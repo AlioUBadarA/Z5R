@@ -2019,7 +2019,7 @@ function updateUI() {
     badge.className   = 'role-badge ' + rc.cls;
     const firstName   = currentUser.name.split(' ')[0];
     authBtn.textContent = '👋 ' + firstName + ' · Déco.';
-    if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name;
+    if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name + (currentUser.poste ? ' · ' + currentUser.poste : '');
 
     // FIX: display explicite pour surcharger le CSS .member-only { display:none }
     memberNavItems.forEach(n => n.style.display = 'block');
