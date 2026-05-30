@@ -316,7 +316,7 @@
     <!-- Matchs à venir & résultats récents -->
     <div class="card mb">
       <div class="card-header">
-        <span class="card-title">Matchs — À venir & Récents</span>
+        <span class="card-title">Matchs · À venir & Récents</span>
         <button class="btn" onclick="showSection('competition')">Voir tout ⚽</button>
       </div>
       <div class="gap" style="padding:8px;gap:6px">
@@ -366,7 +366,7 @@
     <!-- Classement rapide -->
     <div class="card mb">
       <div class="card-header">
-        <span class="card-title">Classement — Poule A</span>
+        <span class="card-title">Classement · Poule A</span>
         <button class="btn" onclick="showSection('classement')">Voir tout 🏆</button>
       </div>
       <div class="table-wrap">
@@ -387,7 +387,7 @@
     <!-- Poules (aperçu public) -->
     <div class="card mb">
       <div class="card-header">
-        <span class="card-title">Poules — Aperçu</span>
+        <span class="card-title">Poules · Aperçu</span>
         <button class="btn" onclick="showSection('competition')">Programme complet</button>
       </div>
       <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
@@ -420,7 +420,7 @@
         <div class="fiche-card">
           <div class="fiche-icon">📋</div>
           <div class="fiche-info">
-            <div class="fiche-title">Billetterie — Journée du 29/08</div>
+            <div class="fiche-title">Billetterie · Journée du 29/08</div>
             <div class="fiche-meta">Saison 2024 · Publié le 01/09/2024</div>
           </div>
           <div class="fiche-amount">55 600 FCFA</div>
@@ -428,7 +428,7 @@
         <div class="fiche-card">
           <div class="fiche-icon">📋</div>
           <div class="fiche-info">
-            <div class="fiche-title">Billetterie — Journée du 15/09</div>
+            <div class="fiche-title">Billetterie · Journée du 15/09</div>
             <div class="fiche-meta">Saison 2024 · Publié le 18/09/2024</div>
           </div>
           <div class="fiche-amount">91 350 FCFA</div>
@@ -436,7 +436,7 @@
         <div class="fiche-card">
           <div class="fiche-icon">📋</div>
           <div class="fiche-info">
-            <div class="fiche-title">Billetterie — Journée du 06/10</div>
+            <div class="fiche-title">Billetterie · Journée du 06/10</div>
             <div class="fiche-meta">Saison 2024 · Publié le 10/10/2024</div>
           </div>
           <div class="fiche-amount">84 300 FCFA</div>
@@ -444,7 +444,7 @@
         <div class="fiche-card">
           <div class="fiche-icon">🏆</div>
           <div class="fiche-info">
-            <div class="fiche-title">Billetterie — Finale 28/12</div>
+            <div class="fiche-title">Billetterie · Finale 28/12</div>
             <div class="fiche-meta">Saison 2024 · Publié le 02/01/2025</div>
           </div>
           <div class="fiche-amount">495 250 FCFA</div>
@@ -605,7 +605,7 @@
     <div id="poule-a">
       <div class="card mb">
         <div class="card-header">
-          <span class="card-title">Poule A — Programme</span>
+          <span class="card-title">Poule A · Programme</span>
           <span class="badge green">5 équipes</span>
         </div>
         <div class="gap" style="padding:12px;gap:6px">
@@ -638,7 +638,7 @@
     </div>
     <div id="poule-b" style="display:none">
       <div class="card mb">
-        <div class="card-header"><span class="card-title">Poule B — Programme</span><span class="badge amber">4 équipes</span></div>
+        <div class="card-header"><span class="card-title">Poule B · Programme</span><span class="badge amber">4 équipes</span></div>
         <div class="gap" style="padding:12px;gap:6px">
           <div class="match-card">
             <div class="match-team">ASC Baraka</div>
@@ -724,11 +724,11 @@
   <!-- CAISSE EN TEMPS RÉEL (visible par tous) -->
   <div id="caisse-widget" class="card mb" style="background:linear-gradient(135deg,var(--green-d),#1a7a5c);color:#fff;border:none">
     <div style="padding:16px">
-      <div style="font-size:11px;opacity:0.8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">État de la Caisse — Temps réel</div>
+      <div style="font-size:11px;opacity:0.8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">État de la Caisse · Temps réel</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:8px">
         <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:10px;opacity:0.75;margin-bottom:2px">Solde de départ</div>
-          <div style="font-size:16px;font-weight:700" id="cw-solde-depart">—</div>
+          <div style="font-size:16px;font-weight:700" id="cw-solde-depart"></div>
         </div>
         <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:10px;opacity:0.75;margin-bottom:2px">Total Recettes</div>
@@ -858,8 +858,8 @@
   </div>
 
   <div class="grid-2 mb">
-    <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs">—</div><div class="stat-sub">Cadets + Seniors</div></div>
-    <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes">—</div><div class="stat-sub">saison 2025</div></div>
+    <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs"></div><div class="stat-sub">Cadets + Seniors</div></div>
+    <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes"></div><div class="stat-sub">saison 2025</div></div>
   </div>
 
   <!-- Sélecteur d'équipes -->
@@ -944,7 +944,7 @@
   <div id="saison-panel" class="card mb" style="display:none">
     <div class="card-header">
       <span class="card-title">🗓️ Gestion de la saison</span>
-      <span class="badge amber" id="saison-statut-badge">—</span>
+      <span class="badge amber" id="saison-statut-badge"></span>
     </div>
     <div class="card-body">
       <div id="saison-active-view" style="display:none">
@@ -961,7 +961,7 @@
           <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--radius-sm);border-left:3px solid var(--green)">
             <span style="font-size:20px">✅</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:600;color:var(--green-d)">Étape 1 — Saison déclarée</div>
+              <div style="font-size:13px;font-weight:600;color:var(--green-d)">Étape 1 · Saison déclarée</div>
               <div style="font-size:11px;color:var(--muted)">Saison créée avec les équipes participantes</div>
             </div>
           </div>
@@ -970,7 +970,7 @@
           <div id="step-tirage" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray)">
             <span style="font-size:20px" id="step-tirage-icon">🎲</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:600" id="step-tirage-title">Étape 2 — Tirage au sort</div>
+              <div style="font-size:13px;font-weight:600" id="step-tirage-title">Étape 2 · Tirage au sort</div>
               <div style="font-size:11px;color:var(--muted)" id="step-tirage-desc">Répartir les équipes dans les poules</div>
             </div>
             <button class="btn" id="btn-tirage" onclick="openTirageModal();openModal('modal-tirage')" style="font-size:12px">🎲 Procéder</button>
@@ -980,7 +980,7 @@
           <div id="step-matchs" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
             <span style="font-size:20px" id="step-matchs-icon">📅</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:600" id="step-matchs-title">Étape 3 — Programmer les matchs</div>
+              <div style="font-size:13px;font-weight:600" id="step-matchs-title">Étape 3 · Programmer les matchs</div>
               <div style="font-size:11px;color:var(--muted)" id="step-matchs-desc">Générer le calendrier de la phase de poules</div>
             </div>
             <button class="btn" id="btn-matchs" onclick="programmerMatchs()" style="font-size:12px" disabled>📅 Générer</button>
@@ -990,7 +990,7 @@
           <div id="step-ouverture" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
             <span style="font-size:20px" id="step-ouverture-icon">🚀</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:600" id="step-ouverture-title">Étape 4 — Déclarer la compétition ouverte</div>
+              <div style="font-size:13px;font-weight:600" id="step-ouverture-title">Étape 4 · Déclarer la compétition ouverte</div>
               <div style="font-size:11px;color:var(--muted)" id="step-ouverture-desc">Fixer la date officielle d'ouverture</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center">
@@ -1017,7 +1017,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>💰 Solde de départ (report saison précédente — FCFA)</label>
+          <label>💰 Solde de départ (report saison précédente · FCFA)</label>
           <input type="number" id="saison-solde-depart" placeholder="Ex : 368065" min="0" value="0">
           <p style="font-size:11px;color:var(--muted);margin-top:3px">Ce montant est ajouté au bilan comme point de départ de la caisse</p>
         </div>
@@ -1471,7 +1471,7 @@
 <div id="modal-finale" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span class="modal-title">🏆 Bilan Financier — Finale</span>
+      <span class="modal-title">🏆 Bilan Financier · Finale</span>
       <button class="close-btn" onclick="closeModal('modal-finale')">✕</button>
     </div>
     <div class="form-row">
@@ -1680,7 +1680,7 @@
 <div id="modal-tirage" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <span class="modal-title">🎲 Tirage au sort — Poules</span>
+      <span class="modal-title">🎲 Tirage au sort · Poules</span>
       <button class="close-btn" onclick="closeModal('modal-tirage')">✕</button>
     </div>
     <div id="tirage-etape-1">
@@ -1715,7 +1715,7 @@
 <div id="modal-fiche-journee" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <span class="modal-title">📋 Bilan Financier — Journée</span>
+      <span class="modal-title">📋 Bilan Financier · Journée</span>
       <button class="close-btn" onclick="closeModal('modal-fiche-journee')">✕</button>
     </div>
     <div class="form-row" style="margin-bottom:14px">
@@ -2225,7 +2225,7 @@ function renderTeamPlayers(team) {
   const subEl   = document.getElementById('joueurs-subtitle');
   const tbody   = document.getElementById('team-players-body');
 
-  if (titleEl) titleEl.textContent = team + ' — ' + list.length + ' joueur(s) / technicien(s)';
+  if (titleEl) titleEl.textContent = team + ' · ' + list.length + ' joueur(s) / technicien(s)';
   if (subEl)   subEl.textContent   = list.length + ' enregistré(s) · ' + team;
 
   if (!tbody) return;
@@ -2388,7 +2388,7 @@ function renderMembersTable() {
     return `<tr>
       <td><strong>${m.name}</strong></td>
       <td style="font-size:12px;color:var(--muted)">${m.poste}</td>
-      <td>${active ? code(m.username) : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+      <td>${active ? code(m.username) : ''}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         ${active
           ? `<span class="badge green" style="font-size:10px">✅ Actif</span>${actionBtns(m.username, m.name)}`
@@ -2572,7 +2572,7 @@ function renderSaisonPanel() {
     document.getElementById('saison-date-display').textContent    = new Date(saison.date).toLocaleDateString('fr-FR');
     document.getElementById('saison-equipes-display').textContent = saison.equipes.length;
     const dbEl = document.getElementById('saison-declared-by');
-    if (dbEl) dbEl.textContent = saison.declaredBy || '—';
+    if (dbEl) dbEl.textContent = saison.declaredBy || '';
 
     // Mettre à jour le header du bureau
     const h = document.querySelector('#bureau h2');
@@ -2586,7 +2586,7 @@ function renderSaisonPanel() {
       step2.style.borderColor  = 'var(--green)';
       step2.style.opacity      = '1';
       document.getElementById('step-tirage-icon').textContent  = '✅';
-      document.getElementById('step-tirage-title').textContent = 'Étape 2 — Tirage effectué';
+      document.getElementById('step-tirage-title').textContent = 'Étape 2 · Tirage effectué';
       const nbPoules = saison.poules ? Object.keys(saison.poules).length : 0;
       document.getElementById('step-tirage-desc').textContent  = nbPoules + ' poule(s) définies';
       if (btn2) btn2.textContent = '🔄 Refaire';
@@ -2607,7 +2607,7 @@ function renderSaisonPanel() {
       step3.style.background  = 'var(--green-l)';
       step3.style.borderColor = 'var(--green)';
       document.getElementById('step-matchs-icon').textContent  = '✅';
-      document.getElementById('step-matchs-title').textContent = 'Étape 3 — Matchs programmés';
+      document.getElementById('step-matchs-title').textContent = 'Étape 3 · Matchs programmés';
       document.getElementById('step-matchs-desc').textContent  = (saison.matchs||[]).length + ' rencontres générées';
     }
 
@@ -2624,7 +2624,7 @@ function renderSaisonPanel() {
       step4.style.background  = 'var(--green-l)';
       step4.style.borderColor = 'var(--green)';
       document.getElementById('step-ouverture-icon').textContent  = '✅';
-      document.getElementById('step-ouverture-title').textContent = 'Étape 4 — Compétition déclarée ouverte';
+      document.getElementById('step-ouverture-title').textContent = 'Étape 4 · Compétition déclarée ouverte';
       const d = new Date(saison.dateOuverture).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
       document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
       if (btn4) { btn4.disabled = true; btn4.textContent = '✅ Ouverte'; }
@@ -3018,7 +3018,7 @@ function renderFichesList() {
         ${f.journee}${f.terrain ? ' · Terrain ' + f.terrain : ''}
       </div>
       <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
-        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : '—'}
+        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : ''}
       </div>
 
       <!-- Corps : 2 colonnes -->
@@ -3079,9 +3079,9 @@ function renderFichesList() {
 function getStades() {
   try { return JSON.parse(localStorage.getItem('zone5r_stades')) || [
     { nom:'Stade René COLY', lieu:'Bignona Centre', capacite:3000, contact:'René COLY' },
-    { nom:'CEM Arfang Bessire Sonko', lieu:'Bignona', capacite:500, contact:'—' },
-    { nom:'Terrain HLM', lieu:'HLM Bignona', capacite:800, contact:'—' },
-    { nom:'Terrain JKS', lieu:'Bignona', capacite:600, contact:'—' },
+    { nom:'CEM Arfang Bessire Sonko', lieu:'Bignona', capacite:500, contact:'' },
+    { nom:'Terrain HLM', lieu:'HLM Bignona', capacite:800, contact:'' },
+    { nom:'Terrain JKS', lieu:'Bignona', capacite:600, contact:'' },
   ]; } catch(e) { return []; }
 }
 function saveStades(d) { localStorage.setItem('zone5r_stades', JSON.stringify(d)); fireSync('stades', d); }
@@ -3095,7 +3095,7 @@ function renderStadesPanel() {
     <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:13px;font-weight:600">🏟️ ${s.nom}</div>
-        <div style="font-size:11px;color:var(--muted)">${s.lieu} · Cap. ${(s.capacite||0).toLocaleString('fr-FR')} · ${s.contact||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.lieu} · Cap. ${(s.capacite||0).toLocaleString('fr-FR')} · ${s.contact||''}</div>
       </div>
       <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteStade(${i})">✕</button>
     </div>`).join('');
@@ -3150,7 +3150,7 @@ function renderSuspensions() {
   if (alert) {
     if (susp.length > 0) {
       alert.className = 'alert danger';
-      alert.innerHTML = `🟥 <strong>${susp.length} joueur(s) suspendu(s)</strong> — vérifiez avant validation des feuilles de match`;
+      alert.innerHTML = `🟥 <strong>${susp.length} joueur(s) suspendu(s)</strong> · vérifiez avant validation des feuilles de match`;
     } else {
       alert.className = 'alert success';
       alert.innerHTML = '✅ Aucune suspension active en ce moment.';
@@ -3163,7 +3163,7 @@ function renderSuspensions() {
       <td>${s.asc}</td>
       <td><span class="badge ${s.type==='rouge'?'red':'amber'}">${s.motif}</span></td>
       <td style="text-align:center"><strong>${s.matchsRestants}</strong></td>
-      <td>${isMember ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="leverSuspension('${s.id}')">Lever</button>` : '—'}</td>
+      <td>${isMember ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="leverSuspension('${s.id}')">Lever</button>` : ''}</td>
     </tr>`).join('')
   : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucune suspension active</td></tr>';
 }
@@ -3247,10 +3247,10 @@ function renderLitiges() {
     <tr>
       <td><strong>${l.match}</strong><br><span style="font-size:11px;color:var(--muted)">${new Date(l.date).toLocaleDateString('fr-FR')}</span></td>
       <td>${l.motif}<br>${l.plaignant?`<span style="font-size:11px;color:var(--muted)">Plaignant : ${l.plaignant}</span>`:''}</td>
-      <td>${l.amende ? `<span class="badge red">${l.amende.toLocaleString('fr-FR')}</span>` : '—'}</td>
+      <td>${l.amende ? `<span class="badge red">${l.amende.toLocaleString('fr-FR')}</span>` : ''}</td>
       <td><span class="badge ${CLASSES[l.decision]||'gray'}">${LABELS[l.decision]||l.decision}</span></td>
-      <td>${l.pvName ? `<span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:12px;cursor:default" title="PV non téléchargeable">📄 ${l.pvName}</span>` : '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-      <td>${currentUser?.role==='juridique' ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="editLitige('${l.id}')">Modifier</button>` : '—'}</td>
+      <td>${l.pvName ? `<span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:12px;cursor:default" title="PV non téléchargeable">📄 ${l.pvName}</span>` : ''}</td>
+      <td>${currentUser?.role==='juridique' ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="editLitige('${l.id}')">Modifier</button>` : ''}</td>
     </tr>`).join('')
   : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Aucun litige déclaré</td></tr>';
 }
@@ -3326,10 +3326,10 @@ function renderFinaleDisplay() {
   div.innerHTML = `
     <div class="card mb">
       <div style="background:var(--amber-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:14px">
-        🏆 FINALE — ${f.equipeA} vs ${f.equipeB}
+        🏆 FINALE · ${f.equipeA} vs ${f.equipeB}
       </div>
       <div style="background:var(--amber-l);padding:6px 16px;text-align:center;font-size:12px;color:var(--amber-d)">
-        ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—'}
+        ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
         ${f.terrain ? ' · ' + f.terrain : ''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr">
@@ -3454,7 +3454,7 @@ function renderDepensesList() {
       <div class="tx-icon depense">💸</div>
       <div class="tx-info">
         <div class="tx-desc">${d.description}</div>
-        <div class="tx-date">${d.categorie} · ${d.date||'—'} · ${d.declaredBy||'—'}</div>
+        <div class="tx-date">${d.categorie} · ${d.date||''} · ${d.declaredBy||''}</div>
       </div>
       <div class="tx-amount depense">– ${fmt(d.montant)}</div>
     </div>`).join('')
@@ -3534,7 +3534,7 @@ function renderBilan() {
 
   div.innerHTML = `
     <div style="text-align:center;margin-bottom:16px;font-size:12px;color:var(--muted)">
-      Saison : <strong>${saison?.nom||'—'}</strong> · Généré le ${new Date().toLocaleDateString('fr-FR')}
+      Saison : <strong>${saison?.nom||''}</strong> · Généré le ${new Date().toLocaleDateString('fr-FR')}
     </div>
 
     <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
