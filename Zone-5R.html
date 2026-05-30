@@ -3666,8 +3666,14 @@ function removeContribRow(btn, asc) {
 //  INIT
 // ============================================================
 function _bootApp() {
-  // Synchroniser les comptes vers Firestore (assure que DEFAULT_USERS y sont toujours présents)
-  saveUsers(getUsers());
+  // Initialiser tous les comptes (DEFAULT_USERS + bureau) s'ils n'existent pas encore
+  const users = getUsers();
+  BUREAU_MEMBERS.forEach(m => {
+    if (!users[m.username]) {
+      users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+    }
+  });
+  saveUsers(users);
   getPlayers();
   getStades();
   initTeamTabs();
