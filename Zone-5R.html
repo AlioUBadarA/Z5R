@@ -1061,7 +1061,10 @@
   <div id="admin-access-panel" class="card mb" style="display:none">
     <div class="card-header">
       <span class="card-title">🔑 Gestion des accès membres</span>
-      <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="font-size:12px" onclick="createAllBureauAccounts()">🚀 Activer tous</button>
+        <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
+      </div>
     </div>
     <div class="table-wrap">
       <table id="members-pwd-table">
@@ -1876,23 +1879,27 @@ async function initFirebase() {
 // ============================================================
 //  DONNÉES UTILISATEURS (stockées dans localStorage)
 // ============================================================
+// Comptes permanents (toujours présents, non supprimables)
 const DEFAULT_USERS = {
-  'aliou.sagna':     { password: 'Zone5R!2025',  role: 'superadmin',    name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
-  'djiby.diatta':    { password: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',       poste: 'Président Zone 5R' },
-  'boubacar.camara': { password: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',           poste: 'Secrétaire Général' },
-  'papis.sagna':     { password: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',       poste: 'SG Adjoint' },
-  'habib.sane':      { password: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',     poste: 'Trésorier Général' },
-  'agnile.dieng':    { password: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint' },
-  'ibrahima.dieme':  { password: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',            poste: 'Pdt Commission Finances' },
-  'sidiky.doumbia':  { password: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports' },
-  'fode.goudiaby':   { password: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',            poste: 'Commission Juridique' },
-  'cheikh.diatta':   { password: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication' },
-  'aicha.mbaye':     { password: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',              poste: 'Commissaire aux Comptes' },
-  'idrissa.diallo':  { password: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes' },
-  // ── Comptes de test ──────────────────────────────────────────────────────────
-  'test.admin':      { password: 'TestAdmin25',  role: 'superadmin',    name: 'Compte Test Admin',         poste: 'Test – Accès complet'     },
-  'test.visiteur':   { password: 'TestVisit25',  role: 'visiteur',      name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule'     },
+  'aliou.sagna':   { password: 'Zone5R!2025', role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'test.admin':    { password: 'TestAdmin25', role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
+  'test.visiteur': { password: 'TestVisit25', role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
 };
+
+// Membres du bureau — définition de référence (comptes créés à la demande)
+const BUREAU_MEMBERS = [
+  { username: 'djiby.diatta',    defaultPwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
+  { username: 'boubacar.camara', defaultPwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
+  { username: 'papis.sagna',     defaultPwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
+  { username: 'habib.sane',      defaultPwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',    poste: 'Trésorier Général'          },
+  { username: 'agnile.dieng',    defaultPwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint'          },
+  { username: 'ibrahima.dieme',  defaultPwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',           poste: 'Pdt Commission Finances'    },
+  { username: 'sidiky.doumbia',  defaultPwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports'      },
+  { username: 'fode.goudiaby',   defaultPwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',           poste: 'Commission Juridique'       },
+  { username: 'cheikh.diatta',   defaultPwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
+  { username: 'aicha.mbaye',     defaultPwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
+  { username: 'idrissa.diallo',  defaultPwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
+];
 
 const ROLE_CONFIG = {
   superadmin:    { label: 'Super Admin',   cls: 'purple' },
@@ -2366,39 +2373,83 @@ function clearSearch() {
 //  GESTION DES MOTS DE PASSE (Super Admin)
 // ============================================================
 function renderMembersTable() {
-  const users     = getUsers();
-  const protected = new Set(Object.keys(DEFAULT_USERS));
-  const tbody     = document.querySelector('#members-pwd-table tbody');
-  tbody.innerHTML = Object.entries(users)
-    .filter(([username]) => username !== 'aliou.sagna')
-    .map(([username, user]) => {
-      const isProtected = protected.has(username);
-      return `
-      <tr>
-        <td><strong>${user.name}</strong></td>
-        <td style="font-size:12px;color:var(--muted)">${user.poste}</td>
-        <td><code style="background:var(--gray-l);padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace">${username}</code></td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn" style="font-size:11px;padding:4px 10px"
-            onclick="openChangePasswordModal('${username}', '${user.name.replace(/'/g, "\\'")}')">
-            🔑 MDP
-          </button>
-          ${isProtected ? '' : `<button class="btn danger" style="font-size:11px;padding:4px 10px"
-            onclick="deleteAccount('${username}', '${user.name.replace(/'/g, "\\'")}')">
-            🗑️
-          </button>`}
-        </td>
-      </tr>`;
-    }).join('');
+  const users = getUsers();
+  const tbody = document.querySelector('#members-pwd-table tbody');
+  const code  = u => `<code style="background:var(--gray-l);padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace">${u}</code>`;
+  const actionBtns = (username, name) => `
+    <button class="btn" style="font-size:11px;padding:3px 8px"
+      onclick="openChangePasswordModal('${username}','${name.replace(/'/g,"\\'")}')">🔑 MDP</button>
+    <button class="btn danger" style="font-size:11px;padding:3px 8px"
+      onclick="deleteAccount('${username}','${name.replace(/'/g,"\\'")}')">🗑️</button>`;
+
+  // ── Section 1 : Membres du Bureau ──────────────────────────
+  const bureauRows = BUREAU_MEMBERS.map((m, i) => {
+    const active = !!users[m.username];
+    return `<tr>
+      <td><strong>${m.name}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${m.poste}</td>
+      <td>${active ? code(m.username) : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+      <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        ${active
+          ? `<span class="badge green" style="font-size:10px">✅ Actif</span>${actionBtns(m.username, m.name)}`
+          : `<button class="btn primary" style="font-size:11px;padding:3px 10px"
+               onclick="createBureauAccount(${i})">Créer accès</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // ── Section 2 : Comptes personnalisés ───────────────────────
+  const bureauSet = new Set(BUREAU_MEMBERS.map(m => m.username));
+  const customRows = Object.entries(users)
+    .filter(([u]) => !bureauSet.has(u) && !DEFAULT_USERS[u])
+    .map(([username, user]) => `<tr>
+      <td><strong>${user.name}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${user.poste}</td>
+      <td>${code(username)}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">${actionBtns(username, user.name)}</td>
+    </tr>`).join('');
+
+  const sep = label => `<tr><td colspan="4" style="padding:8px 12px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);
+    background:var(--gray-l);border-top:1px solid var(--border)">${label}</td></tr>`;
+
+  tbody.innerHTML =
+    sep('📋 Membres du Bureau') + bureauRows +
+    (customRows ? sep('👤 Comptes personnalisés') + customRows : '');
 }
 
 function deleteAccount(username, name) {
-  if (!confirm('Supprimer le compte de ' + name + ' ?\nCette action est irréversible.')) return;
+  if (!confirm('Supprimer le compte de ' + name + ' ?\nIl pourra être recréé en 1 clic.')) return;
   const users = getUsers();
   delete users[username];
   saveUsers(users);
   renderMembersTable();
   showToast('🗑️ Compte ' + username + ' supprimé.');
+}
+
+function createBureauAccount(index) {
+  const m = BUREAU_MEMBERS[index];
+  const users = getUsers();
+  if (users[m.username]) { showToast('⚠️ Ce compte existe déjà.'); return; }
+  users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+  saveUsers(users);
+  renderMembersTable();
+  showToast('✅ ' + m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP : ' + m.defaultPwd);
+}
+
+function createAllBureauAccounts() {
+  const users = getUsers();
+  let created = 0;
+  BUREAU_MEMBERS.forEach(m => {
+    if (!users[m.username]) {
+      users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+      created++;
+    }
+  });
+  if (created === 0) { showToast('ℹ️ Tous les comptes bureau sont déjà actifs.'); return; }
+  saveUsers(users);
+  renderMembersTable();
+  showToast('✅ ' + created + ' compte(s) activé(s) et synchronisés sur Firebase.');
 }
 
 function openChangePasswordModal(username, name) {
