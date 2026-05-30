@@ -1061,7 +1061,7 @@
   <div id="admin-access-panel" class="card mb" style="display:none">
     <div class="card-header">
       <span class="card-title">🔑 Gestion des accès membres</span>
-      <span class="badge purple">Super Admin</span>
+      <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
     </div>
     <div class="table-wrap">
       <table id="members-pwd-table">
@@ -1153,7 +1153,7 @@
           <tr><td>El Habib Pierre SANÉ</td><td>Trésorier Général</td><td><span class="badge amber">Trésorier</span></td></tr>
           <tr><td>Souleymane DIENG (Agnile)</td><td>Trésorier Adjoint</td><td><span class="badge amber">Trésorier</span></td></tr>
           <tr><td>Ibrahima DIEME</td><td>Président Commission Finances</td><td><span class="badge amber">Finances</span></td></tr>
-          <tr><td>Sidiky DOUMBIA</td><td>Commission Compétitions (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
+          <tr><td>Sidiky DOUMBIA</td><td>Commission des Sports (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
           <tr><td>Fodé GOUDIABY</td><td>Commission Juridique (Pdt)</td><td><span class="badge red">Juridique</span></td></tr>
           <tr><td>Cheikh S. DIATTA</td><td>Commission Communication (Pdt)</td><td><span class="badge blue">Communication</span></td></tr>
           <tr><td>Aïcha MBAYE</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
@@ -1167,6 +1167,51 @@
 <!-- ============================
      MODALS
      ============================ -->
+
+<!-- Modal: Créer un compte -->
+<div id="modal-create-account" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">👤 Nouveau compte membre</span>
+      <button class="close-btn" onclick="closeModal('modal-create-account')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Nom complet *</label>
+      <input type="text" id="create-name" placeholder="Ex : Mamadou DIATTA">
+    </div>
+    <div class="form-group">
+      <label>Poste / Fonction *</label>
+      <input type="text" id="create-poste" placeholder="Ex : Commission Juridique">
+    </div>
+    <div class="form-group">
+      <label>Identifiant *</label>
+      <input type="text" id="create-username" placeholder="Ex : mamadou.diatta" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Rôle *</label>
+      <select id="create-role">
+        <option value="secretaire">Secrétaire</option>
+        <option value="tresorier">Trésorier</option>
+        <option value="finances">Finances</option>
+        <option value="competitions">Compétitions</option>
+        <option value="juridique">Juridique</option>
+        <option value="communication">Communication</option>
+        <option value="audit">Audit</option>
+        <option value="admin">Président (Admin)</option>
+        <option value="superadmin">Super Admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Mot de passe *</label>
+      <input type="password" id="create-pwd" placeholder="Min. 6 caractères" autocomplete="new-password">
+    </div>
+    <div class="error-msg" id="create-error">Veuillez remplir tous les champs obligatoires.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-create-account')">Annuler</button>
+      <button class="btn primary" onclick="createAccount()">✅ Créer le compte</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal: Saisir score -->
 <div id="modal-match" class="modal-overlay" onclick="closeModalOutside(event)">
@@ -1839,7 +1884,7 @@ const DEFAULT_USERS = {
   'habib.sane':      { password: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',     poste: 'Trésorier Général' },
   'agnile.dieng':    { password: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint' },
   'ibrahima.dieme':  { password: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',            poste: 'Pdt Commission Finances' },
-  'sidiky.doumbia':  { password: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission Compétitions' },
+  'sidiky.doumbia':  { password: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports' },
   'fode.goudiaby':   { password: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',            poste: 'Commission Juridique' },
   'cheikh.diatta':   { password: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication' },
   'aicha.mbaye':     { password: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',              poste: 'Commissaire aux Comptes' },
@@ -2373,6 +2418,45 @@ function saveNewPassword() {
     closeModal('modal-change-pwd');
     showToast('✅ Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
   }
+}
+
+function openCreateAccountModal() {
+  ['create-name','create-poste','create-username','create-pwd'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('create-role').value = 'secretaire';
+  document.getElementById('create-error').classList.remove('show');
+  openModal('modal-create-account');
+}
+
+function createAccount() {
+  const name     = document.getElementById('create-name').value.trim();
+  const poste    = document.getElementById('create-poste').value.trim();
+  const username = document.getElementById('create-username').value.trim().toLowerCase();
+  const role     = document.getElementById('create-role').value;
+  const pwd      = document.getElementById('create-pwd').value;
+  const errEl    = document.getElementById('create-error');
+
+  if (!name || !poste || !username || !pwd) {
+    errEl.textContent = 'Veuillez remplir tous les champs obligatoires.';
+    errEl.classList.add('show'); return;
+  }
+  if (pwd.length < 6) {
+    errEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+    errEl.classList.add('show'); return;
+  }
+  const users = getUsers();
+  if (users[username]) {
+    errEl.textContent = 'Cet identifiant existe déjà.';
+    errEl.classList.add('show'); return;
+  }
+  errEl.classList.remove('show');
+
+  users[username] = { password: pwd, role, name, poste };
+  saveUsers(users);
+  closeModal('modal-create-account');
+  renderMembersTable();
+  showToast('✅ Compte ' + username + ' créé avec succès.');
 }
 
 // ============================================================
@@ -3515,7 +3599,8 @@ function removeContribRow(btn, asc) {
 //  INIT
 // ============================================================
 function _bootApp() {
-  getUsers();
+  // Synchroniser les comptes vers Firestore (assure que DEFAULT_USERS y sont toujours présents)
+  saveUsers(getUsers());
   getPlayers();
   getStades();
   initTeamTabs();
