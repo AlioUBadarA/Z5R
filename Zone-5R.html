@@ -248,6 +248,9 @@
     .visitor-hero { padding: 18px; }
   }
 </style>
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -1735,6 +1738,97 @@
 
 <script>
 // ============================================================
+//  FIREBASE — config, helpers, init
+// ============================================================
+firebase.initializeApp({
+  apiKey:            'AIzaSyAf4rYCVwRISriNK57kq6PxUCLAffxbRYo',
+  authDomain:        'z5rb-a8286.firebaseapp.com',
+  projectId:         'z5rb-a8286',
+  storageBucket:     'z5rb-a8286.firebasestorage.app',
+  messagingSenderId: '156095222819',
+  appId:             '1:156095222819:web:2e914f0377a76dfa5c4d96'
+});
+const _db  = firebase.firestore();
+const _COL = 'zone5r';
+let   _appReady = false;
+
+// Écriture Firestore asynchrone (fire-and-forget)
+async function fireSync(key, data) {
+  try { await _db.collection(_COL).doc(key).set({ data }); }
+  catch(e) { console.warn('[FS] sync', key, e.message); }
+}
+
+// Lecture Firestore → localStorage
+async function fireLoad(key) {
+  try {
+    const doc = await _db.collection(_COL).doc(key).get();
+    if (doc.exists && doc.data().data !== undefined) {
+      localStorage.setItem('zone5r_' + key, JSON.stringify(doc.data().data));
+    }
+  } catch(e) { console.warn('[FS] load', key, e.message); }
+}
+
+async function initFirebase() {
+  const keys = ['users','players','saison','teams','fiches','stades',
+                 'suspensions','litiges','finale','licences','depenses'];
+  await Promise.all(keys.map(k => fireLoad(k)));
+
+  // Listeners temps réel — synchronisent les autres onglets/navigateurs
+  _db.collection(_COL).doc('players').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_players', JSON.stringify(snap.data().data));
+    initTeamTabs(); renderLicencesTable();
+  });
+  _db.collection(_COL).doc('saison').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_saison', JSON.stringify(snap.data().data));
+    if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
+    updateUI();
+  });
+  _db.collection(_COL).doc('suspensions').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_suspensions', JSON.stringify(snap.data().data));
+    renderSuspensions();
+  });
+  _db.collection(_COL).doc('litiges').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_litiges', JSON.stringify(snap.data().data));
+    renderLitiges();
+  });
+  _db.collection(_COL).doc('teams').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_teams', JSON.stringify(snap.data().data));
+    if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderEquipesPanel();
+    refreshSaisonEquipesSelect();
+  });
+  _db.collection(_COL).doc('fiches').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_fiches', JSON.stringify(snap.data().data));
+    renderFichesList();
+  });
+  _db.collection(_COL).doc('licences').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_licences', JSON.stringify(snap.data().data));
+    renderLicencesTable();
+  });
+  _db.collection(_COL).doc('depenses').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_depenses', JSON.stringify(snap.data().data));
+    renderDepensesList(); updateCaisse(); renderBilan();
+  });
+  _db.collection(_COL).doc('finale').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_finale', JSON.stringify(snap.data().data));
+    renderFinaleDisplay(); updateCaisse(); renderBilan();
+  });
+  _db.collection(_COL).doc('users').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_USERS)), snap.data().data);
+    localStorage.setItem('zone5r_users', JSON.stringify(merged));
+  });
+}
+
+// ============================================================
 //  DONNÉES UTILISATEURS (stockées dans localStorage)
 // ============================================================
 const DEFAULT_USERS = {
@@ -1794,6 +1888,7 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem('zone5r_users', JSON.stringify(users));
+  fireSync('users', users);
 }
 
 // ============================================================
@@ -2027,6 +2122,7 @@ function getPlayers() {
 
 function savePlayers(data) {
   localStorage.setItem('zone5r_players', JSON.stringify(data));
+  fireSync('players', data);
 }
 
 let currentTeam = null;
@@ -2302,6 +2398,11 @@ function getSaison() {
   catch(e) { return null; }
 }
 
+function saveSaison(saison) {
+  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+  fireSync('saison', saison);
+}
+
 function renderSaisonPanel() {
   const panel  = document.getElementById('saison-panel');
   const active = document.getElementById('saison-active-view');
@@ -2400,7 +2501,7 @@ function declarerSaison() {
 
   const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
   const saison = { nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
-  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+  saveSaison(saison);
 
   renderSaisonPanel();
   showToast('🚀 Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
@@ -2409,7 +2510,7 @@ function declarerSaison() {
 function cloturerSaison() {
   if (!confirm('Clôturer la saison en cours ? Cette action est irréversible.')) return;
   const saison = getSaison();
-  if (saison) { saison.active = false; localStorage.setItem('zone5r_saison', JSON.stringify(saison)); }
+  if (saison) { saison.active = false; saveSaison(saison); }
   renderSaisonPanel();
   showToast('🔒 Saison clôturée.');
 }
@@ -2426,7 +2527,7 @@ function getTeams() {
     return s ? JSON.parse(s) : {};
   } catch(e) { return {}; }
 }
-function saveTeams(data) { localStorage.setItem('zone5r_teams', JSON.stringify(data)); }
+function saveTeams(data) { localStorage.setItem('zone5r_teams', JSON.stringify(data)); fireSync('teams', data); }
 
 function refreshSaisonEquipesSelect() {
   const sel = document.getElementById('saison-equipes-select');
@@ -2583,7 +2684,7 @@ function confirmTirage() {
   saison.tirageDone   = true;
   saison.matchsProgrammes = false;
   saison.declaredOpen = false;
-  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+  saveSaison(saison);
 
   closeModal('modal-tirage');
   renderSaisonPanel();
@@ -2611,7 +2712,7 @@ function programmerMatchs() {
 
   saison.matchs           = allMatchs;
   saison.matchsProgrammes = true;
-  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+  saveSaison(saison);
 
   renderSaisonPanel();
   showToast('✅ ' + allMatchs.length + ' matchs générés pour la phase de poules !');
@@ -2634,7 +2735,7 @@ function declarerOuverte() {
   const saison = getSaison();
   saison.declaredOpen   = true;
   saison.dateOuverture  = dateOuverture;
-  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+  saveSaison(saison);
 
   renderSaisonPanel();
   const d = new Date(dateOuverture).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
@@ -2648,7 +2749,7 @@ function getFiches() {
   try { return JSON.parse(localStorage.getItem('zone5r_fiches')) || []; }
   catch(e) { return []; }
 }
-function saveFiches(data) { localStorage.setItem('zone5r_fiches', JSON.stringify(data)); }
+function saveFiches(data) { localStorage.setItem('zone5r_fiches', JSON.stringify(data)); fireSync('fiches', data); }
 
 function openFicheModal() {
   // Réinitialiser tous les champs
@@ -2832,7 +2933,7 @@ function getStades() {
     { nom:'Terrain JKS', lieu:'Bignona', capacite:600, contact:'—' },
   ]; } catch(e) { return []; }
 }
-function saveStades(d) { localStorage.setItem('zone5r_stades', JSON.stringify(d)); }
+function saveStades(d) { localStorage.setItem('zone5r_stades', JSON.stringify(d)); fireSync('stades', d); }
 
 function renderStadesPanel() {
   const body = document.getElementById('stades-body');
@@ -2886,7 +2987,7 @@ function getSuspensions() {
     { id:'s3', joueur:'Omar DIATTA',  asc:'ASC Kafesse', motif:'Rouge direct', matchsRestants:3, type:'rouge' },
   ]; } catch(e) { return []; }
 }
-function saveSuspensions(d) { localStorage.setItem('zone5r_suspensions', JSON.stringify(d)); }
+function saveSuspensions(d) { localStorage.setItem('zone5r_suspensions', JSON.stringify(d)); fireSync('suspensions', d); }
 
 function renderSuspensions() {
   const susp  = getSuspensions();
@@ -2933,7 +3034,7 @@ function getLitiges() {
   try { return JSON.parse(localStorage.getItem('zone5r_litiges')) || []; }
   catch(e) { return []; }
 }
-function saveLitiges(d) { localStorage.setItem('zone5r_litiges', JSON.stringify(d)); }
+function saveLitiges(d) { localStorage.setItem('zone5r_litiges', JSON.stringify(d)); fireSync('litiges', d); }
 
 function initLitigeModal() {
   const saison = getSaison();
@@ -3010,7 +3111,7 @@ function getFinale() {
   try { return JSON.parse(localStorage.getItem('zone5r_finale')) || null; }
   catch(e) { return null; }
 }
-function saveFinaleData(d) { localStorage.setItem('zone5r_finale', JSON.stringify(d)); }
+function saveFinaleData(d) { localStorage.setItem('zone5r_finale', JSON.stringify(d)); fireSync('finale', d); }
 
 function updateFinaleTotaux() {
   const v = id => parseFloat(document.getElementById(id)?.value||0)||0;
@@ -3111,7 +3212,7 @@ function getLicences() {
   try { return JSON.parse(localStorage.getItem('zone5r_licences')) || []; }
   catch(e) { return []; }
 }
-function saveLicences(d) { localStorage.setItem('zone5r_licences', JSON.stringify(d)); }
+function saveLicences(d) { localStorage.setItem('zone5r_licences', JSON.stringify(d)); fireSync('licences', d); }
 
 function updateLicTotal() {
   const j  = parseInt(document.getElementById('lic-joueurs')?.value)||0;
@@ -3190,7 +3291,7 @@ function getDepensesDiverses() {
   try { return JSON.parse(localStorage.getItem('zone5r_depenses')) || []; }
   catch(e) { return []; }
 }
-function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); }
+function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); fireSync('depenses', d); }
 
 function renderDepensesList() {
   const dep = getDepensesDiverses();
@@ -3413,18 +3514,28 @@ function removeContribRow(btn, asc) {
 // ============================================================
 //  INIT
 // ============================================================
-getUsers();
-getPlayers();
-getStades(); // init stades par défaut
-initTeamTabs();
-renderFichesList();
-renderLicencesTable();
-renderDepensesList();
-renderSuspensions();
-renderLitiges();
-renderFinaleDisplay();
-updateCaisse();
-updateUI();
+function _bootApp() {
+  getUsers();
+  getPlayers();
+  getStades();
+  initTeamTabs();
+  renderFichesList();
+  renderLicencesTable();
+  renderDepensesList();
+  renderSuspensions();
+  renderLitiges();
+  renderFinaleDisplay();
+  updateCaisse();
+  updateUI();
+  _appReady = true;
+}
+
+initFirebase()
+  .then(_bootApp)
+  .catch(err => {
+    console.error('[FS] init failed, fallback localStorage:', err);
+    _bootApp();
+  });
 </script>
 </body>
 </html>
