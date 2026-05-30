@@ -261,7 +261,7 @@
   <div class="logo-circle">5R</div>
   <div class="header-title">
     <h1>Zone 5R ODGAM</h1>
-    <p>Le Renouveau des Navetanes · Bignona</p>
+    <p id="header-subtitle">Le Renouveau des Navetanes · Bignona</p>
   </div>
   <span class="role-badge visitor" id="user-role-badge">Visiteur</span>
   <button class="header-auth-btn" id="header-auth-btn" onclick="toggleAuth()">🔐 Connexion</button>
@@ -2011,12 +2011,15 @@ function updateUI() {
   // Boutons réservés membres (Saisir score, Créer poule, + Opération, etc.)
   const memberActions = document.querySelectorAll('.member-action');
 
+  const subtitle = document.getElementById('header-subtitle');
+
   if (currentUser) {
     const rc = ROLE_CONFIG[currentUser.role] || { label: 'Membre', cls: 'gray' };
     badge.textContent = rc.label;
     badge.className   = 'role-badge ' + rc.cls;
     const firstName   = currentUser.name.split(' ')[0];
     authBtn.textContent = '👋 ' + firstName + ' · Déco.';
+    if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name;
 
     // FIX: display explicite pour surcharger le CSS .member-only { display:none }
     memberNavItems.forEach(n => n.style.display = 'block');
@@ -2064,6 +2067,7 @@ function updateUI() {
     badge.textContent = 'Visiteur';
     badge.className   = 'role-badge visitor';
     authBtn.textContent = '🔐 Connexion';
+    if (subtitle) subtitle.textContent = 'Le Renouveau des Navetanes · Bignona';
 
     memberNavItems.forEach(n => n.style.display = 'none');
     memberActions.forEach(b => b.style.display = 'none');
