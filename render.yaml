@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: zone-5r-app
+    env: static
+    staticPublishPath: .
+    buildCommand: ""
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /Zone-5R.html

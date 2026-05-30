@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zone 5R ODGAM – Navetanes Bignona</title>
+<style>
+  :root {
+    --green: #1D9E75; --green-l: #E1F5EE; --green-d: #085041;
+    --amber: #BA7517; --amber-l: #FAEEDA; --amber-d: #412402;
+    --red: #A32D2D; --red-l: #FCEBEB;
+    --blue: #185FA5; --blue-l: #E6F1FB;
+    --purple: #534AB7; --purple-l: #EEEDFE;
+    --gray: #5F5E5A; --gray-l: #F1EFE8; --gray-d: #2C2C2A;
+    --bg: #f8f7f4; --card: #fff;
+    --text: #1a1a18; --muted: #6b6a65; --border: rgba(0,0,0,0.1);
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--green-d); color: #fff; padding: 0 16px; display: flex;
+    align-items: center; gap: 12px; height: 56px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .logo-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--amber);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+    font-size: 13px; color: var(--amber-d); flex-shrink: 0; }
+  .header-title { flex: 1; }
+  .header-title h1 { font-size: 15px; font-weight: 600; }
+  .header-title p { font-size: 11px; opacity: 0.75; }
+  .role-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .role-badge.amber   { background: var(--amber); color: var(--amber-d); }
+  .role-badge.purple  { background: var(--purple); color: #fff; }
+  .role-badge.blue    { background: var(--blue); color: #fff; }
+  .role-badge.green   { background: var(--green); color: #fff; }
+  .role-badge.red     { background: var(--red); color: #fff; }
+  .role-badge.gray    { background: rgba(255,255,255,0.3); color: #fff; }
+  .role-badge.visitor { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+  .header-auth-btn { background: rgba(255,255,255,0.12); color: #fff;
+    border: 1px solid rgba(255,255,255,0.3); font-size: 12px; padding: 5px 12px;
+    border-radius: 20px; cursor: pointer; font-weight: 500; transition: background 0.15s;
+    white-space: nowrap; }
+  .header-auth-btn:hover { background: rgba(255,255,255,0.22); }
+
+  /* NAV */
+  nav { background: var(--card); border-bottom: 1px solid var(--border);
+    display: flex; overflow-x: auto; scrollbar-width: none; position: sticky; top: 56px; z-index: 99; }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-item { flex-shrink: 0; padding: 12px 16px; font-size: 13px; font-weight: 500;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s; white-space: nowrap; }
+  .nav-item.active { color: var(--green); border-bottom-color: var(--green); }
+  .nav-item:hover { color: var(--text); }
+  .nav-item.member-only { display: none; }
+  .member-action { display: none; }
+
+  /* SECTIONS */
+  .section { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+    box-shadow: var(--shadow); overflow: hidden; }
+  .card-header { padding: 14px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-body { padding: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+
+  /* STAT CARDS */
+  .stat { background: var(--gray-l); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stat.green { background: var(--green-l); }
+  .stat.green .stat-value { color: var(--green-d); }
+  .stat.amber { background: var(--amber-l); }
+  .stat.amber .stat-value { color: var(--amber-d); }
+  .stat.red { background: var(--red-l); }
+  .stat.red .stat-value { color: var(--red); }
+  .stat.blue { background: var(--blue-l); }
+  .stat.blue .stat-value { color: var(--blue); }
+
+  /* TABLES */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+    background: var(--gray-l); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-l); }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge.green  { background: var(--green-l);  color: var(--green-d); }
+  .badge.amber  { background: var(--amber-l);  color: var(--amber-d); }
+  .badge.red    { background: var(--red-l);    color: var(--red); }
+  .badge.blue   { background: var(--blue-l);   color: var(--blue); }
+  .badge.gray   { background: var(--gray-l);   color: var(--gray); }
+  .badge.purple { background: var(--purple-l); color: var(--purple); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+    border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card);
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { background: var(--gray-l); }
+  .btn.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn.primary:hover { background: var(--green-d); }
+  .btn.danger { background: var(--red-l); color: var(--red); border-color: transparent; }
+  .btn.purple { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn.purple:hover { background: #443da0; }
+
+  /* FORMS */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  input, select, textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; background: var(--bg);
+    color: var(--text); transition: border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); background: var(--card); }
+  textarea { min-height: 80px; resize: vertical; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* MATCH CARD */
+  .match-card { background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .match-team { flex: 1; font-size: 13px; font-weight: 600; }
+  .match-team.right { text-align: right; }
+  .match-score { display: flex; align-items: center; gap: 8px; }
+  .score-box { width: 36px; height: 36px; border-radius: 6px; background: var(--gray-d);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; }
+  .match-vs { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+  /* CLASSEMENT */
+  .rank-1 td:first-child { color: var(--amber); font-weight: 700; }
+  .rank-2 td:first-child { color: var(--muted); font-weight: 600; }
+  .rank-3 td:first-child { color: #cd7f32; font-weight: 600; }
+
+  /* TRESORERIE */
+  .tx-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    border-bottom: 1px solid var(--border); }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-icon { width: 32px; height: 32px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .tx-icon.recette { background: var(--green-l); }
+  .tx-icon.depense { background: var(--red-l); }
+  .tx-info { flex: 1; }
+  .tx-desc { font-size: 13px; font-weight: 500; }
+  .tx-date { font-size: 11px; color: var(--muted); }
+  .tx-amount { font-size: 14px; font-weight: 700; }
+  .tx-amount.recette { color: var(--green-d); }
+  .tx-amount.depense { color: var(--red); }
+
+  /* PROGRESS */
+  .progress { height: 6px; background: var(--gray-l); border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; background: var(--gray-l); padding: 4px;
+    border-radius: var(--radius-sm); margin-bottom: 16px; }
+  .tab { flex: 1; padding: 7px; text-align: center; font-size: 12px; font-weight: 500;
+    border-radius: 6px; cursor: pointer; transition: all 0.15s; color: var(--muted); }
+  .tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+
+  /* ALERT */
+  .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px;
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+  .alert.warning { background: var(--amber-l); color: var(--amber-d); }
+  .alert.danger  { background: var(--red-l);   color: var(--red); }
+  .alert.info    { background: var(--blue-l);   color: var(--blue); }
+  .alert.success { background: var(--green-l);  color: var(--green-d); }
+
+  /* ROLES */
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .role-card { background: var(--gray-l); border-radius: var(--radius-sm); padding: 12px;
+    border-left: 3px solid var(--green); }
+  .role-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .role-pos  { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .role-perms { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .mt { margin-top: 16px; }
+  .mb { margin-bottom: 16px; }
+  .gap { display: flex; flex-direction: column; gap: 10px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 999; padding: 16px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--card); border-radius: var(--radius); padding: 20px;
+    width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .close-btn { background: none; border: none; font-size: 20px; cursor: pointer;
+    color: var(--muted); padding: 0 4px; }
+
+  /* VISITOR HERO */
+  .visitor-hero { background: linear-gradient(135deg, var(--green-d) 0%, #1a7a5c 100%);
+    border-radius: var(--radius); padding: 24px; color: #fff; margin-bottom: 16px; }
+  .visitor-hero h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .visitor-hero p  { font-size: 13px; opacity: 0.85; margin-bottom: 16px; }
+  .search-bar { display: flex; gap: 8px; }
+  .search-bar input { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; flex: 1; }
+  .search-bar input::placeholder { color: rgba(255,255,255,0.6); }
+  .search-bar input:focus { outline: none; background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.6); }
+  .search-bar button { background: #fff; color: var(--green-d); border: none;
+    border-radius: var(--radius-sm); padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* FICHE RECETTE */
+  .fiche-card { display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .fiche-card:last-child { border-bottom: none; }
+  .fiche-icon { width: 38px; height: 38px; border-radius: var(--radius-sm);
+    background: var(--green-l); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .fiche-info { flex: 1; }
+  .fiche-title { font-size: 13px; font-weight: 600; }
+  .fiche-meta  { font-size: 11px; color: var(--muted); }
+  .fiche-amount { font-size: 14px; font-weight: 700; color: var(--green-d); white-space: nowrap; }
+
+  /* LOGIN CARD */
+  .login-card { background: var(--card); border-radius: var(--radius);
+    border: 2px solid var(--green-l); box-shadow: var(--shadow); padding: 24px;
+    max-width: 400px; margin: 0 auto; }
+  .login-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .login-card .login-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .error-msg { background: var(--red-l); color: var(--red); padding: 8px 12px;
+    border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 12px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+    background: var(--green-d); color: #fff; padding: 12px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideIn 0.2s ease; }
+  @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .score-box { width: 30px; height: 30px; font-size: 15px; }
+    .visitor-hero { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==============================
+     HEADER
+     ============================== -->
+<header>
+  <div class="logo-circle">5R</div>
+  <div class="header-title">
+    <h1>Zone 5R ODGAM</h1>
+    <p>Le Renouveau des Navetanes · Bignona</p>
+  </div>
+  <span class="role-badge visitor" id="user-role-badge">Visiteur</span>
+  <button class="header-auth-btn" id="header-auth-btn" onclick="toggleAuth()">🔐 Connexion</button>
+</header>
+
+<!-- ==============================
+     NAVIGATION
+     ============================== -->
+<nav id="main-nav">
+  <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">🏠 Accueil</div>
+  <div class="nav-item" data-section="competition" onclick="showSection('competition')">⚽ Compétition</div>
+  <div class="nav-item" data-section="classement" onclick="showSection('classement')">🏆 Classements</div>
+  <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')">💰 Trésorerie</div>
+  <div class="nav-item member-only" data-section="joueurs" onclick="showSection('joueurs')">👥 Joueurs</div>
+  <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">🟨 Cartons</div>
+  <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Bureau</div>
+</nav>
+
+<!-- ============================
+     DASHBOARD
+     ============================ -->
+<div id="dashboard" class="section active">
+
+  <!-- ── VUE VISITEUR ── -->
+  <div id="visitor-view">
+
+    <div class="visitor-hero">
+      <h2>Navetanes Bignona 2025 ⚽</h2>
+      <p>Zone 5R ODGAM · Saison en cours · Phase de poules · Suivez toute l'actualité en temps réel</p>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Rechercher une équipe, un match, une date..."
+               oninput="searchMatches(this.value)" onkeydown="if(event.key==='Enter') searchMatches(this.value)">
+        <button onclick="searchMatches(document.getElementById('search-input').value)">🔍</button>
+      </div>
+    </div>
+
+    <!-- Résultats de recherche -->
+    <div id="search-results" class="card mb" style="display:none">
+      <div class="card-header">
+        <span class="card-title" id="search-results-title">Résultats</span>
+        <button class="btn" onclick="clearSearch()">✕ Effacer</button>
+      </div>
+      <div id="search-results-body" class="gap" style="padding:12px;gap:6px"></div>
+    </div>
+
+    <div class="grid-3 mb">
+      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">18</div><div class="stat-sub">4 poules</div></div>
+      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">24</div><div class="stat-sub">sur 72 prévus</div></div>
+      <div class="stat blue"><div class="stat-label">Journées restantes</div><div class="stat-value">8</div><div class="stat-sub">saison 2025</div></div>
+    </div>
+
+    <!-- Matchs à venir & résultats récents -->
+    <div class="card mb">
+      <div class="card-header">
+        <span class="card-title">Matchs — À venir & Récents</span>
+        <button class="btn" onclick="showSection('competition')">Voir tout ⚽</button>
+      </div>
+      <div class="gap" style="padding:8px;gap:6px">
+        <div class="match-card">
+          <div class="match-team">ASC Walidane</div>
+          <div class="match-score">
+            <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
+          </div>
+          <div class="match-team right">ASC Chicago</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule A</div>
+            <div style="font-size:11px;color:var(--green);font-weight:600">Auj. 16h</div>
+          </div>
+        </div>
+        <div class="match-card">
+          <div class="match-team">ASC Baraka</div>
+          <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
+          <div class="match-team right">ASC Deggo</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule B</div>
+            <span class="badge green">Joué</span>
+          </div>
+        </div>
+        <div class="match-card">
+          <div class="match-team">ASC Walidane</div>
+          <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">0</div></div>
+          <div class="match-team right">ASC Chicago</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule A · 07/09</div>
+            <span class="badge green">Joué</span>
+          </div>
+        </div>
+        <div class="match-card">
+          <div class="match-team">ASC Yengoulène</div>
+          <div class="match-score">
+            <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
+          </div>
+          <div class="match-team right">ASC Nafacounda</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule C</div>
+            <div style="font-size:11px;color:var(--muted)">13/09 · 15h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Classement rapide -->
+    <div class="card mb">
+      <div class="card-header">
+        <span class="card-title">Classement — Poule A</span>
+        <button class="btn" onclick="showSection('classement')">Voir tout 🏆</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>Pts</th></tr></thead>
+          <tbody>
+            <tr class="rank-1"><td>🥇</td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td><strong>7</strong></td></tr>
+            <tr class="rank-2"><td>🥈</td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td><strong>5</strong></td></tr>
+            <tr class="rank-3"><td>🥉</td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td><strong>3</strong></td></tr>
+            <tr><td>4</td><td>ASC Kafesse</td><td>3</td><td>0</td><td>1</td><td>2</td><td><strong>1</strong></td></tr>
+            <tr><td>5</td><td>ASC Chicago</td><td>2</td><td>0</td><td>0</td><td>2</td><td><strong>0</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--muted);padding:8px 12px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>
+    </div>
+
+    <!-- Poules (aperçu public) -->
+    <div class="card mb">
+      <div class="card-header">
+        <span class="card-title">Poules — Aperçu</span>
+        <button class="btn" onclick="showSection('competition')">Programme complet</button>
+      </div>
+      <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+        <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--green-d);margin-bottom:6px">Poule A</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.8">ASC Walidane<br>ASC Chicago<br>ASC Kafesse<br>ASC Baraka<br>ASC Oryx MTG</div>
+        </div>
+        <div style="background:var(--amber-l);border-radius:var(--radius-sm);padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--amber-d);margin-bottom:6px">Poule B</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.8">ASC Baraka<br>ASC Deggo<br>ASC Médina Plateau<br>ASC Santhiaba</div>
+        </div>
+        <div style="background:var(--blue-l);border-radius:var(--radius-sm);padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px">Poule C</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;font-style:italic">Programme en attente de validation</div>
+        </div>
+        <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--gray);margin-bottom:6px">Poule D</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;font-style:italic">Programme en attente de validation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fiches de recettes publiées -->
+    <div class="card mb">
+      <div class="card-header">
+        <span class="card-title">📄 Fiches de recettes publiées</span>
+        <span class="badge green">Officielles</span>
+      </div>
+      <div>
+        <div class="fiche-card">
+          <div class="fiche-icon">📋</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Billetterie — Journée du 29/08</div>
+            <div class="fiche-meta">Saison 2024 · Publié le 01/09/2024</div>
+          </div>
+          <div class="fiche-amount">55 600 FCFA</div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-icon">📋</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Billetterie — Journée du 15/09</div>
+            <div class="fiche-meta">Saison 2024 · Publié le 18/09/2024</div>
+          </div>
+          <div class="fiche-amount">91 350 FCFA</div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-icon">📋</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Billetterie — Journée du 06/10</div>
+            <div class="fiche-meta">Saison 2024 · Publié le 10/10/2024</div>
+          </div>
+          <div class="fiche-amount">84 300 FCFA</div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-icon">🏆</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Billetterie — Finale 28/12</div>
+            <div class="fiche-meta">Saison 2024 · Publié le 02/01/2025</div>
+          </div>
+          <div class="fiche-amount">495 250 FCFA</div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-icon">🏛️</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Subvention Mairie de Bignona</div>
+            <div class="fiche-meta">Saison 2024 · Publié le 15/08/2024</div>
+          </div>
+          <div class="fiche-amount">150 000 FCFA</div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-icon">📊</div>
+          <div class="fiche-info">
+            <div class="fiche-title">Bilan total recettes 2024</div>
+            <div class="fiche-meta">Rapport annuel certifié · Publié le 15/01/2025</div>
+          </div>
+          <div class="fiche-amount">2 345 065 FCFA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNEXION — espace membres -->
+    <div id="login-section" class="mb">
+      <div class="login-card">
+        <h3>🔐 Espace membres</h3>
+        <p class="login-sub">Connectez-vous pour accéder aux fonctions réservées au bureau Zone 5R.</p>
+        <div class="error-msg" id="login-error">Identifiant ou mot de passe incorrect.</div>
+        <div class="form-group">
+          <label>Identifiant</label>
+          <input type="text" id="login-username" placeholder="Ex : aliou.sagna" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+                 onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Se connecter</button>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">
+          Identifiants fournis par le Super Admin · Aliou B. S. SAGNA
+        </p>
+      </div>
+    </div>
+  </div><!-- /visitor-view -->
+
+  <!-- ── VUE MEMBRE ── -->
+  <div id="member-view" style="display:none">
+    <div class="flex-between mb">
+      <div>
+        <h2 style="font-size:18px;font-weight:700">Navetanes 2025</h2>
+        <p style="font-size:12px;color:var(--muted)">Saison en cours · Phase de poules</p>
+      </div>
+      <span class="badge green">En cours</span>
+    </div>
+
+    <div class="grid-3 mb">
+      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">18</div><div class="stat-sub">4 poules</div></div>
+      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">24</div><div class="stat-sub">sur 72 prévus</div></div>
+      <div class="stat blue"><div class="stat-label">Recettes</div><div class="stat-value">590K</div><div class="stat-sub">FCFA</div></div>
+      <div class="stat red"><div class="stat-label">Cartons rouges</div><div class="stat-value">3</div><div class="stat-sub">suspensions actives</div></div>
+    </div>
+
+    <div class="alert warning">⚠️ <strong>2 réclamations</strong> en attente de traitement par la Commission Juridique</div>
+
+    <div class="card mb">
+      <div class="card-header">
+        <span class="card-title">Prochains matchs</span>
+        <button class="btn" onclick="showSection('competition')">Voir tout</button>
+      </div>
+      <div style="padding:8px">
+        <div class="gap" style="gap:6px;padding:8px">
+          <div class="match-card">
+            <div class="match-team">ASC Walidane</div>
+            <div class="match-score">
+              <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
+            </div>
+            <div class="match-team right">ASC Chicago</div>
+            <div style="flex-shrink:0;text-align:right">
+              <div style="font-size:11px;color:var(--muted)">Poule A</div>
+              <div style="font-size:11px;color:var(--green);font-weight:600">Auj. 16h</div>
+            </div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Baraka</div>
+            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
+            <div class="match-team right">ASC Deggo</div>
+            <div style="flex-shrink:0;text-align:right">
+              <div style="font-size:11px;color:var(--muted)">Poule B</div>
+              <span class="badge green">Joué</span>
+            </div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Yengoulène</div>
+            <div class="match-score">
+              <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
+            </div>
+            <div class="match-team right">ASC Nafacounda</div>
+            <div style="flex-shrink:0;text-align:right">
+              <div style="font-size:11px;color:var(--muted)">Poule C</div>
+              <div style="font-size:11px;color:var(--muted)">13/09 · 15h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Progression financière 2025</span></div>
+      <div class="card-body">
+        <div style="margin-bottom:12px">
+          <div class="flex-between" style="margin-bottom:4px">
+            <span style="font-size:12px">Recettes billetterie</span>
+            <span style="font-size:12px;font-weight:600;color:var(--green-d)">590 650 FCFA</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:51%;background:var(--green)"></div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="flex-between" style="margin-bottom:4px">
+            <span style="font-size:12px">Recettes licences</span>
+            <span style="font-size:12px;font-weight:600;color:var(--blue)">52 250 FCFA</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:5%;background:var(--blue)"></div></div>
+        </div>
+        <div>
+          <div class="flex-between" style="margin-bottom:4px">
+            <span style="font-size:12px">Total recettes 2024 (réf.)</span>
+            <span style="font-size:12px;font-weight:600;color:var(--amber-d)">2 345 065 FCFA</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:100%;background:var(--amber)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /member-view -->
+
+</div><!-- /dashboard -->
+
+<!-- ============================
+     COMPETITION
+     ============================ -->
+<div id="competition" class="section">
+  <div class="flex-between mb">
+    <h2 style="font-size:18px;font-weight:700">Compétition</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn member-action" onclick="openModal('modal-match')">+ Saisir score</button>
+      <button class="btn primary member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'poule-a','comp-tabs')">Poule A</div>
+    <div class="tab" onclick="switchTab(this,'poule-b','comp-tabs')">Poule B</div>
+    <div class="tab" onclick="switchTab(this,'poule-c','comp-tabs')">Poule C</div>
+    <div class="tab" onclick="switchTab(this,'poule-d','comp-tabs')">Poule D</div>
+  </div>
+
+  <div id="comp-tabs">
+    <div id="poule-a">
+      <div class="card mb">
+        <div class="card-header">
+          <span class="card-title">Poule A — Programme</span>
+          <span class="badge green">5 équipes</span>
+        </div>
+        <div class="gap" style="padding:12px;gap:6px">
+          <div class="match-card">
+            <div class="match-team">ASC Walidane</div>
+            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">0</div></div>
+            <div class="match-team right">ASC Chicago</div>
+            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Kafesse</div>
+            <div class="match-score"><div class="score-box">1</div><div class="match-vs">–</div><div class="score-box">1</div></div>
+            <div class="match-team right">ASC Baraka</div>
+            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Oryx MTG</div>
+            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
+            <div class="match-team right">ASC Walidane</div>
+            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--amber);font-weight:600">10/09 · 16h</div></div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Chicago</div>
+            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
+            <div class="match-team right">ASC Kafesse</div>
+            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--muted)">12/09 · 15h</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="poule-b" style="display:none">
+      <div class="card mb">
+        <div class="card-header"><span class="card-title">Poule B — Programme</span><span class="badge amber">4 équipes</span></div>
+        <div class="gap" style="padding:12px;gap:6px">
+          <div class="match-card">
+            <div class="match-team">ASC Baraka</div>
+            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
+            <div class="match-team right">ASC Deggo</div>
+            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
+          </div>
+          <div class="match-card">
+            <div class="match-team">ASC Médina Plateau</div>
+            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
+            <div class="match-team right">ASC Baraka</div>
+            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--muted)">11/09 · 16h</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="poule-c" style="display:none">
+      <div class="alert info">ℹ️ Programme Poule C en attente de validation par le Secrétaire.</div>
+    </div>
+    <div id="poule-d" style="display:none">
+      <div class="alert info">ℹ️ Programme Poule D en attente de validation par le Secrétaire.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     CLASSEMENTS
+     ============================ -->
+<div id="classement" class="section">
+  <div class="flex-between mb">
+    <h2 style="font-size:18px;font-weight:700">Classements</h2>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'cls-a','cls-tabs')">Poule A</div>
+    <div class="tab" onclick="switchTab(this,'cls-b','cls-tabs')">Poule B</div>
+    <div class="tab" onclick="switchTab(this,'cls-c','cls-tabs')">Poule C</div>
+    <div class="tab" onclick="switchTab(this,'cls-d','cls-tabs')">Poule D</div>
+  </div>
+  <div id="cls-tabs">
+    <div id="cls-a">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
+            <tbody>
+              <tr class="rank-1"><td>🥇</td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td>5</td><td>1</td><td><span class="badge green">+4</span></td><td><strong>7</strong></td></tr>
+              <tr class="rank-2"><td>🥈</td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td>4</td><td>2</td><td><span class="badge green">+2</span></td><td><strong>5</strong></td></tr>
+              <tr class="rank-3"><td>🥉</td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td>3</td><td>3</td><td><span class="badge gray">0</span></td><td><strong>3</strong></td></tr>
+              <tr><td>4</td><td>ASC Kafesse</td><td>3</td><td>0</td><td>1</td><td>2</td><td>2</td><td>5</td><td><span class="badge red">-3</span></td><td><strong>1</strong></td></tr>
+              <tr><td>5</td><td>ASC Chicago</td><td>2</td><td>0</td><td>0</td><td>2</td><td>1</td><td>4</td><td><span class="badge red">-3</span></td><td><strong>0</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>
+    </div>
+    <div id="cls-b" style="display:none">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
+            <tbody>
+              <tr class="rank-1"><td>🥇</td><td><strong>ASC Baraka</strong></td><td>2</td><td>2</td><td>0</td><td>0</td><td>4</td><td>1</td><td><span class="badge green">+3</span></td><td><strong>6</strong></td></tr>
+              <tr class="rank-2"><td>🥈</td><td>ASC Médina Plateau</td><td>1</td><td>1</td><td>0</td><td>0</td><td>2</td><td>0</td><td><span class="badge green">+2</span></td><td><strong>3</strong></td></tr>
+              <tr class="rank-3"><td>🥉</td><td>ASC Deggo</td><td>2</td><td>0</td><td>0</td><td>2</td><td>1</td><td>3</td><td><span class="badge red">-2</span></td><td><strong>0</strong></td></tr>
+              <tr><td>4</td><td>ASC Santhiaba</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>3</td><td><span class="badge red">-3</span></td><td><strong>0</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="cls-c" style="display:none"><div class="alert info">ℹ️ Phase de poules C non encore commencée.</div></div>
+    <div id="cls-d" style="display:none"><div class="alert info">ℹ️ Phase de poules D non encore commencée.</div></div>
+  </div>
+</div>
+
+<!-- ============================
+     TRÉSORERIE
+     ============================ -->
+<div id="tresorerie" class="section">
+
+  <!-- CAISSE EN TEMPS RÉEL (visible par tous) -->
+  <div id="caisse-widget" class="card mb" style="background:linear-gradient(135deg,var(--green-d),#1a7a5c);color:#fff;border:none">
+    <div style="padding:16px">
+      <div style="font-size:11px;opacity:0.8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">État de la Caisse — Temps réel</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:8px">
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:0.75;margin-bottom:2px">Solde de départ</div>
+          <div style="font-size:16px;font-weight:700" id="cw-solde-depart">—</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:0.75;margin-bottom:2px">Total Recettes</div>
+          <div style="font-size:16px;font-weight:700;color:#7effc4" id="cw-recettes">0</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;opacity:0.75;margin-bottom:2px">Total Dépenses</div>
+          <div style="font-size:16px;font-weight:700;color:#ffaaaa" id="cw-depenses">0</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.2);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.4)">
+          <div style="font-size:10px;opacity:0.75;margin-bottom:2px">SOLDE EN CAISSE</div>
+          <div style="font-size:20px;font-weight:800" id="cw-solde">0 FCFA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-between mb">
+    <h2 style="font-size:18px;font-weight:700">Trésorerie</h2>
+  </div>
+
+  <div class="tabs" style="flex-wrap:wrap;gap:2px">
+    <div class="tab active" onclick="switchTab(this,'tx-journees','tx-tabs')">📋 Journées</div>
+    <div class="tab" onclick="switchTab(this,'tx-finale','tx-tabs')">🏆 Finale</div>
+    <div class="tab" onclick="switchTab(this,'tx-licences','tx-tabs')">🎟️ Licences/Bordereaux</div>
+    <div class="tab" onclick="switchTab(this,'tx-depenses','tx-tabs')">💸 Dépenses diverses</div>
+    <div class="tab" onclick="switchTab(this,'tx-rapport','tx-tabs');renderBilan()">📊 Bilan</div>
+  </div>
+
+  <div id="tx-tabs">
+
+    <!-- ── FICHES JOURNÉES ── -->
+    <div id="tx-journees">
+      <div class="flex-between mb">
+        <div style="font-size:13px;color:var(--muted)">Chaque fiche valide une journée et alimente le bilan</div>
+        <button class="btn primary member-action" onclick="openFicheModal()">+ Nouvelle fiche journée</button>
+      </div>
+      <div id="fiches-list">
+        <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune fiche enregistrée</div>
+      </div>
+    </div>
+
+    <!-- ── FINALE ── -->
+    <div id="tx-finale" style="display:none">
+      <div class="flex-between mb">
+        <div>
+          <div style="font-size:14px;font-weight:700">🏆 Gestion de la Finale</div>
+          <div style="font-size:12px;color:var(--muted)">Recettes, dépenses, dons & soutiens · inclus dans le bilan général</div>
+        </div>
+        <button class="btn primary member-action" onclick="openFinaleModal()">+ Déclarer finale</button>
+      </div>
+      <div id="finale-display">
+        <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune finale déclarée</div>
+      </div>
+    </div>
+
+    <!-- ── LICENCES & BORDEREAUX ── -->
+    <div id="tx-licences" style="display:none">
+      <div class="flex-between mb">
+        <div>
+          <div style="font-size:14px;font-weight:700">🎟️ Licences & Bordereaux</div>
+          <div style="font-size:12px;color:var(--muted)">Ventes par ASC · recettes intégrées au bilan</div>
+        </div>
+        <button class="btn primary member-action" onclick="initLicenceModal();openModal('modal-licence')">+ Enregistrer vente</button>
+      </div>
+      <div class="card mb">
+        <div class="card-header">
+          <span class="card-title">Récapitulatif par ASC</span>
+          <div style="display:flex;gap:8px">
+            <span class="badge green" id="total-licences-badge">Total : 0 FCFA</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ASC</th><th>Licences joueurs</th><th>Licences tech.</th><th>Bordereaux</th><th>Sous-total</th></tr></thead>
+            <tbody id="licences-table-body">
+              <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucune vente enregistrée</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DÉPENSES DIVERSES ── -->
+    <div id="tx-depenses" style="display:none">
+      <div class="flex-between mb">
+        <div>
+          <div style="font-size:14px;font-weight:700">💸 Dépenses hors journée</div>
+          <div style="font-size:12px;color:var(--muted)">Achats, rémunérations, cotisations, dons aux ASC…</div>
+        </div>
+        <button class="btn danger member-action" onclick="openModal('modal-tx')">+ Opération</button>
+      </div>
+      <div id="depenses-list">
+        <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>
+      </div>
+    </div>
+
+    <!-- ── BILAN GÉNÉRAL ── -->
+    <div id="tx-rapport" style="display:none">
+      <div class="card mb">
+        <div class="card-header">
+          <span class="card-title">📊 Bilan Général de la Saison</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn" onclick="printBilan()">🖨️ Imprimer</button>
+            <button class="btn primary" onclick="openModal('modal-send-bilan')">📤 Envoyer aux ASC</button>
+          </div>
+        </div>
+        <div id="bilan-content" style="padding:16px">
+          <!-- Généré par JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================
+     JOUEURS & LICENCES
+     ============================ -->
+<div id="joueurs" class="section">
+  <div class="flex-between mb">
+    <div>
+      <h2 style="font-size:18px;font-weight:700">Joueurs & Licences</h2>
+      <p style="font-size:12px;color:var(--muted)" id="joueurs-subtitle">Sélectionner une équipe pour voir ses joueurs</p>
+    </div>
+    <button class="btn primary member-action" id="btn-add-joueur" onclick="openAddPlayerModal()">+ Ajouter joueur</button>
+  </div>
+
+  <div class="grid-2 mb">
+    <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs">—</div><div class="stat-sub">Cadets + Seniors</div></div>
+    <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes">—</div><div class="stat-sub">saison 2025</div></div>
+  </div>
+
+  <!-- Sélecteur d'équipes -->
+  <div class="card mb">
+    <div class="card-header"><span class="card-title">Choisir une équipe</span></div>
+    <div id="team-tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px">
+      <!-- Généré par JS -->
+    </div>
+  </div>
+
+  <!-- Liste des joueurs de l'équipe sélectionnée -->
+  <div class="card" id="team-players-card">
+    <div class="card-header">
+      <span class="card-title" id="team-players-title">Aucune équipe sélectionnée</span>
+      <input type="text" placeholder="Rechercher joueur..." style="width:160px;padding:6px 10px;font-size:12px"
+             oninput="filterTeamPlayers(this.value)">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>N° Lic.</th><th>Joueur</th><th>Catégorie</th><th>Type</th><th>Statut</th><th>Cartons</th></tr></thead>
+        <tbody id="team-players-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">
+            Cliquer sur une équipe ci-dessus pour afficher ses joueurs
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     CARTONS & DISCIPLINAIRE
+     ============================ -->
+<div id="cartons" class="section">
+  <div class="flex-between mb">
+    <h2 style="font-size:18px;font-weight:700">Discipline</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn danger member-action" onclick="openModal('modal-carton')">+ Carton</button>
+      <button class="btn" id="btn-add-litige" style="display:none" onclick="initLitigeModal();openModal('modal-litige')">⚖️ + Litige</button>
+    </div>
+  </div>
+
+  <div class="alert danger" id="suspensions-alert">🟥 Chargement…</div>
+
+  <!-- SUSPENSIONS -->
+  <div class="card mb">
+    <div class="card-header"><span class="card-title">Suspensions actives</span><span class="badge red" id="suspensions-count">0</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Joueur</th><th>ASC</th><th>Motif</th><th>Matchs restants</th><th>Action</th></tr></thead>
+        <tbody id="suspensions-body"><!-- Généré par JS --></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LITIGES & RÉCLAMATIONS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚖️ Litiges & Réclamations</span>
+      <span class="badge amber" id="litiges-count-badge">0 en cours</span>
+    </div>
+    <div class="alert info" style="margin:12px 16px;margin-bottom:0;font-size:12px">
+      ℹ️ Les litiges sont déclarés exclusivement par le <strong>Président de la Commission Juridique</strong>. Le PV de délibération est visible par tous.
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Match</th><th>Motif</th><th>Amende (FCFA)</th><th>Statut</th><th>PV</th><th>Action</th></tr></thead>
+        <tbody id="litiges-body"><!-- Généré par JS --></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     BUREAU & RÔLES
+     ============================ -->
+<div id="bureau" class="section">
+  <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">Bureau Zone 5R / 2025</h2>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:16px">ODGAM Bignona · Siège : Collège René COLY</p>
+
+  <!-- ADMIN/SUPERADMIN : Gestion de la saison -->
+  <div id="saison-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">🗓️ Gestion de la saison</span>
+      <span class="badge amber" id="saison-statut-badge">—</span>
+    </div>
+    <div class="card-body">
+      <div id="saison-active-view" style="display:none">
+        <div class="alert success" style="margin-bottom:16px">
+          ✅ <strong>Saison <span id="saison-nom-display"></span></strong> ·
+          Démarrage : <span id="saison-date-display"></span> ·
+          <span id="saison-equipes-display"></span> équipes engagées
+        </div>
+
+        <!-- STEPPER -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+
+          <!-- Étape 1 : Saison créée ✅ -->
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--radius-sm);border-left:3px solid var(--green)">
+            <span style="font-size:20px">✅</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--green-d)">Étape 1 — Saison déclarée</div>
+              <div style="font-size:11px;color:var(--muted)">Saison créée avec les équipes participantes</div>
+            </div>
+          </div>
+
+          <!-- Étape 2 : Tirage au sort -->
+          <div id="step-tirage" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray)">
+            <span style="font-size:20px" id="step-tirage-icon">🎲</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600" id="step-tirage-title">Étape 2 — Tirage au sort</div>
+              <div style="font-size:11px;color:var(--muted)" id="step-tirage-desc">Répartir les équipes dans les poules</div>
+            </div>
+            <button class="btn" id="btn-tirage" onclick="openTirageModal();openModal('modal-tirage')" style="font-size:12px">🎲 Procéder</button>
+          </div>
+
+          <!-- Étape 3 : Programmer les matchs -->
+          <div id="step-matchs" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
+            <span style="font-size:20px" id="step-matchs-icon">📅</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600" id="step-matchs-title">Étape 3 — Programmer les matchs</div>
+              <div style="font-size:11px;color:var(--muted)" id="step-matchs-desc">Générer le calendrier de la phase de poules</div>
+            </div>
+            <button class="btn" id="btn-matchs" onclick="programmerMatchs()" style="font-size:12px" disabled>📅 Générer</button>
+          </div>
+
+          <!-- Étape 4 : Déclarer ouverte -->
+          <div id="step-ouverture" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
+            <span style="font-size:20px" id="step-ouverture-icon">🚀</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600" id="step-ouverture-title">Étape 4 — Déclarer la compétition ouverte</div>
+              <div style="font-size:11px;color:var(--muted)" id="step-ouverture-desc">Fixer la date officielle d'ouverture</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" id="ouverture-date-input" style="width:140px;font-size:12px;padding:6px 8px" min="">
+              <button class="btn primary" id="btn-ouverture" onclick="declarerOuverte()" style="font-size:12px" disabled>🚀 Ouvrir</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-between">
+          <div style="font-size:11px;color:var(--muted)">Déclarée par <strong id="saison-declared-by"></strong></div>
+          <button class="btn danger" onclick="cloturerSaison()">🔒 Clôturer la saison</button>
+        </div>
+      </div>
+      <div id="saison-form-view">
+        <div class="form-row mb">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Nom de la saison</label>
+            <input type="text" id="saison-nom" placeholder="Ex : Navetanes 2025">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Date de démarrage</label>
+            <input type="date" id="saison-date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>💰 Solde de départ (report saison précédente — FCFA)</label>
+          <input type="number" id="saison-solde-depart" placeholder="Ex : 368065" min="0" value="0">
+          <p style="font-size:11px;color:var(--muted);margin-top:3px">Ce montant est ajouté au bilan comme point de départ de la caisse</p>
+        </div>
+        <div class="form-group">
+          <label>Équipes participantes (sélection multiple)</label>
+          <select id="saison-equipes-select" multiple style="height:160px">
+            <!-- Rempli dynamiquement par refreshSaisonEquipesSelect() -->
+          </select>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Maintenir Ctrl (PC) ou ⌘ (Mac) pour sélectionner plusieurs équipes</p>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn primary" onclick="declarerSaison()">🚀 Déclarer la saison</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN/SUPERADMIN : Stades -->
+  <div id="stades-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">🏟️ Stades & Terrains</span>
+      <button class="btn primary" style="font-size:12px" onclick="openModal('modal-add-stade')">+ Ajouter terrain</button>
+    </div>
+    <div id="stades-body">
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucun terrain enregistré</div>
+    </div>
+  </div>
+
+  <!-- ADMIN/SUPERADMIN : Équipes & Représentants -->
+  <div id="equipes-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">🏟️ Équipes & Représentants</span>
+      <button class="btn primary" style="font-size:12px" onclick="openAddTeamModal()">+ Ajouter association</button>
+    </div>
+    <div id="equipes-reps-body">
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Aucune équipe enregistrée</div>
+    </div>
+  </div>
+
+  <!-- SUPERADMIN/ADMIN : Gestion des accès -->
+  <div id="admin-access-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">🔑 Gestion des accès membres</span>
+      <span class="badge purple">Super Admin</span>
+    </div>
+    <div class="table-wrap">
+      <table id="members-pwd-table">
+        <thead><tr><th>Membre</th><th>Poste</th><th>Identifiant</th><th>Action</th></tr></thead>
+        <tbody>
+          <!-- Rempli par JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
+    <div class="card-body">
+      <div class="role-grid">
+        <div class="role-card" style="border-color:var(--purple)">
+          <div class="role-name">Super Admin</div>
+          <div class="role-pos">Aliou Badara Sadia SAGNA</div>
+          <div class="role-perms">
+            <span class="badge purple">Accès total</span>
+            <span class="badge purple">Gestion MDP</span>
+          </div>
+        </div>
+        <div class="role-card" style="border-color:var(--amber)">
+          <div class="role-name">Président</div>
+          <div class="role-pos">Djiby Diouf DIATTA</div>
+          <div class="role-perms">
+            <span class="badge amber">Accès total</span>
+            <span class="badge blue">Validation</span>
+          </div>
+        </div>
+        <div class="role-card">
+          <div class="role-name">Secrétaire Général</div>
+          <div class="role-pos">Boubacar CAMARA</div>
+          <div class="role-perms">
+            <span class="badge blue">Résultats</span>
+            <span class="badge blue">Licences</span>
+            <span class="badge blue">Calendrier</span>
+          </div>
+        </div>
+        <div class="role-card" style="border-color:var(--amber)">
+          <div class="role-name">Trésorier Général</div>
+          <div class="role-pos">El Habib Pierre SANÉ</div>
+          <div class="role-perms">
+            <span class="badge amber">Finances</span>
+            <span class="badge amber">Rapports</span>
+          </div>
+        </div>
+        <div class="role-card">
+          <div class="role-name">Commission Compétitions</div>
+          <div class="role-pos">Sidiky DOUMBIA (Pdt)</div>
+          <div class="role-perms">
+            <span class="badge green">Scores</span>
+            <span class="badge green">Cartons</span>
+            <span class="badge green">Poules</span>
+          </div>
+        </div>
+        <div class="role-card" style="border-color:var(--red)">
+          <div class="role-name">Commission Juridique</div>
+          <div class="role-pos">Fodé GOUDIABY (Pdt)</div>
+          <div class="role-perms">
+            <span class="badge red">Réclamations</span>
+            <span class="badge red">Sanctions</span>
+          </div>
+        </div>
+        <div class="role-card" style="border-color:var(--gray)">
+          <div class="role-name">Public / Supporters</div>
+          <div class="role-pos">Consultation uniquement</div>
+          <div class="role-perms">
+            <span class="badge gray">Résultats</span>
+            <span class="badge gray">Classements</span>
+            <span class="badge gray">Fiches recettes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Membres du Bureau</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nom</th><th>Poste</th><th>Accès</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Aliou Badara Sadia SAGNA</strong></td><td>1er VP Marketing / Super Admin</td><td><span class="badge purple">Super Admin</span></td></tr>
+          <tr><td><strong>Djiby Diouf DIATTA</strong></td><td>Président Zone 5R</td><td><span class="badge amber">Admin</span></td></tr>
+          <tr><td>Boubacar CAMARA</td><td>Secrétaire Général</td><td><span class="badge blue">Secrétaire</span></td></tr>
+          <tr><td>Aliou SAGNA (Papis)</td><td>SG Adjoint</td><td><span class="badge blue">Secrétaire</span></td></tr>
+          <tr><td>El Habib Pierre SANÉ</td><td>Trésorier Général</td><td><span class="badge amber">Trésorier</span></td></tr>
+          <tr><td>Souleymane DIENG (Agnile)</td><td>Trésorier Adjoint</td><td><span class="badge amber">Trésorier</span></td></tr>
+          <tr><td>Ibrahima DIEME</td><td>Président Commission Finances</td><td><span class="badge amber">Finances</span></td></tr>
+          <tr><td>Sidiky DOUMBIA</td><td>Commission Compétitions (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
+          <tr><td>Fodé GOUDIABY</td><td>Commission Juridique (Pdt)</td><td><span class="badge red">Juridique</span></td></tr>
+          <tr><td>Cheikh S. DIATTA</td><td>Commission Communication (Pdt)</td><td><span class="badge blue">Communication</span></td></tr>
+          <tr><td>Aïcha MBAYE</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
+          <tr><td>Idrissa DIALLO</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     MODALS
+     ============================ -->
+
+<!-- Modal: Saisir score -->
+<div id="modal-match" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚽ Saisir un résultat</span>
+      <button class="close-btn" onclick="closeModal('modal-match')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Poule</label>
+      <select><option>Poule A</option><option>Poule B</option><option>Poule C</option><option>Poule D</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Équipe Domicile</label>
+        <select><option>ASC Walidane</option><option>ASC Baraka</option><option>ASC Chicago</option><option>ASC Kafesse</option></select>
+      </div>
+      <div class="form-group">
+        <label>Score Domicile</label>
+        <input type="number" min="0" value="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Équipe Extérieur</label>
+        <select><option>ASC Oryx MTG</option><option>ASC Deggo</option><option>ASC Nafacounda</option></select>
+      </div>
+      <div class="form-group">
+        <label>Score Extérieur</label>
+        <input type="number" min="0" value="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date de la rencontre</label>
+      <input type="date">
+    </div>
+    <div class="form-group">
+      <label>Terrain</label>
+      <select><option>Stade René COLY</option><option>CEM Arfang Bessire Sonko</option><option>Terrain HLM</option><option>Terrain JKS</option></select>
+    </div>
+    <div class="form-group">
+      <label>Observations / Incidents</label>
+      <textarea placeholder="Cartons reçus, incidents, réclamations..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-match')">Annuler</button>
+      <button class="btn primary" onclick="alert('Score sauvegardé ! Classement mis à jour.');closeModal('modal-match')">Valider le résultat</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Opération financière -->
+<div id="modal-tx" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">💰 Nouvelle opération</span>
+      <button class="close-btn" onclick="closeModal('modal-tx')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select><option value="recette">Recette</option><option value="depense">Dépense</option></select>
+    </div>
+    <div class="form-group">
+      <label>Catégorie</label>
+      <select><option>Billetterie</option><option>Licences</option><option>Amendes</option><option>Subvention / Don</option><option>Engagement</option><option>Matériel</option><option>Location terrain</option><option>Transport</option><option>Arbitres</option><option>Divers</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Montant (FCFA)</label>
+        <input type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <input type="text" placeholder="Ex: Billetterie journée du 15/09">
+    </div>
+    <div class="form-group">
+      <label>Justificatif (photo)</label>
+      <input type="file" accept="image/*,application/pdf">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-tx')">Annuler</button>
+      <button class="btn primary" onclick="saveOperation()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Joueur -->
+<div id="modal-joueur" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👤 Nouveau joueur / Technicien</span>
+      <button class="close-btn" onclick="closeModal('modal-joueur')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Équipe (ASC)</label>
+      <select id="modal-player-team"><!-- options générées par JS --></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Prénom</label><input type="text" id="modal-player-prenom"></div>
+      <div class="form-group"><label>Nom</label><input type="text" id="modal-player-nom"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date de naissance</label><input type="date" id="modal-player-dob"></div>
+      <div class="form-group"><label>Téléphone</label><input type="tel" id="modal-player-tel"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Catégorie</label>
+        <select id="modal-player-categorie"><option>Senior</option><option>Cadet</option><option>Minime</option></select>
+      </div>
+      <div class="form-group">
+        <label>Type licence</label>
+        <select id="modal-player-type">
+          <option value="Joueur">Joueur (200 FCFA)</option>
+          <option value="Technicien">Technicien (250 FCFA)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Photo CNI / Joueur</label><input type="file" accept="image/*"></div>
+    <div class="error-msg" id="modal-player-error">Veuillez renseigner le prénom, le nom et l'équipe.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-joueur')">Annuler</button>
+      <button class="btn primary" onclick="savePlayer()">✅ Valider & Licencier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Carton -->
+<div id="modal-carton" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🃏 Enregistrer un carton</span>
+      <button class="close-btn" onclick="closeModal('modal-carton')">✕</button>
+    </div>
+    <div class="form-group"><label>Rencontre</label><select><option>Walidane vs Chicago (Poule A)</option><option>Baraka vs Deggo (Poule B)</option></select></div>
+    <div class="form-group"><label>Joueur</label><input type="text" placeholder="Rechercher joueur par nom ou n° licence..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type de carton</label>
+        <select id="card-type" onchange="updateSuspension()">
+          <option value="jaune">🟨 Carton jaune</option>
+          <option value="rouge">🟥 Carton rouge direct</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Suspension (matchs)</label><input type="number" id="suspension-nb" value="1" min="0"></div>
+    </div>
+    <div class="form-group"><label>Motif</label><textarea placeholder="Décrire l'incident..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-carton')">Annuler</button>
+      <button class="btn danger" onclick="alert('Carton enregistré. Suspension automatique appliquée.');closeModal('modal-carton')">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Créer poule -->
+<div id="modal-poule" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏆 Créer une poule</span>
+      <button class="close-btn" onclick="closeModal('modal-poule')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nom de la poule</label><input type="text" placeholder="Ex: Poule E"></div>
+      <div class="form-group"><label>Nb d'équipes</label>
+        <select><option>4 équipes</option><option selected>5 équipes</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Équipes (sélectionner)</label>
+      <select multiple style="height:140px">
+        <option>ASC Walidane</option><option>ASC Chicago</option><option>ASC Nafacounda</option>
+        <option>ASC Kafesse</option><option>ASC Baraka</option><option>ASC Oryx MTG</option>
+        <option>ASC Deggo</option><option>ASC Médina Plateau</option><option>ASC Tankoron</option>
+        <option>ASC Diengue</option><option>ASC Renaissance</option><option>ASC Santhiaba</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-poule')">Annuler</button>
+      <button class="btn primary" onclick="alert('Poule créée ! Calendrier généré automatiquement.');closeModal('modal-poule')">Créer & Générer calendrier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Réclamation -->
+<div id="modal-reclamation" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚖️ Traitement réclamation</span>
+      <button class="close-btn" onclick="closeModal('modal-reclamation')">✕</button>
+    </div>
+    <div class="alert warning" style="margin-bottom:12px">ASC Deggo conteste la régularité du joueur n°5R-044 (Baraka) lors de Baraka vs Deggo du 29/08</div>
+    <div class="form-group"><label>Décision de la Commission Juridique</label>
+      <select><option>En cours d'instruction</option><option>Réclamation rejetée</option><option>Match rejoué</option><option>Forfait attribué</option><option>Sanction disciplinaire</option></select>
+    </div>
+    <div class="form-group"><label>Motivations</label><textarea placeholder="Rédiger la décision motivée..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-reclamation')">Annuler</button>
+      <button class="btn primary" onclick="alert('Décision enregistrée. Notification envoyée aux ASC.');closeModal('modal-reclamation')">Rendre la décision</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Changer mot de passe (Super Admin) -->
+<div id="modal-change-pwd" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔑 Changer le mot de passe</span>
+      <button class="close-btn" onclick="closeModal('modal-change-pwd')">✕</button>
+    </div>
+    <div class="alert info" style="margin-bottom:16px">
+      Modification du compte : <strong id="pwd-target-name"></strong>
+    </div>
+    <input type="hidden" id="pwd-target-username">
+    <div class="form-group">
+      <label>Nouveau mot de passe</label>
+      <input type="password" id="new-pwd" placeholder="Minimum 6 caractères">
+    </div>
+    <div class="form-group">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="confirm-pwd" placeholder="Répéter le mot de passe"
+             onkeydown="if(event.key==='Enter') saveNewPassword()">
+    </div>
+    <div class="error-msg" id="pwd-error">Les mots de passe ne correspondent pas.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-change-pwd')">Annuler</button>
+      <button class="btn purple" onclick="saveNewPassword()">✅ Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ajouter stade -->
+<div id="modal-add-stade" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏟️ Nouveau terrain</span>
+      <button class="close-btn" onclick="closeModal('modal-add-stade')">✕</button>
+    </div>
+    <div class="form-group"><label>Nom du terrain</label><input type="text" id="stade-nom" placeholder="Ex : Stade René COLY"></div>
+    <div class="form-group"><label>Quartier / Localité</label><input type="text" id="stade-lieu" placeholder="Ex : Bignona Centre"></div>
+    <div class="form-group"><label>Capacité (places)</label><input type="number" id="stade-capacite" placeholder="Ex : 2000" min="0"></div>
+    <div class="form-group"><label>Responsable / Contact</label><input type="text" id="stade-contact" placeholder="Ex : René COLY · 77 000 00 00"></div>
+    <div class="error-msg" id="stade-error">Veuillez renseigner le nom du terrain.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-add-stade')">Annuler</button>
+      <button class="btn primary" onclick="saveStade()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Finale -->
+<div id="modal-finale" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">🏆 Bilan Financier — Finale</span>
+      <button class="close-btn" onclick="closeModal('modal-finale')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Date de la finale</label><input type="date" id="fin-date"></div>
+      <div class="form-group"><label>Terrain</label><select id="fin-terrain-select"><option value="">-- Choisir --</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Équipe A (finaliste)</label><select id="fin-equipe-a"><option value="">-- Choisir --</option></select></div>
+      <div class="form-group"><label>Équipe B (finaliste)</label><select id="fin-equipe-b"><option value="">-- Choisir --</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--green-d);border-bottom:2px solid var(--green);padding-bottom:4px;margin-bottom:10px">RECETTES</div>
+        <div class="form-group"><label>Recette à la porte</label><input type="number" id="fin-r-porte" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Bénéfices chaises</label><input type="number" id="fin-r-chaises" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Dons & Soutiens reçus</label><input type="number" id="fin-r-dons" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Subventions</label><input type="number" id="fin-r-subvention" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Soirée dansante</label><input type="number" id="fin-r-soiree" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Autres recettes</label><input type="number" id="fin-r-autres" value="0" oninput="updateFinaleTotaux()"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:4px;margin-bottom:10px">DÉPENSES</div>
+        <div class="form-group"><label>Enveloppes finalistes</label><input type="number" id="fin-d-enveloppes" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Transport membres</label><input type="number" id="fin-d-transport" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Tenues (lacoste)</label><input type="number" id="fin-d-tenues" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Sécurité (Gendarmerie)</label><input type="number" id="fin-d-securite" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Arbitres</label><input type="number" id="fin-d-arbitres" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Médias / Presse</label><input type="number" id="fin-d-medias" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Chaises VIP</label><input type="number" id="fin-d-chaises" value="0" oninput="updateFinaleTotaux()"></div>
+        <div class="form-group"><label>Autres dépenses</label><input type="number" id="fin-d-autres" value="0" oninput="updateFinaleTotaux()"></div>
+      </div>
+    </div>
+    <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0">
+      <div style="text-align:center"><div style="font-size:10px;color:var(--muted)">Total Recettes</div><div style="font-weight:700;color:var(--green-d)" id="fin-total-r">0</div></div>
+      <div style="text-align:center"><div style="font-size:10px;color:var(--muted)">Total Dépenses</div><div style="font-weight:700;color:var(--red)" id="fin-total-d">0</div></div>
+      <div style="text-align:center;background:var(--green-l);border-radius:6px;padding:4px"><div style="font-size:10px;color:var(--green-d)">Bénéfice</div><div style="font-weight:700;color:var(--green-d)" id="fin-benefice">0</div></div>
+    </div>
+    <div class="form-group"><label>Observations / Notes</label><textarea id="fin-notes" placeholder="Résultat final, vainqueur, incidents…" style="min-height:60px"></textarea></div>
+    <div class="error-msg" id="fin-error">Veuillez renseigner la date et les équipes finalistes.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-finale')">Annuler</button>
+      <button class="btn primary" onclick="saveFinale()">✅ Enregistrer le bilan finale</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Licences & Bordereaux -->
+<div id="modal-licence" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🎟️ Vente Licences / Bordereaux</span>
+      <button class="close-btn" onclick="closeModal('modal-licence')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>ASC</label>
+      <select id="lic-asc"><option value="">-- Choisir une ASC --</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Licences joueurs (× 200 FCFA)</label><input type="number" id="lic-joueurs" value="0" min="0" oninput="updateLicTotal()"></div>
+      <div class="form-group"><label>Licences techniciens (× 250 FCFA)</label><input type="number" id="lic-tech" value="0" min="0" oninput="updateLicTotal()"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Bordereaux (× 500 FCFA)</label><input type="number" id="lic-bordereaux" value="0" min="0" oninput="updateLicTotal()"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="lic-date"></div>
+    </div>
+    <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:10px;text-align:center;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--green-d)">Montant total à percevoir</div>
+      <div style="font-size:20px;font-weight:700;color:var(--green-d)" id="lic-total">0 FCFA</div>
+    </div>
+    <div class="error-msg" id="lic-error">Veuillez sélectionner une ASC et renseigner au moins une quantité.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-licence')">Annuler</button>
+      <button class="btn primary" onclick="saveLicence()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Litige (Commission Juridique uniquement) -->
+<div id="modal-litige" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚖️ Déclarer un litige</span>
+      <button class="close-btn" onclick="closeModal('modal-litige')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Match concerné</label><select id="lit-match"><option value="">-- Choisir --</option></select></div>
+      <div class="form-group"><label>ASC plaignante</label><select id="lit-plaignant"><option value="">-- Choisir --</option></select></div>
+    </div>
+    <div class="form-group"><label>Motif du litige</label><input type="text" id="lit-motif" placeholder="Ex : Joueur non licencié aligné"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Décision</label>
+        <select id="lit-decision">
+          <option value="en_cours">En cours d'instruction</option>
+          <option value="rejete">Réclamation rejetée</option>
+          <option value="rejoue">Match rejoué</option>
+          <option value="forfait">Forfait attribué</option>
+          <option value="sanction">Sanction disciplinaire</option>
+          <option value="resultat_modifie">Résultat modifié</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Amende éventuelle (FCFA)</label>
+        <input type="number" id="lit-amende" value="0" min="0">
+      </div>
+    </div>
+    <div class="form-group"><label>ASC sanctionnée / joueur</label><input type="text" id="lit-sanctionne" placeholder="Laisser vide si aucune sanction"></div>
+    <div class="form-group"><label>Motivations de la décision</label><textarea id="lit-motivations" placeholder="Rédiger les motivations…"></textarea></div>
+    <div class="form-group">
+      <label>PV de délibération (PDF/Image)</label>
+      <input type="file" id="lit-pv" accept="image/*,application/pdf">
+      <p style="font-size:11px;color:var(--muted);margin-top:3px">Visible par tous · non téléchargeable</p>
+    </div>
+    <div class="error-msg" id="lit-error">Veuillez renseigner le match et le motif.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-litige')">Annuler</button>
+      <button class="btn primary" onclick="saveLitige()">✅ Enregistrer la décision</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Envoyer bilan aux ASC -->
+<div id="modal-send-bilan" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📤 Envoyer le bilan</span>
+      <button class="close-btn" onclick="closeModal('modal-send-bilan')">✕</button>
+    </div>
+    <div class="alert info" style="margin-bottom:16px">Le bilan sera marqué comme envoyé. L'envoi réel nécessite une intégration backend (email/WhatsApp).</div>
+    <div class="form-group">
+      <label>Destinataires</label>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px" id="bilan-recipients">
+        <!-- Généré JS -->
+      </div>
+    </div>
+    <div class="form-group"><label>Message d'accompagnement</label><textarea placeholder="Ex : Veuillez trouver ci-joint le bilan financier de la saison 2025…" style="min-height:80px"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-send-bilan')">Annuler</button>
+      <button class="btn primary" onclick="sendBilan()">📤 Marquer comme envoyé</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ajouter équipe + représentants -->
+<div id="modal-add-team" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">🏟️ Nouvelle association (ASC)</span>
+      <button class="close-btn" onclick="closeModal('modal-add-team')">✕</button>
+    </div>
+
+    <!-- Identité de l'ASC -->
+    <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.03em">Identité</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Nom de l'association *</label>
+        <input type="text" id="team-nom" placeholder="Ex : ASC Kafountine">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="form-group" style="margin:0">
+          <label>Quartier / Localité</label>
+          <input type="text" id="team-quartier" placeholder="Ex : Kafountine">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Année de création</label>
+          <input type="number" id="team-annee" placeholder="Ex : 1998" min="1950" max="2099">
+        </div>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Couleurs de l'équipe</label>
+        <input type="text" id="team-couleurs" placeholder="Ex : Rouge et blanc">
+      </div>
+    </div>
+
+    <!-- Représentants -->
+    <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.03em">Représentants *</div>
+      <div id="reps-fields">
+        <div class="rep-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+          <input type="text" placeholder="Nom complet" class="rep-nom">
+          <input type="text" placeholder="Rôle (Pdt, SG…)" class="rep-role">
+          <input type="tel" placeholder="Téléphone" class="rep-tel">
+        </div>
+        <div class="rep-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+          <input type="text" placeholder="Nom complet" class="rep-nom">
+          <input type="text" placeholder="Rôle" class="rep-role">
+          <input type="tel" placeholder="Téléphone" class="rep-tel">
+        </div>
+        <div class="rep-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <input type="text" placeholder="Nom complet" class="rep-nom">
+          <input type="text" placeholder="Rôle" class="rep-role">
+          <input type="tel" placeholder="Téléphone" class="rep-tel">
+        </div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="team-error">Veuillez renseigner le nom de l'association et au moins un représentant.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-add-team')">Annuler</button>
+      <button class="btn primary" onclick="saveTeam()">✅ Enregistrer l'association</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Tirage au sort -->
+<div id="modal-tirage" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🎲 Tirage au sort — Poules</span>
+      <button class="close-btn" onclick="closeModal('modal-tirage')">✕</button>
+    </div>
+    <div id="tirage-etape-1">
+      <div class="form-group">
+        <label>Nombre de poules</label>
+        <select id="nb-poules">
+          <option value="2">2 poules</option>
+          <option value="3">3 poules</option>
+          <option value="4" selected>4 poules</option>
+          <option value="5">5 poules</option>
+          <option value="6">6 poules</option>
+        </select>
+      </div>
+      <div class="alert info" id="tirage-equipes-info" style="margin-bottom:16px">Chargement des équipes…</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeModal('modal-tirage')">Annuler</button>
+        <button class="btn primary" onclick="doTirage()">🎲 Tirer au sort</button>
+      </div>
+    </div>
+    <div id="tirage-etape-2" style="display:none">
+      <div class="alert success" style="margin-bottom:16px">🎲 Tirage effectué ! Vérifiez les poules ci-dessous.</div>
+      <div id="tirage-result"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn" onclick="doTirage()">🔄 Retirer</button>
+        <button class="btn primary" onclick="confirmTirage()">✅ Confirmer le tirage</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Fiche journée (structure exacte du document) -->
+<div id="modal-fiche-journee" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <span class="modal-title">📋 Bilan Financier — Journée</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-journee')">✕</button>
+    </div>
+    <div class="form-row" style="margin-bottom:14px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Libellé journée</label>
+        <input type="text" id="fj-journee" placeholder="Ex : Journée 02/09">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Terrain</label>
+        <input type="text" id="fj-terrain" placeholder="Ex : Terrain Collège René Coly">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="fj-date">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- RECETTES -->
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--green-d);border-bottom:2px solid var(--green);padding-bottom:4px;margin-bottom:10px">Recettes</div>
+        <div class="form-group"><label>Recette à la porte</label><input type="number" id="fj-r-porte" value="0" min="0"></div>
+        <div class="form-group"><label>Bénéfices chaises</label><input type="number" id="fj-r-chaises" value="0" min="0"></div>
+        <div class="form-group"><label>Quote part ASCE</label><input type="number" id="fj-r-asce" value="0" min="0"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Contributions équipes</div>
+        <div id="fj-contributions"><!-- Généré par JS selon les équipes de la saison --></div>
+      </div>
+      <!-- DÉPENSES -->
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:4px;margin-bottom:10px">Dépenses</div>
+        <div class="form-group"><label>Arbitres</label><input type="number" id="fj-d-arbitres" value="0" min="0"></div>
+        <div class="form-group"><label>ASP (Sécurité)</label><input type="number" id="fj-d-asp" value="0" min="0"></div>
+        <div class="form-group"><label>Animateur</label><input type="number" id="fj-d-animateur" value="0" min="0"></div>
+        <div class="form-group"><label>Croix Rouge</label><input type="number" id="fj-d-croixrouge" value="0" min="0"></div>
+        <div class="form-group"><label>Location cordes</label><input type="number" id="fj-d-cordes" value="0" min="0"></div>
+        <div class="form-group"><label>Location filets</label><input type="number" id="fj-d-filets" value="0" min="0"></div>
+        <div class="form-group"><label>Chaises école de foot</label><input type="number" id="fj-d-chaises" value="0" min="0"></div>
+        <div class="form-group"><label>Presse</label><input type="number" id="fj-d-presse" value="0" min="0"></div>
+        <div class="form-group"><label>Social</label><input type="number" id="fj-d-social" value="0" min="0"></div>
+        <div class="form-group"><label>Transport</label><input type="number" id="fj-d-transport" value="0" min="0"></div>
+        <div class="form-group"><label>Collège René Coly</label><input type="number" id="fj-d-college" value="0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- Totaux live -->
+    <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px">
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Total Recettes</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-d)" id="fj-total-r">0</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase">Total Dépenses</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red)" id="fj-total-d">0</div>
+      </div>
+      <div style="text-align:center;background:var(--green-l);border-radius:var(--radius-sm);padding:6px">
+        <div style="font-size:10px;font-weight:600;color:var(--green-d);text-transform:uppercase">Bénéfice du Jour</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-d)" id="fj-benefice">0</div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="fj-error" style="margin-top:10px">Veuillez renseigner le libellé et la date.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" onclick="closeModal('modal-fiche-journee')">Annuler</button>
+      <button class="btn primary" onclick="saveFicheJournee()">✅ Enregistrer la fiche</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  DONNÉES UTILISATEURS (stockées dans localStorage)
+// ============================================================
+const DEFAULT_USERS = {
+  'aliou.sagna':     { password: 'Zone5R!2025',  role: 'superadmin',    name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'djiby.diatta':    { password: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',       poste: 'Président Zone 5R' },
+  'boubacar.camara': { password: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',           poste: 'Secrétaire Général' },
+  'papis.sagna':     { password: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',       poste: 'SG Adjoint' },
+  'habib.sane':      { password: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',     poste: 'Trésorier Général' },
+  'agnile.dieng':    { password: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint' },
+  'ibrahima.dieme':  { password: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',            poste: 'Pdt Commission Finances' },
+  'sidiky.doumbia':  { password: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission Compétitions' },
+  'fode.goudiaby':   { password: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',            poste: 'Commission Juridique' },
+  'cheikh.diatta':   { password: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication' },
+  'aicha.mbaye':     { password: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',              poste: 'Commissaire aux Comptes' },
+  'idrissa.diallo':  { password: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes' },
+  // ── Comptes de test ──────────────────────────────────────────────────────────
+  'test.admin':      { password: 'TestAdmin25',  role: 'superadmin',    name: 'Compte Test Admin',         poste: 'Test – Accès complet'     },
+  'test.visiteur':   { password: 'TestVisit25',  role: 'visiteur',      name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule'     },
+};
+
+const ROLE_CONFIG = {
+  superadmin:    { label: 'Super Admin',   cls: 'purple' },
+  admin:         { label: 'Président',     cls: 'amber'  },
+  secretaire:    { label: 'Secrétaire',    cls: 'blue'   },
+  tresorier:     { label: 'Trésorier',     cls: 'amber'  },
+  finances:      { label: 'Finances',      cls: 'amber'  },
+  competitions:  { label: 'Compétitions',  cls: 'green'  },
+  juridique:     { label: 'Juridique',     cls: 'red'    },
+  communication: { label: 'Communication', cls: 'blue'   },
+  audit:         { label: 'Audit',         cls: 'gray'   },
+  visiteur:      { label: 'Visiteur',      cls: 'gray'   },
+};
+
+// Session persistée dans localStorage
+let currentUser = (function() {
+  try {
+    const s = localStorage.getItem('zone5r_session');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+})();
+
+function getUsers() {
+  try {
+    const stored = localStorage.getItem('zone5r_users');
+    // Fusionner avec DEFAULT_USERS pour que les nouveaux comptes par défaut soient toujours présents
+    const base = JSON.parse(JSON.stringify(DEFAULT_USERS));
+    if (!stored) {
+      localStorage.setItem('zone5r_users', JSON.stringify(base));
+      return base;
+    }
+    const merged = Object.assign(base, JSON.parse(stored));
+    return merged;
+  } catch(e) {
+    return JSON.parse(JSON.stringify(DEFAULT_USERS));
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem('zone5r_users', JSON.stringify(users));
+}
+
+// ============================================================
+//  AUTHENTIFICATION
+// ============================================================
+function doLogin() {
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const errorEl  = document.getElementById('login-error');
+  const users    = getUsers();
+
+  if (users[username] && users[username].password === password) {
+    currentUser = { username, ...users[username] };
+    localStorage.setItem('zone5r_session', JSON.stringify(currentUser));
+    errorEl.classList.remove('show');
+    updateUI();
+    showToast('Bienvenue, ' + currentUser.name.split(' ')[0] + ' !');
+  } else {
+    errorEl.classList.add('show');
+    document.getElementById('login-password').value = '';
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('zone5r_session');
+  updateUI();
+  showSection('dashboard');
+  showToast('Déconnexion réussie.');
+}
+
+function toggleAuth() {
+  if (currentUser) {
+    doLogout();
+  } else {
+    showSection('dashboard');
+    setTimeout(() => {
+      const el = document.getElementById('login-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 80);
+  }
+}
+
+// ============================================================
+//  MISE À JOUR DE L'INTERFACE
+// ============================================================
+function updateUI() {
+  const badge   = document.getElementById('user-role-badge');
+  const authBtn = document.getElementById('header-auth-btn');
+  const memberNavItems = document.querySelectorAll('.nav-item.member-only');
+  const visitorView = document.getElementById('visitor-view');
+  const memberView  = document.getElementById('member-view');
+  const adminPanel  = document.getElementById('admin-access-panel');
+
+  // Boutons réservés membres (Saisir score, Créer poule, + Opération, etc.)
+  const memberActions = document.querySelectorAll('.member-action');
+
+  if (currentUser) {
+    const rc = ROLE_CONFIG[currentUser.role] || { label: 'Membre', cls: 'gray' };
+    badge.textContent = rc.label;
+    badge.className   = 'role-badge ' + rc.cls;
+    const firstName   = currentUser.name.split(' ')[0];
+    authBtn.textContent = '👋 ' + firstName + ' · Déco.';
+
+    // FIX: display explicite pour surcharger le CSS .member-only { display:none }
+    memberNavItems.forEach(n => n.style.display = 'block');
+    // Le rôle visiteur peut consulter mais ne peut pas modifier
+    const isReadOnly = currentUser.role === 'visiteur';
+    memberActions.forEach(b => b.style.display = isReadOnly ? 'none' : '');
+    visitorView.style.display = 'none';
+    memberView.style.display  = 'block';
+
+    // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
+    const btnAddJoueur = document.getElementById('btn-add-joueur');
+    if (btnAddJoueur) {
+      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.role) ? '' : 'none';
+    }
+
+    // Panneaux réservés Admin/SuperAdmin
+    const saisonPanel  = document.getElementById('saison-panel');
+    const equipesPanel = document.getElementById('equipes-panel');
+    const stadesPanel = document.getElementById('stades-panel');
+    if (CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) {
+      adminPanel.style.display = 'block';
+      renderMembersTable();
+      if (saisonPanel)  { saisonPanel.style.display  = 'block'; renderSaisonPanel(); }
+      if (equipesPanel) { equipesPanel.style.display = 'block'; renderEquipesPanel(); }
+      if (stadesPanel)  { stadesPanel.style.display  = 'block'; renderStadesPanel(); }
+    } else {
+      adminPanel.style.display = 'none';
+      if (saisonPanel)  saisonPanel.style.display  = 'none';
+      if (equipesPanel) equipesPanel.style.display = 'none';
+      if (stadesPanel)  stadesPanel.style.display  = 'none';
+    }
+
+    // Bouton Litige : réservé Commission Juridique
+    const btnLitige = document.getElementById('btn-add-litige');
+    if (btnLitige) {
+      btnLitige.style.display = currentUser.role === 'juridique' ? '' : 'none';
+    }
+
+    // Onglet Bilan → recalcul à l'ouverture
+    renderBilan();
+    updateCaisse();
+    renderSuspensions();
+    renderLitiges();
+  } else {
+    badge.textContent = 'Visiteur';
+    badge.className   = 'role-badge visitor';
+    authBtn.textContent = '🔐 Connexion';
+
+    memberNavItems.forEach(n => n.style.display = 'none');
+    memberActions.forEach(b => b.style.display = 'none');
+    visitorView.style.display = 'block';
+    memberView.style.display  = 'none';
+    adminPanel.style.display  = 'none';
+
+    // Remettre le formulaire de connexion propre
+    const uEl = document.getElementById('login-username');
+    const pEl = document.getElementById('login-password');
+    if (uEl) uEl.value = '';
+    if (pEl) pEl.value = '';
+    document.getElementById('login-error').classList.remove('show');
+  }
+}
+
+// ============================================================
+//  NAVIGATION — CORRECTION DU BUG
+// ============================================================
+function showSection(id) {
+  // Masquer toutes les sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  // Afficher la section cible
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+  // Mettre à jour le nav actif via data-section
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.section === id);
+  });
+}
+
+// ============================================================
+//  ONGLETS
+// ============================================================
+function switchTab(el, targetId, groupId) {
+  const group = document.getElementById(groupId);
+  group.querySelectorAll(':scope > div').forEach(d => d.style.display = 'none');
+  const target = document.getElementById(targetId);
+  if (target) target.style.display = 'block';
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ============================================================
+//  MODALS
+// ============================================================
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function closeModalOutside(e) {
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+}
+
+// ============================================================
+//  DISCIPLINE
+// ============================================================
+function updateSuspension() {
+  document.getElementById('suspension-nb').value =
+    document.getElementById('card-type').value === 'rouge' ? 3 : 1;
+}
+
+// ============================================================
+//  FILTRE JOUEURS
+// ============================================================
+// Ancienne fonction gardée pour compatibilité
+function filterTable(val) {
+  document.querySelectorAll('#joueurs-table tbody tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ============================================================
+//  JOUEURS PAR ÉQUIPE
+// ============================================================
+const ALL_TEAMS = [
+  'ASC Walidane','ASC Chicago','ASC Kafesse','ASC Baraka','ASC Oryx MTG',
+  'ASC Deggo','ASC Médina Plateau','ASC Santhiaba','ASC Yengoulène',
+  'ASC Nafacounda','ASC Tankoron','ASC Diengue','ASC Renaissance'
+];
+
+// Rôles autorisés à ajouter des joueurs
+const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','tresorier','juridique','communication','audit','finances'];
+// Rôles autorisés à créer des comptes
+const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
+
+function getPlayers() {
+  try {
+    const stored = localStorage.getItem('zone5r_players');
+    if (!stored) {
+      const init = {
+        'ASC Walidane': [
+          { id:'5R-001', prenom:'Oumar',   nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'🟨 1' },
+          { id:'5R-006', prenom:'Mamadou', nom:'BADJI',     cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'–'   },
+          { id:'5R-007', prenom:'Ismaël',  nom:'SAMBOU',    cat:'Senior', type:'Technicien', statut:'Actif',         cartons:'–'   },
+        ],
+        'ASC Baraka': [
+          { id:'5R-002', prenom:'Seydou',  nom:'COLY',      cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟥 1' },
+          { id:'5R-008', prenom:'Ousmane', nom:'DIATTA',    cat:'Cadet',  type:'Joueur',     statut:'Actif',         cartons:'–'   },
+        ],
+        'ASC Chicago': [
+          { id:'5R-003', prenom:'Mamadou', nom:'SANÉ',      cat:'Cadet',  type:'Joueur',     statut:'Actif',         cartons:'–'   },
+        ],
+        'ASC Yengoulène': [
+          { id:'5R-004', prenom:'Ibrahima',nom:'BADJI',     cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'🟨 2' },
+        ],
+        'ASC Nafacounda': [
+          { id:'5R-005', prenom:'Lamine',  nom:'GOUDIABY',  cat:'Senior', type:'Joueur',     statut:'Avertissement', cartons:'🟨 1' },
+        ],
+        'ASC Deggo': [
+          { id:'5R-009', prenom:'Aliou',   nom:'DIEME',     cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟨 2' },
+        ],
+        'ASC Kafesse': [
+          { id:'5R-010', prenom:'Omar',    nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟥 1' },
+        ],
+      };
+      localStorage.setItem('zone5r_players', JSON.stringify(init));
+      return init;
+    }
+    return JSON.parse(stored);
+  } catch(e) { return {}; }
+}
+
+function savePlayers(data) {
+  localStorage.setItem('zone5r_players', JSON.stringify(data));
+}
+
+let currentTeam = null;
+
+function initTeamTabs() {
+  // Remplir le sélecteur du modal
+  const sel = document.getElementById('modal-player-team');
+  if (sel) {
+    sel.innerHTML = ALL_TEAMS.map(t => `<option value="${t}">${t}</option>`).join('');
+  }
+
+  // Afficher les boutons d'équipe
+  const container = document.getElementById('team-tabs-container');
+  if (!container) return;
+  const players = getPlayers();
+  container.innerHTML = ALL_TEAMS.map(team => {
+    const nb = (players[team] || []).length;
+    return `<button class="btn" data-team="${team}" onclick="selectTeam('${team}')"
+      style="font-size:12px;display:flex;align-items:center;gap:6px">
+      ${team} <span style="background:var(--gray-l);border-radius:10px;padding:1px 6px;font-size:10px">${nb}</span>
+    </button>`;
+  }).join('');
+
+  // Totaux
+  const allPlayers = Object.values(players).flat();
+  const totalEl = document.getElementById('total-joueurs');
+  const equipesEl = document.getElementById('total-equipes');
+  if (totalEl) totalEl.textContent = allPlayers.length;
+  if (equipesEl) equipesEl.textContent = Object.keys(players).length;
+}
+
+function selectTeam(team) {
+  currentTeam = team;
+  // Mettre à jour les styles des boutons
+  document.querySelectorAll('#team-tabs-container button').forEach(btn => {
+    btn.className = btn.dataset.team === team ? 'btn primary' : 'btn';
+    btn.style.cssText = btn.dataset.team === team
+      ? 'font-size:12px;display:flex;align-items:center;gap:6px'
+      : 'font-size:12px;display:flex;align-items:center;gap:6px';
+  });
+  renderTeamPlayers(team);
+}
+
+function renderTeamPlayers(team) {
+  const players = getPlayers();
+  const list    = players[team] || [];
+  const titleEl = document.getElementById('team-players-title');
+  const subEl   = document.getElementById('joueurs-subtitle');
+  const tbody   = document.getElementById('team-players-body');
+
+  if (titleEl) titleEl.textContent = team + ' — ' + list.length + ' joueur(s) / technicien(s)';
+  if (subEl)   subEl.textContent   = list.length + ' enregistré(s) · ' + team;
+
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">
+      Aucun joueur enregistré pour ${team}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(p => {
+    const catCls    = p.cat === 'Senior' ? 'blue' : p.cat === 'Cadet' ? 'amber' : 'gray';
+    const statutCls = p.statut === 'Actif' ? 'green' : p.statut === 'Suspendu' ? 'red' : 'amber';
+    return `<tr>
+      <td style="font-family:monospace;font-size:12px">${p.id}</td>
+      <td><strong>${p.prenom} ${p.nom}</strong></td>
+      <td><span class="badge ${catCls}">${p.cat}</span></td>
+      <td><span class="badge gray">${p.type}</span></td>
+      <td><span class="badge ${statutCls}">${p.statut}</span></td>
+      <td>${p.cartons}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTeamPlayers(val) {
+  document.querySelectorAll('#team-players-body tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function openAddPlayerModal() {
+  if (!currentUser) return;
+  // Pré-sélectionner l'équipe active
+  const sel = document.getElementById('modal-player-team');
+  if (sel && currentTeam) sel.value = currentTeam;
+  // Vider les champs
+  ['modal-player-prenom','modal-player-nom','modal-player-dob','modal-player-tel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('modal-player-error').classList.remove('show');
+  openModal('modal-joueur');
+}
+
+function savePlayer() {
+  const team    = document.getElementById('modal-player-team').value;
+  const prenom  = document.getElementById('modal-player-prenom').value.trim();
+  const nom     = document.getElementById('modal-player-nom').value.trim().toUpperCase();
+  const cat     = document.getElementById('modal-player-categorie').value;
+  const type    = document.getElementById('modal-player-type').value;
+  const errEl   = document.getElementById('modal-player-error');
+
+  if (!prenom || !nom) {
+    errEl.textContent = 'Veuillez renseigner le prénom et le nom.';
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+
+  const data = getPlayers();
+  if (!data[team]) data[team] = [];
+
+  const total = Object.values(data).flat().length + 1;
+  const id    = '5R-' + String(total).padStart(3,'0');
+
+  data[team].push({ id, prenom, nom, cat, type, statut: 'Actif', cartons: '–' });
+  savePlayers(data);
+
+  closeModal('modal-joueur');
+  initTeamTabs();                    // Rafraîchir les compteurs
+  if (currentTeam === team) renderTeamPlayers(team);
+  showToast('✅ ' + prenom + ' ' + nom + ' ajouté(e) à ' + team);
+}
+
+// ============================================================
+//  RECHERCHE DE MATCHS (visiteur)
+// ============================================================
+const ALL_MATCHES = [
+  { dom: 'ASC Walidane',      ext: 'ASC Chicago',        poule: 'A', date: "Auj. 16h",      score: null,  statut: 'upcoming' },
+  { dom: 'ASC Walidane',      ext: 'ASC Chicago',        poule: 'A', date: '07/09',          score: '2-0', statut: 'joue'     },
+  { dom: 'ASC Kafesse',       ext: 'ASC Baraka',         poule: 'A', date: '07/09',          score: '1-1', statut: 'joue'     },
+  { dom: 'ASC Oryx MTG',      ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 16h',   score: null,  statut: 'upcoming' },
+  { dom: 'ASC Chicago',       ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 15h',   score: null,  statut: 'upcoming' },
+  { dom: 'ASC Baraka',        ext: 'ASC Deggo',          poule: 'B', date: '29/08',          score: '2-1', statut: 'joue'     },
+  { dom: 'ASC Médina Plateau',ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 16h',   score: null,  statut: 'upcoming' },
+  { dom: 'ASC Yengoulène',    ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
+  { dom: 'ASC Santhiaba',     ext: 'ASC Médina Plateau', poule: 'B', date: '08/09',          score: '0-2', statut: 'joue'     },
+];
+
+function searchMatches(query) {
+  const q          = query.trim().toLowerCase();
+  const resultsDiv = document.getElementById('search-results');
+  const resultsBody= document.getElementById('search-results-body');
+  const resultsTitle=document.getElementById('search-results-title');
+
+  if (!q) { resultsDiv.style.display = 'none'; return; }
+
+  const found = ALL_MATCHES.filter(m =>
+    m.dom.toLowerCase().includes(q) ||
+    m.ext.toLowerCase().includes(q) ||
+    ('poule ' + m.poule).includes(q) ||
+    m.date.toLowerCase().includes(q)
+  );
+
+  resultsTitle.textContent = found.length + ' résultat' + (found.length !== 1 ? 's' : '');
+
+  if (found.length === 0) {
+    resultsBody.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)">Aucun match trouvé pour « ' + query + ' »</div>';
+  } else {
+    resultsBody.innerHTML = found.map(m => {
+      if (m.statut === 'joue') {
+        const [s1, s2] = m.score.split('-');
+        return `<div class="match-card">
+          <div class="match-team">${m.dom}</div>
+          <div class="match-score"><div class="score-box">${s1}</div><div class="match-vs">–</div><div class="score-box">${s2}</div></div>
+          <div class="match-team right">${m.ext}</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule ${m.poule} · ${m.date}</div>
+            <span class="badge green">Joué</span>
+          </div>
+        </div>`;
+      } else {
+        return `<div class="match-card">
+          <div class="match-team">${m.dom}</div>
+          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
+          <div class="match-team right">${m.ext}</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule ${m.poule}</div>
+            <div style="font-size:11px;color:var(--amber);font-weight:600">${m.date}</div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+  }
+
+  resultsDiv.style.display = 'block';
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').style.display = 'none';
+}
+
+// ============================================================
+//  GESTION DES MOTS DE PASSE (Super Admin)
+// ============================================================
+function renderMembersTable() {
+  const users = getUsers();
+  const tbody = document.querySelector('#members-pwd-table tbody');
+  tbody.innerHTML = Object.entries(users)
+    .filter(([username]) => username !== 'aliou.sagna')
+    .map(([username, user]) => `
+      <tr>
+        <td><strong>${user.name}</strong></td>
+        <td style="font-size:12px;color:var(--muted)">${user.poste}</td>
+        <td><code style="background:var(--gray-l);padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace">${username}</code></td>
+        <td>
+          <button class="btn" style="font-size:11px;padding:4px 10px"
+            onclick="openChangePasswordModal('${username}', '${user.name.replace(/'/g, "\\'")}')">
+            🔑 MDP
+          </button>
+        </td>
+      </tr>
+    `).join('');
+}
+
+function openChangePasswordModal(username, name) {
+  document.getElementById('pwd-target-username').value = username;
+  document.getElementById('pwd-target-name').textContent = name;
+  document.getElementById('new-pwd').value     = '';
+  document.getElementById('confirm-pwd').value = '';
+  document.getElementById('pwd-error').classList.remove('show');
+  openModal('modal-change-pwd');
+}
+
+function saveNewPassword() {
+  const username   = document.getElementById('pwd-target-username').value;
+  const newPwd     = document.getElementById('new-pwd').value;
+  const confirmPwd = document.getElementById('confirm-pwd').value;
+  const errorEl    = document.getElementById('pwd-error');
+
+  if (!newPwd || newPwd.length < 6) {
+    errorEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (newPwd !== confirmPwd) {
+    errorEl.textContent = 'Les mots de passe ne correspondent pas.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  const users = getUsers();
+  if (users[username]) {
+    users[username].password = newPwd;
+    saveUsers(users);
+    closeModal('modal-change-pwd');
+    showToast('✅ Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
+  }
+}
+
+// ============================================================
+//  TOAST NOTIFICATION
+// ============================================================
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className   = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; }, 2500);
+  setTimeout(() => t.remove(), 2900);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+// ============================================================
+//  GESTION DE LA SAISON
+// ============================================================
+function getSaison() {
+  try { return JSON.parse(localStorage.getItem('zone5r_saison')) || null; }
+  catch(e) { return null; }
+}
+
+function renderSaisonPanel() {
+  const panel  = document.getElementById('saison-panel');
+  const active = document.getElementById('saison-active-view');
+  const form   = document.getElementById('saison-form-view');
+  const badge  = document.getElementById('saison-statut-badge');
+  if (!panel) return;
+
+  const saison = getSaison();
+  if (saison && saison.active) {
+    active.style.display = 'block';
+    form.style.display   = 'none';
+    badge.textContent    = saison.declaredOpen ? '🚀 Ouverte' : 'En cours';
+    badge.className      = saison.declaredOpen ? 'badge green' : 'badge amber';
+
+    document.getElementById('saison-nom-display').textContent     = saison.nom;
+    document.getElementById('saison-date-display').textContent    = new Date(saison.date).toLocaleDateString('fr-FR');
+    document.getElementById('saison-equipes-display').textContent = saison.equipes.length;
+    const dbEl = document.getElementById('saison-declared-by');
+    if (dbEl) dbEl.textContent = saison.declaredBy || '—';
+
+    // Mettre à jour le header du bureau
+    const h = document.querySelector('#bureau h2');
+    if (h) h.textContent = 'Bureau Zone 5R / ' + saison.nom;
+
+    // Étape 2 : Tirage
+    const step2 = document.getElementById('step-tirage');
+    const btn2  = document.getElementById('btn-tirage');
+    if (saison.tirageDone) {
+      step2.style.background   = 'var(--green-l)';
+      step2.style.borderColor  = 'var(--green)';
+      step2.style.opacity      = '1';
+      document.getElementById('step-tirage-icon').textContent  = '✅';
+      document.getElementById('step-tirage-title').textContent = 'Étape 2 — Tirage effectué';
+      const nbPoules = saison.poules ? Object.keys(saison.poules).length : 0;
+      document.getElementById('step-tirage-desc').textContent  = nbPoules + ' poule(s) définies';
+      if (btn2) btn2.textContent = '🔄 Refaire';
+    } else {
+      step2.style.background   = 'var(--gray-l)';
+      step2.style.borderColor  = 'var(--gray)';
+      step2.style.opacity      = '1';
+    }
+
+    // Étape 3 : Matchs
+    const step3 = document.getElementById('step-matchs');
+    const btn3  = document.getElementById('btn-matchs');
+    if (saison.tirageDone) {
+      step3.style.opacity = '1';
+      if (btn3) btn3.disabled = false;
+    }
+    if (saison.matchsProgrammes) {
+      step3.style.background  = 'var(--green-l)';
+      step3.style.borderColor = 'var(--green)';
+      document.getElementById('step-matchs-icon').textContent  = '✅';
+      document.getElementById('step-matchs-title').textContent = 'Étape 3 — Matchs programmés';
+      document.getElementById('step-matchs-desc').textContent  = (saison.matchs||[]).length + ' rencontres générées';
+    }
+
+    // Étape 4 : Ouverture
+    const step4 = document.getElementById('step-ouverture');
+    const btn4  = document.getElementById('btn-ouverture');
+    const dateInput = document.getElementById('ouverture-date-input');
+    if (saison.matchsProgrammes) {
+      step4.style.opacity = '1';
+      if (btn4) btn4.disabled = false;
+      if (dateInput) dateInput.min = new Date(Date.now()+86400000).toISOString().split('T')[0];
+    }
+    if (saison.declaredOpen) {
+      step4.style.background  = 'var(--green-l)';
+      step4.style.borderColor = 'var(--green)';
+      document.getElementById('step-ouverture-icon').textContent  = '✅';
+      document.getElementById('step-ouverture-title').textContent = 'Étape 4 — Compétition déclarée ouverte';
+      const d = new Date(saison.dateOuverture).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+      document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
+      if (btn4) { btn4.disabled = true; btn4.textContent = '✅ Ouverte'; }
+    }
+  } else {
+    active.style.display = 'none';
+    form.style.display   = 'block';
+    badge.textContent    = 'Aucune saison active';
+    badge.className      = 'badge gray';
+    const h = document.querySelector('#bureau h2');
+    if (h) h.textContent = 'Bureau Zone 5R / 2025';
+    refreshSaisonEquipesSelect();
+  }
+}
+
+function declarerSaison() {
+  const nom   = document.getElementById('saison-nom').value.trim();
+  const date  = document.getElementById('saison-date').value;
+  const selEl = document.getElementById('saison-equipes-select');
+  const equipes = Array.from(selEl.selectedOptions).map(o => o.value);
+
+  if (!nom)           return showToast('⚠️ Veuillez saisir un nom de saison.');
+  if (!date)          return showToast('⚠️ Veuillez choisir une date de démarrage.');
+  if (equipes.length < 2) return showToast('⚠️ Sélectionnez au moins 2 équipes.');
+
+  const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
+  const saison = { nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
+  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+
+  renderSaisonPanel();
+  showToast('🚀 Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
+}
+
+function cloturerSaison() {
+  if (!confirm('Clôturer la saison en cours ? Cette action est irréversible.')) return;
+  const saison = getSaison();
+  if (saison) { saison.active = false; localStorage.setItem('zone5r_saison', JSON.stringify(saison)); }
+  renderSaisonPanel();
+  showToast('🔒 Saison clôturée.');
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+// ============================================================
+//  ÉQUIPES & REPRÉSENTANTS
+// ============================================================
+function getTeams() {
+  try {
+    const s = localStorage.getItem('zone5r_teams');
+    return s ? JSON.parse(s) : {};
+  } catch(e) { return {}; }
+}
+function saveTeams(data) { localStorage.setItem('zone5r_teams', JSON.stringify(data)); }
+
+function refreshSaisonEquipesSelect() {
+  const sel = document.getElementById('saison-equipes-select');
+  if (!sel) return;
+  // Fusionner ALL_TEAMS + équipes enregistrées en localStorage
+  const storedKeys = Object.keys(getTeams());
+  const all = [...new Set([...ALL_TEAMS, ...storedKeys])].sort();
+  const prev = Array.from(sel.selectedOptions).map(o => o.value);
+  sel.innerHTML = all.map(t =>
+    `<option value="${t}"${prev.includes(t) ? ' selected' : ''}>${t}</option>`
+  ).join('');
+}
+
+function renderEquipesPanel() {
+  const panel = document.getElementById('equipes-reps-body');
+  if (!panel) return;
+  const teams = getTeams();
+  const keys  = Object.keys(teams);
+  if (keys.length === 0) {
+    panel.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Aucune équipe enregistrée</div>';
+    return;
+  }
+  panel.innerHTML = keys.map(nom => {
+    const t = teams[nom];
+    const meta = [
+      t.quartier ? '📍 ' + t.quartier : '',
+      t.annee    ? '📅 ' + t.annee    : '',
+      t.couleurs ? '🎨 ' + t.couleurs : '',
+    ].filter(Boolean).join('  ·  ');
+    const repsHtml = (t.representants || []).filter(r => r.nom).map(r =>
+      `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">
+        <strong>${r.nom}</strong> <span style="color:var(--muted)">${r.role}</span>
+        ${r.tel ? '· ' + r.tel : ''}
+      </div>`
+    ).join('');
+    return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div class="flex-between" style="margin-bottom:4px">
+        <div style="font-size:14px;font-weight:600">${nom}</div>
+        <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteTeam('${nom}')">Supprimer</button>
+      </div>
+      ${meta ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${meta}</div>` : ''}
+      ${repsHtml || '<div style="font-size:12px;color:var(--muted)">Aucun représentant renseigné</div>'}
+    </div>`;
+  }).join('');
+}
+
+function openAddTeamModal() {
+  ['team-nom','team-quartier','team-annee','team-couleurs'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.querySelectorAll('.rep-nom, .rep-role, .rep-tel').forEach(el => el.value = '');
+  document.getElementById('team-error').classList.remove('show');
+  openModal('modal-add-team');
+}
+
+function saveTeam() {
+  const nom = document.getElementById('team-nom').value.trim();
+  const errEl = document.getElementById('team-error');
+  if (!nom) { errEl.classList.add('show'); return; }
+
+  const rows = document.querySelectorAll('#reps-fields .rep-row');
+  const reps = [];
+  rows.forEach(row => {
+    const n = row.querySelector('.rep-nom').value.trim();
+    const r = row.querySelector('.rep-role').value.trim();
+    const t = row.querySelector('.rep-tel').value.trim();
+    if (n) reps.push({ nom: n, role: r, tel: t });
+  });
+
+  if (reps.length === 0) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const quartier  = document.getElementById('team-quartier').value.trim();
+  const annee     = document.getElementById('team-annee').value.trim();
+  const couleurs  = document.getElementById('team-couleurs').value.trim();
+
+  const teams = getTeams();
+  teams[nom] = { nom, quartier, annee, couleurs, representants: reps };
+  saveTeams(teams);
+
+  // Sync: ajouter dans ALL_TEAMS si absent
+  if (!ALL_TEAMS.includes(nom)) ALL_TEAMS.push(nom);
+
+  // Sync: ajouter dans le select de saison si absent
+  refreshSaisonEquipesSelect();
+
+  closeModal('modal-add-team');
+  renderEquipesPanel();
+  initTeamTabs();
+  showToast('✅ ' + nom + ' enregistrée avec ' + reps.length + ' représentant(s).');
+}
+
+function deleteTeam(nom) {
+  if (!confirm('Supprimer l\'équipe ' + nom + ' et ses représentants ?')) return;
+  const teams = getTeams();
+  delete teams[nom];
+  saveTeams(teams);
+  renderEquipesPanel();
+  showToast('Équipe ' + nom + ' supprimée.');
+}
+
+// ============================================================
+//  TIRAGE AU SORT
+// ============================================================
+let pendingTirage = null; // { poules: { A:[], B:[], ... } }
+
+function openTirageModal() {
+  const saison = getSaison();
+  if (!saison) return;
+  const info = document.getElementById('tirage-equipes-info');
+  if (info) info.textContent = saison.equipes.length + ' équipes à répartir · ' + saison.nom;
+  document.getElementById('tirage-etape-1').style.display = 'block';
+  document.getElementById('tirage-etape-2').style.display = 'none';
+  pendingTirage = null;
+}
+
+function doTirage() {
+  const saison = getSaison();
+  if (!saison) return;
+  const nbPoules = parseInt(document.getElementById('nb-poules').value);
+  const equipes  = [...saison.equipes].sort(() => Math.random() - 0.5); // Mélanger
+
+  const lettres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const poules  = {};
+  lettres.slice(0, nbPoules).forEach(l => poules[l] = []);
+
+  equipes.forEach((eq, i) => {
+    poules[lettres[i % nbPoules]].push(eq);
+  });
+
+  pendingTirage = { poules };
+
+  // Afficher le résultat
+  const resultDiv = document.getElementById('tirage-result');
+  resultDiv.innerHTML = Object.entries(poules).map(([lettre, teams]) => `
+    <div style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--green-d);margin-bottom:4px">
+        Poule ${lettre} <span style="font-weight:400;color:var(--muted)">(${teams.length} équipes)</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${teams.map(t => `<span class="badge green">${t}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('tirage-etape-1').style.display = 'none';
+  document.getElementById('tirage-etape-2').style.display = 'block';
+}
+
+function confirmTirage() {
+  if (!pendingTirage) return;
+  const saison = getSaison();
+  saison.poules       = pendingTirage.poules;
+  saison.tirageDone   = true;
+  saison.matchsProgrammes = false;
+  saison.declaredOpen = false;
+  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+
+  closeModal('modal-tirage');
+  renderSaisonPanel();
+  showToast('✅ Tirage confirmé ! Les poules sont définies.');
+}
+
+// ============================================================
+//  PROGRAMMER LES MATCHS (Round-Robin par poule)
+// ============================================================
+function programmerMatchs() {
+  const saison = getSaison();
+  if (!saison || !saison.tirageDone) {
+    showToast('⚠️ Effectuez d\'abord le tirage au sort.');
+    return;
+  }
+  const allMatchs = [];
+  Object.entries(saison.poules).forEach(([poule, teams]) => {
+    // Round-robin : chaque paire se rencontre une fois
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        allMatchs.push({ poule, dom: teams[i], ext: teams[j], score: null, joue: false, date: null });
+      }
+    }
+  });
+
+  saison.matchs           = allMatchs;
+  saison.matchsProgrammes = true;
+  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+
+  renderSaisonPanel();
+  showToast('✅ ' + allMatchs.length + ' matchs générés pour la phase de poules !');
+}
+
+// ============================================================
+//  DÉCLARER LA COMPÉTITION OUVERTE
+// ============================================================
+function declarerOuverte() {
+  const dateOuverture = document.getElementById('ouverture-date-input').value;
+  if (!dateOuverture) {
+    showToast('⚠️ Veuillez choisir une date d\'ouverture.');
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  if (dateOuverture <= today) {
+    showToast('⚠️ La date d\'ouverture doit être dans le futur.');
+    return;
+  }
+  const saison = getSaison();
+  saison.declaredOpen   = true;
+  saison.dateOuverture  = dateOuverture;
+  localStorage.setItem('zone5r_saison', JSON.stringify(saison));
+
+  renderSaisonPanel();
+  const d = new Date(dateOuverture).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  showToast('🚀 Compétition déclarée ouverte le ' + d + ' !');
+}
+
+// ============================================================
+//  FICHES DE JOURNÉE
+// ============================================================
+function getFiches() {
+  try { return JSON.parse(localStorage.getItem('zone5r_fiches')) || []; }
+  catch(e) { return []; }
+}
+function saveFiches(data) { localStorage.setItem('zone5r_fiches', JSON.stringify(data)); }
+
+function openFicheModal() {
+  // Réinitialiser tous les champs
+  ['fj-journee','fj-terrain','fj-date'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['fj-r-porte','fj-r-chaises','fj-r-asce',
+   'fj-d-arbitres','fj-d-asp','fj-d-animateur','fj-d-croixrouge',
+   'fj-d-cordes','fj-d-filets','fj-d-chaises','fj-d-presse',
+   'fj-d-social','fj-d-transport','fj-d-college'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = 0;
+  });
+  // Générer les champs contributions équipes
+  const saison = getSaison();
+  const contribDiv = document.getElementById('fj-contributions');
+  if (contribDiv) {
+    const equipes = saison ? saison.equipes : ALL_TEAMS.slice(0,8);
+    contribDiv.innerHTML = equipes.map((eq, i) => `
+      <div class="form-group" style="margin-bottom:8px">
+        <label>${eq}</label>
+        <input type="number" class="fj-contrib" data-equipe="${eq}" value="0" min="0" oninput="updateFicheTotaux()">
+      </div>
+    `).join('');
+  }
+  updateFicheTotaux();
+  document.getElementById('fj-error').classList.remove('show');
+  // Ajouter les listeners pour le calcul auto
+  document.querySelectorAll('#modal-fiche-journee input[type="number"]').forEach(el => {
+    el.addEventListener('input', updateFicheTotaux);
+  });
+  openModal('modal-fiche-journee');
+}
+
+function updateFicheTotaux() {
+  const v = id => parseFloat(document.getElementById(id)?.value || 0) || 0;
+  const totalR = v('fj-r-porte') + v('fj-r-chaises') + v('fj-r-asce') +
+    Array.from(document.querySelectorAll('.fj-contrib')).reduce((s,el) => s + (parseFloat(el.value)||0), 0);
+  const totalD = v('fj-d-arbitres') + v('fj-d-asp') + v('fj-d-animateur') +
+    v('fj-d-croixrouge') + v('fj-d-cordes') + v('fj-d-filets') +
+    v('fj-d-chaises') + v('fj-d-presse') + v('fj-d-social') +
+    v('fj-d-transport') + v('fj-d-college');
+  const benefice = totalR - totalD;
+
+  const fmt = n => n.toLocaleString('fr-FR');
+  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = fmt(val); };
+  setEl('fj-total-r', totalR);
+  setEl('fj-total-d', totalD);
+  setEl('fj-benefice', benefice);
+  const bEl = document.getElementById('fj-benefice');
+  if (bEl) bEl.style.color = benefice >= 0 ? 'var(--green-d)' : 'var(--red)';
+}
+
+function saveFicheJournee() {
+  const journee = document.getElementById('fj-journee').value.trim();
+  const date    = document.getElementById('fj-date').value;
+  const errEl   = document.getElementById('fj-error');
+  if (!journee || !date) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const v = id => parseFloat(document.getElementById(id)?.value || 0) || 0;
+  const contributions = Array.from(document.querySelectorAll('.fj-contrib')).map(el => ({
+    equipe: el.dataset.equipe, montant: parseFloat(el.value)||0
+  })).filter(c => c.montant > 0);
+
+  const totalR = v('fj-r-porte') + v('fj-r-chaises') + v('fj-r-asce') +
+    contributions.reduce((s,c) => s + c.montant, 0);
+  const totalD = v('fj-d-arbitres') + v('fj-d-asp') + v('fj-d-animateur') +
+    v('fj-d-croixrouge') + v('fj-d-cordes') + v('fj-d-filets') +
+    v('fj-d-chaises') + v('fj-d-presse') + v('fj-d-social') +
+    v('fj-d-transport') + v('fj-d-college');
+
+  const fiches = getFiches();
+  const soldePrecedent = fiches.length > 0 ? fiches[fiches.length-1].soldeToutCompte : 0;
+
+  const fiche = {
+    id: 'F' + Date.now(), journee, terrain: document.getElementById('fj-terrain').value.trim(),
+    date, declaredBy: currentUser?.name,
+    recettes: {
+      porte: v('fj-r-porte'), chaises: v('fj-r-chaises'), asce: v('fj-r-asce'), contributions
+    },
+    depenses: {
+      arbitres: v('fj-d-arbitres'), asp: v('fj-d-asp'), animateur: v('fj-d-animateur'),
+      croixRouge: v('fj-d-croixrouge'), cordes: v('fj-d-cordes'), filets: v('fj-d-filets'),
+      chaises: v('fj-d-chaises'), presse: v('fj-d-presse'), social: v('fj-d-social'),
+      transport: v('fj-d-transport'), college: v('fj-d-college')
+    },
+    totalRecettes: totalR, totalDepenses: totalD,
+    beneficeJour: totalR - totalD,
+    soldeToutCompte: soldePrecedent + (totalR - totalD)
+  };
+
+  fiches.push(fiche);
+  saveFiches(fiches);
+  closeModal('modal-fiche-journee');
+  renderFichesList();
+  showToast('✅ Fiche ' + journee + ' enregistrée · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA');
+}
+
+function renderFichesList() {
+  const container = document.getElementById('fiches-list');
+  if (!container) return;
+  const fiches = getFiches();
+  if (fiches.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune fiche de journée enregistrée</div>';
+    return;
+  }
+  const fmt = n => (n||0).toLocaleString('fr-FR');
+  container.innerHTML = [...fiches].reverse().map(f => `
+    <div class="card mb" style="overflow:visible">
+      <!-- En-tête style document -->
+      <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
+        Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
+      </div>
+      <div style="background:#ffff00;color:#000;padding:6px 16px;text-align:center;font-weight:700;font-size:13px">
+        ${f.journee}${f.terrain ? ' · Terrain ' + f.terrain : ''}
+      </div>
+      <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
+        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : '—'}
+      </div>
+
+      <!-- Corps : 2 colonnes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
+        <div style="padding:12px;border-right:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
+          ${[
+            ['Recette à la porte', f.recettes.porte],
+            ['Bénéfices chaises',  f.recettes.chaises],
+            ['Quote part ASCE',    f.recettes.asce],
+          ].filter(([,v]) => v).map(([l,v]) => `
+            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+          `).join('')}
+          ${(f.recettes.contributions||[]).map(c => `
+            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
+          `).join('')}
+        </div>
+        <div style="padding:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center">Dépenses</div>
+          ${[
+            ['Arbitres',           f.depenses.arbitres],
+            ['ASP',                f.depenses.asp],
+            ['Animateur',          f.depenses.animateur],
+            ['Croix Rouge',        f.depenses.croixRouge],
+            ['Location cordes',    f.depenses.cordes],
+            ['Location filets',    f.depenses.filets],
+            ['Chaises école foot', f.depenses.chaises],
+            ['Presse',             f.depenses.presse],
+            ['Social',             f.depenses.social],
+            ['Transport',          f.depenses.transport],
+            ['Collège René Coly',  f.depenses.college],
+          ].filter(([,v]) => v).map(([l,v]) => `
+            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Totaux -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
+        <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
+        <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
+      </div>
+      <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
+        <strong style="font-size:13px">Bénéfice du Jour</strong>
+        <strong style="font-size:18px;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">${fmt(f.beneficeJour)} FCFA</strong>
+      </div>
+      <div style="padding:10px 16px;background:var(--green-d);color:#fff;display:flex;justify-content:space-between;align-items:center">
+        <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
+        <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+//  STADES
+// ============================================================
+function getStades() {
+  try { return JSON.parse(localStorage.getItem('zone5r_stades')) || [
+    { nom:'Stade René COLY', lieu:'Bignona Centre', capacite:3000, contact:'René COLY' },
+    { nom:'CEM Arfang Bessire Sonko', lieu:'Bignona', capacite:500, contact:'—' },
+    { nom:'Terrain HLM', lieu:'HLM Bignona', capacite:800, contact:'—' },
+    { nom:'Terrain JKS', lieu:'Bignona', capacite:600, contact:'—' },
+  ]; } catch(e) { return []; }
+}
+function saveStades(d) { localStorage.setItem('zone5r_stades', JSON.stringify(d)); }
+
+function renderStadesPanel() {
+  const body = document.getElementById('stades-body');
+  if (!body) return;
+  const stades = getStades();
+  if (!stades.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Aucun terrain</div>'; return; }
+  body.innerHTML = stades.map((s, i) => `
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;font-weight:600">🏟️ ${s.nom}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.lieu} · Cap. ${(s.capacite||0).toLocaleString('fr-FR')} · ${s.contact||'—'}</div>
+      </div>
+      <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteStade(${i})">✕</button>
+    </div>`).join('');
+  // Mettre à jour les selects de stades
+  const opts = stades.map(s => `<option value="${s.nom}">${s.nom}</option>`).join('');
+  ['fin-terrain-select'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = '<option value="">-- Choisir --</option>' + opts; }
+  });
+}
+
+function saveStade() {
+  const nom = document.getElementById('stade-nom').value.trim();
+  const errEl = document.getElementById('stade-error');
+  if (!nom) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+  const stades = getStades();
+  stades.push({ nom, lieu: document.getElementById('stade-lieu').value.trim(),
+    capacite: parseInt(document.getElementById('stade-capacite').value)||0,
+    contact: document.getElementById('stade-contact').value.trim() });
+  saveStades(stades);
+  closeModal('modal-add-stade');
+  renderStadesPanel();
+  showToast('✅ Terrain « ' + nom + ' » enregistré.');
+}
+
+function deleteStade(i) {
+  if (!confirm('Supprimer ce terrain ?')) return;
+  const stades = getStades(); stades.splice(i,1); saveStades(stades);
+  renderStadesPanel();
+}
+
+// ============================================================
+//  SUSPENSIONS (données localStorage)
+// ============================================================
+function getSuspensions() {
+  try { return JSON.parse(localStorage.getItem('zone5r_suspensions')) || [
+    { id:'s1', joueur:'Seydou COLY',  asc:'ASC Baraka',  motif:'Rouge direct', matchsRestants:2, type:'rouge' },
+    { id:'s2', joueur:'Aliou DIEME',  asc:'ASC Deggo',   motif:'2 jaunes',     matchsRestants:1, type:'jaune' },
+    { id:'s3', joueur:'Omar DIATTA',  asc:'ASC Kafesse', motif:'Rouge direct', matchsRestants:3, type:'rouge' },
+  ]; } catch(e) { return []; }
+}
+function saveSuspensions(d) { localStorage.setItem('zone5r_suspensions', JSON.stringify(d)); }
+
+function renderSuspensions() {
+  const susp  = getSuspensions();
+  const tbody = document.getElementById('suspensions-body');
+  const cnt   = document.getElementById('suspensions-count');
+  const alert = document.getElementById('suspensions-alert');
+  if (!tbody) return;
+  if (cnt) cnt.textContent = susp.length;
+  if (alert) {
+    if (susp.length > 0) {
+      alert.className = 'alert danger';
+      alert.innerHTML = `🟥 <strong>${susp.length} joueur(s) suspendu(s)</strong> — vérifiez avant validation des feuilles de match`;
+    } else {
+      alert.className = 'alert success';
+      alert.innerHTML = '✅ Aucune suspension active en ce moment.';
+    }
+  }
+  const isMember = currentUser !== null;
+  tbody.innerHTML = susp.length ? susp.map(s => `
+    <tr>
+      <td><strong>${s.joueur}</strong></td>
+      <td>${s.asc}</td>
+      <td><span class="badge ${s.type==='rouge'?'red':'amber'}">${s.motif}</span></td>
+      <td style="text-align:center"><strong>${s.matchsRestants}</strong></td>
+      <td>${isMember ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="leverSuspension('${s.id}')">Lever</button>` : '—'}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucune suspension active</td></tr>';
+}
+
+function leverSuspension(id) {
+  if (!currentUser) return;
+  if (!confirm('Lever définitivement cette suspension ?')) return;
+  const susp = getSuspensions().filter(s => s.id !== id);
+  saveSuspensions(susp);
+  renderSuspensions();
+  updateCaisse();
+  showToast('✅ Suspension levée.');
+}
+
+// ============================================================
+//  LITIGES
+// ============================================================
+function getLitiges() {
+  try { return JSON.parse(localStorage.getItem('zone5r_litiges')) || []; }
+  catch(e) { return []; }
+}
+function saveLitiges(d) { localStorage.setItem('zone5r_litiges', JSON.stringify(d)); }
+
+function initLitigeModal() {
+  const saison = getSaison();
+  const equipes = saison ? saison.equipes : ALL_TEAMS;
+  const matchOpts = (saison && saison.matchs ? saison.matchs : []).map(m =>
+    `<option value="${m.dom} vs ${m.ext}">${m.dom} vs ${m.ext} (Poule ${m.poule})</option>`).join('');
+  const eq = document.getElementById('lit-match');
+  if (eq) eq.innerHTML = '<option value="">-- Choisir --</option>' + matchOpts;
+  const plOpts = equipes.map(e => `<option value="${e}">${e}</option>`).join('');
+  const pl = document.getElementById('lit-plaignant');
+  if (pl) pl.innerHTML = '<option value="">-- Choisir --</option>' + plOpts;
+}
+
+function saveLitige() {
+  const match   = document.getElementById('lit-match').value;
+  const motif   = document.getElementById('lit-motif').value.trim();
+  const errEl   = document.getElementById('lit-error');
+  if (!match || !motif) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const pvFile = document.getElementById('lit-pv').files[0];
+  let pvName = null;
+  if (pvFile) pvName = pvFile.name; // Dans une vraie app, on uploadrait le fichier
+
+  const litige = {
+    id: 'L' + Date.now(), match, motif,
+    plaignant: document.getElementById('lit-plaignant').value,
+    decision:  document.getElementById('lit-decision').value,
+    amende:    parseFloat(document.getElementById('lit-amende').value)||0,
+    sanctionne: document.getElementById('lit-sanctionne').value.trim(),
+    motivations: document.getElementById('lit-motivations').value.trim(),
+    pvName, declaredBy: currentUser?.name,
+    date: new Date().toISOString()
+  };
+
+  const litiges = getLitiges();
+  litiges.push(litige);
+  saveLitiges(litiges);
+  closeModal('modal-litige');
+  renderLitiges();
+  updateCaisse(); // Les amendes sont des recettes
+  showToast('⚖️ Litige enregistré' + (litige.amende ? ' · Amende : ' + litige.amende.toLocaleString('fr-FR') + ' FCFA' : '') + '.');
+}
+
+function renderLitiges() {
+  const litiges = getLitiges();
+  const tbody   = document.getElementById('litiges-body');
+  const badge   = document.getElementById('litiges-count-badge');
+  if (!tbody) return;
+  const enCours = litiges.filter(l => l.decision === 'en_cours').length;
+  if (badge) badge.textContent = enCours + ' en cours';
+
+  const LABELS = { en_cours:'En cours', rejete:'Rejeté', rejoue:'Match rejoué',
+    forfait:'Forfait', sanction:'Sanction', resultat_modifie:'Résultat modifié' };
+  const CLASSES = { en_cours:'amber', rejete:'gray', rejoue:'blue',
+    forfait:'red', sanction:'red', resultat_modifie:'blue' };
+
+  tbody.innerHTML = litiges.length ? litiges.map(l => `
+    <tr>
+      <td><strong>${l.match}</strong><br><span style="font-size:11px;color:var(--muted)">${new Date(l.date).toLocaleDateString('fr-FR')}</span></td>
+      <td>${l.motif}<br>${l.plaignant?`<span style="font-size:11px;color:var(--muted)">Plaignant : ${l.plaignant}</span>`:''}</td>
+      <td>${l.amende ? `<span class="badge red">${l.amende.toLocaleString('fr-FR')}</span>` : '—'}</td>
+      <td><span class="badge ${CLASSES[l.decision]||'gray'}">${LABELS[l.decision]||l.decision}</span></td>
+      <td>${l.pvName ? `<span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:12px;cursor:default" title="PV non téléchargeable">📄 ${l.pvName}</span>` : '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+      <td>${currentUser?.role==='juridique' ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="editLitige('${l.id}')">Modifier</button>` : '—'}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Aucun litige déclaré</td></tr>';
+}
+
+// ============================================================
+//  FINALE
+// ============================================================
+function getFinale() {
+  try { return JSON.parse(localStorage.getItem('zone5r_finale')) || null; }
+  catch(e) { return null; }
+}
+function saveFinaleData(d) { localStorage.setItem('zone5r_finale', JSON.stringify(d)); }
+
+function updateFinaleTotaux() {
+  const v = id => parseFloat(document.getElementById(id)?.value||0)||0;
+  const r = v('fin-r-porte')+v('fin-r-chaises')+v('fin-r-dons')+v('fin-r-subvention')+v('fin-r-soiree')+v('fin-r-autres');
+  const d = v('fin-d-enveloppes')+v('fin-d-transport')+v('fin-d-tenues')+v('fin-d-securite')+v('fin-d-arbitres')+v('fin-d-medias')+v('fin-d-chaises')+v('fin-d-autres');
+  const fmt = n => n.toLocaleString('fr-FR');
+  const s = id => { const el = document.getElementById(id); if(el) el.textContent = fmt(id==='fin-benefice'?r-d:id==='fin-total-r'?r:d); };
+  s('fin-total-r'); s('fin-total-d'); s('fin-benefice');
+}
+
+function openFinaleModal() {
+  const saison = getSaison();
+  const equipes = saison ? saison.equipes : ALL_TEAMS;
+  const opts = equipes.map(e=>`<option value="${e}">${e}</option>`).join('');
+  ['fin-equipe-a','fin-equipe-b'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">-- Choisir --</option>' + opts;
+  });
+  renderStadesPanel(); // sync stades select
+  ['fin-r-porte','fin-r-chaises','fin-r-dons','fin-r-subvention','fin-r-soiree','fin-r-autres',
+   'fin-d-enveloppes','fin-d-transport','fin-d-tenues','fin-d-securite','fin-d-arbitres','fin-d-medias','fin-d-chaises','fin-d-autres'
+  ].forEach(id => { const el=document.getElementById(id); if(el) el.value=0; });
+  updateFinaleTotaux();
+  document.getElementById('fin-error').classList.remove('show');
+  openModal('modal-finale');
+}
+
+function saveFinale() {
+  const date   = document.getElementById('fin-date').value;
+  const equA   = document.getElementById('fin-equipe-a').value;
+  const equB   = document.getElementById('fin-equipe-b').value;
+  const errEl  = document.getElementById('fin-error');
+  if (!date||!equA||!equB) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const v = id => parseFloat(document.getElementById(id)?.value||0)||0;
+  const totalR = v('fin-r-porte')+v('fin-r-chaises')+v('fin-r-dons')+v('fin-r-subvention')+v('fin-r-soiree')+v('fin-r-autres');
+  const totalD = v('fin-d-enveloppes')+v('fin-d-transport')+v('fin-d-tenues')+v('fin-d-securite')+v('fin-d-arbitres')+v('fin-d-medias')+v('fin-d-chaises')+v('fin-d-autres');
+
+  const finale = { date, terrain: document.getElementById('fin-terrain-select').value,
+    equipeA: equA, equipeB: equB,
+    recettes:{ porte:v('fin-r-porte'), chaises:v('fin-r-chaises'), dons:v('fin-r-dons'), subvention:v('fin-r-subvention'), soiree:v('fin-r-soiree'), autres:v('fin-r-autres') },
+    depenses:{ enveloppes:v('fin-d-enveloppes'), transport:v('fin-d-transport'), tenues:v('fin-d-tenues'), securite:v('fin-d-securite'), arbitres:v('fin-d-arbitres'), medias:v('fin-d-medias'), chaises:v('fin-d-chaises'), autres:v('fin-d-autres') },
+    totalRecettes:totalR, totalDepenses:totalD, benefice:totalR-totalD,
+    notes: document.getElementById('fin-notes').value.trim(),
+    declaredBy: currentUser?.name };
+
+  saveFinaleData(finale);
+  closeModal('modal-finale');
+  renderFinaleDisplay();
+  updateCaisse();
+  showToast('🏆 Bilan finale enregistré !');
+}
+
+function renderFinaleDisplay() {
+  const div = document.getElementById('finale-display');
+  if (!div) return;
+  const f = getFinale();
+  if (!f) { div.innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune finale déclarée</div>'; return; }
+  const fmt = n => (n||0).toLocaleString('fr-FR');
+  div.innerHTML = `
+    <div class="card mb">
+      <div style="background:var(--amber-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:14px">
+        🏆 FINALE — ${f.equipeA} vs ${f.equipeB}
+      </div>
+      <div style="background:var(--amber-l);padding:6px 16px;text-align:center;font-size:12px;color:var(--amber-d)">
+        ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—'}
+        ${f.terrain ? ' · ' + f.terrain : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="padding:12px;border-right:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:700;color:var(--green-d);margin-bottom:8px">RECETTES</div>
+          ${[['Porte',f.recettes.porte],['Chaises',f.recettes.chaises],['Dons & Soutiens',f.recettes.dons],['Subvention',f.recettes.subvention],['Soirée dansante',f.recettes.soiree],['Autres',f.recettes.autres]]
+            .filter(([,v])=>v).map(([l,v])=>`<div class="flex-between" style="font-size:12px;padding:1px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>`).join('')}
+        </div>
+        <div style="padding:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px">DÉPENSES</div>
+          ${[['Enveloppes',f.depenses.enveloppes],['Transport',f.depenses.transport],['Tenues',f.depenses.tenues],['Sécurité',f.depenses.securite],['Arbitres',f.depenses.arbitres],['Médias',f.depenses.medias],['Chaises VIP',f.depenses.chaises],['Autres',f.depenses.autres]]
+            .filter(([,v])=>v).map(([l,v])=>`<div class="flex-between" style="font-size:12px;padding:1px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>`).join('')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
+        <div style="padding:8px 12px;background:var(--green-l)"><span style="font-size:11px;font-weight:700;color:var(--green-d)">TOTAL RECETTES</span> <strong style="float:right">${fmt(f.totalRecettes)}</strong></div>
+        <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right">${fmt(f.totalDepenses)}</strong></div>
+      </div>
+      <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between">
+        <strong>Bénéfice Finale</strong>
+        <strong style="color:${f.benefice>=0?'var(--green-d)':'var(--red)'}">${fmt(f.benefice)} FCFA</strong>
+      </div>
+      ${f.notes?`<div style="padding:10px 16px;font-size:12px;color:var(--muted)"><em>${f.notes}</em></div>`:''}
+    </div>`;
+}
+
+// ============================================================
+//  LICENCES & BORDEREAUX
+// ============================================================
+function getLicences() {
+  try { return JSON.parse(localStorage.getItem('zone5r_licences')) || []; }
+  catch(e) { return []; }
+}
+function saveLicences(d) { localStorage.setItem('zone5r_licences', JSON.stringify(d)); }
+
+function updateLicTotal() {
+  const j  = parseInt(document.getElementById('lic-joueurs')?.value)||0;
+  const t  = parseInt(document.getElementById('lic-tech')?.value)||0;
+  const b  = parseInt(document.getElementById('lic-bordereaux')?.value)||0;
+  const total = j*200 + t*250 + b*500;
+  const el = document.getElementById('lic-total');
+  if (el) el.textContent = total.toLocaleString('fr-FR') + ' FCFA';
+}
+
+function initLicenceModal() {
+  const saison = getSaison();
+  const equipes = saison ? saison.equipes : ALL_TEAMS;
+  const el = document.getElementById('lic-asc');
+  if (el) el.innerHTML = '<option value="">-- Choisir une ASC --</option>' + equipes.map(e=>`<option value="${e}">${e}</option>`).join('');
+  document.getElementById('lic-error').classList.remove('show');
+  ['lic-joueurs','lic-tech','lic-bordereaux'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=0;});
+  updateLicTotal();
+}
+
+function saveLicence() {
+  const asc   = document.getElementById('lic-asc').value;
+  const j     = parseInt(document.getElementById('lic-joueurs').value)||0;
+  const t     = parseInt(document.getElementById('lic-tech').value)||0;
+  const b     = parseInt(document.getElementById('lic-bordereaux').value)||0;
+  const errEl = document.getElementById('lic-error');
+  if (!asc || (j+t+b===0)) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const lics = getLicences();
+  lics.push({ id:'Lic'+Date.now(), asc, joueurs:j, tech:t, bordereaux:b,
+    total: j*200+t*250+b*500, date: document.getElementById('lic-date').value,
+    declaredBy: currentUser?.name });
+  saveLicences(lics);
+  closeModal('modal-licence');
+  renderLicencesTable();
+  updateCaisse();
+  showToast('✅ Vente enregistrée pour ' + asc + ' · ' + (j*200+t*250+b*500).toLocaleString('fr-FR') + ' FCFA');
+}
+
+function renderLicencesTable() {
+  const lics  = getLicences();
+  const tbody = document.getElementById('licences-table-body');
+  const badge = document.getElementById('total-licences-badge');
+  if (!tbody) return;
+
+  // Grouper par ASC
+  const byAsc = {};
+  lics.forEach(l => {
+    if (!byAsc[l.asc]) byAsc[l.asc] = { joueurs:0, tech:0, bordereaux:0, total:0 };
+    byAsc[l.asc].joueurs   += l.joueurs||0;
+    byAsc[l.asc].tech      += l.tech||0;
+    byAsc[l.asc].bordereaux+= l.bordereaux||0;
+    byAsc[l.asc].total     += l.total||0;
+  });
+  const grandTotal = Object.values(byAsc).reduce((s,v)=>s+v.total,0);
+  if (badge) badge.textContent = 'Total : ' + grandTotal.toLocaleString('fr-FR') + ' FCFA';
+
+  const fmt = n => n.toLocaleString('fr-FR');
+  tbody.innerHTML = Object.keys(byAsc).length ? Object.entries(byAsc).map(([asc,v]) => `
+    <tr>
+      <td><strong>${asc}</strong></td>
+      <td>${v.joueurs} × 200 = <strong>${fmt(v.joueurs*200)}</strong></td>
+      <td>${v.tech} × 250 = <strong>${fmt(v.tech*250)}</strong></td>
+      <td>${v.bordereaux} × 500 = <strong>${fmt(v.bordereaux*500)}</strong></td>
+      <td><span class="badge green">${fmt(v.total)} FCFA</span></td>
+    </tr>`).join('')
+  + `<tr style="background:var(--green-l)"><td colspan="4"><strong>TOTAL ZONE 5R</strong></td><td><strong>${fmt(grandTotal)} FCFA</strong></td></tr>`
+  : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucune vente enregistrée</td></tr>';
+}
+
+// ============================================================
+//  DÉPENSES DIVERSES
+// ============================================================
+function getDepensesDiverses() {
+  try { return JSON.parse(localStorage.getItem('zone5r_depenses')) || []; }
+  catch(e) { return []; }
+}
+function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); }
+
+function renderDepensesList() {
+  const dep = getDepensesDiverses();
+  const div = document.getElementById('depenses-list');
+  if (!div) return;
+  const fmt = n => (n||0).toLocaleString('fr-FR');
+  div.innerHTML = dep.length ? dep.map(d => `
+    <div class="tx-row">
+      <div class="tx-icon depense">💸</div>
+      <div class="tx-info">
+        <div class="tx-desc">${d.description}</div>
+        <div class="tx-date">${d.categorie} · ${d.date||'—'} · ${d.declaredBy||'—'}</div>
+      </div>
+      <div class="tx-amount depense">– ${fmt(d.montant)}</div>
+    </div>`).join('')
+  : '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>';
+}
+
+// Surcharger la sauvegarde de l'opération existante
+function saveOperation() {
+  const type  = document.querySelector('#modal-tx select').value;
+  const cat   = document.querySelectorAll('#modal-tx select')[1].value;
+  const montant = parseFloat(document.querySelectorAll('#modal-tx input[type="number"]')[0].value)||0;
+  const date  = document.querySelectorAll('#modal-tx input[type="date"]')[0].value;
+  const desc  = document.querySelectorAll('#modal-tx input[type="text"]')[0].value.trim();
+  if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
+  const dep = getDepensesDiverses();
+  dep.push({ id:'D'+Date.now(), type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name });
+  saveDepensesDiverses(dep);
+  closeModal('modal-tx');
+  renderDepensesList();
+  updateCaisse();
+  showToast('✅ Opération enregistrée · ' + montant.toLocaleString('fr-FR') + ' FCFA');
+}
+
+// ============================================================
+//  BILAN GÉNÉRAL (calcul depuis toutes les sources)
+// ============================================================
+function computeBilan() {
+  const saison     = getSaison();
+  const soldeDep   = saison ? (saison.soldeDepart||0) : 0;
+  const fiches     = getFiches();
+  const finale     = getFinale();
+  const licences   = getLicences();
+  const depDiverses= getDepensesDiverses();
+  const litiges    = getLitiges();
+
+  const recJournees  = fiches.reduce((s,f) => s+(f.totalRecettes||0), 0);
+  const depJournees  = fiches.reduce((s,f) => s+(f.totalDepenses||0), 0);
+  const recFinale    = finale ? (finale.totalRecettes||0) : 0;
+  const depFinale    = finale ? (finale.totalDepenses||0) : 0;
+  const recLicences  = licences.reduce((s,l) => s+(l.total||0), 0);
+  const recAmendes   = litiges.reduce((s,l) => s+(l.amende||0), 0);
+  const depDiversTotal = depDiverses.filter(d=>d.type==='depense').reduce((s,d) => s+(d.montant||0), 0);
+  const recDiversTotal = depDiverses.filter(d=>d.type==='recette').reduce((s,d) => s+(d.montant||0), 0);
+
+  const totalRecettes = soldeDep + recJournees + recFinale + recLicences + recAmendes + recDiversTotal;
+  const totalDepenses = depJournees + depFinale + depDiversTotal;
+  const solde = totalRecettes - totalDepenses;
+
+  return { soldeDep, recJournees, depJournees, recFinale, depFinale,
+    recLicences, recAmendes, recDiversTotal, depDiversTotal,
+    totalRecettes, totalDepenses, solde, nbFiches: fiches.length };
+}
+
+function updateCaisse() {
+  const b = computeBilan();
+  const fmt = n => n.toLocaleString('fr-FR');
+  const s = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=fmt(val)+' FCFA'; };
+  const s2= (id, val) => { const el=document.getElementById(id); if(el) el.textContent=fmt(val); };
+  s2('cw-solde-depart', b.soldeDep);
+  s2('cw-recettes',  b.totalRecettes);
+  s2('cw-depenses',  b.totalDepenses);
+  const soldeEl = document.getElementById('cw-solde');
+  if (soldeEl) { soldeEl.textContent = fmt(b.solde) + ' FCFA'; soldeEl.style.color = b.solde >= 0 ? '#fff' : '#ffaaaa'; }
+}
+
+function renderBilan() {
+  const div = document.getElementById('bilan-content');
+  if (!div) return;
+  const b   = computeBilan();
+  const saison = getSaison();
+  const fmt = n => n.toLocaleString('fr-FR');
+  const row = (label, montant, cls='') => `
+    <div class="flex-between" style="padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px">${label}</span>
+      <strong style="color:${cls||'var(--text)'}">${fmt(montant)} FCFA</strong>
+    </div>`;
+
+  div.innerHTML = `
+    <div style="text-align:center;margin-bottom:16px;font-size:12px;color:var(--muted)">
+      Saison : <strong>${saison?.nom||'—'}</strong> · Généré le ${new Date().toLocaleDateString('fr-FR')}
+    </div>
+
+    <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--green-d);margin-bottom:10px">📥 RECETTES</div>
+      ${row('Solde de départ (report)', b.soldeDep, 'var(--blue)')}
+      ${row('Journées de championnat ('+b.nbFiches+' fiches)', b.recJournees, 'var(--green-d)')}
+      ${row('Finale', b.recFinale, 'var(--green-d)')}
+      ${row('Licences & Bordereaux', b.recLicences, 'var(--green-d)')}
+      ${row('Amendes & Sanctions', b.recAmendes, 'var(--amber-d)')}
+      ${row('Recettes diverses', b.recDiversTotal, 'var(--green-d)')}
+      <div class="flex-between" style="padding:8px 0;margin-top:4px">
+        <strong style="font-size:14px">TOTAL RECETTES</strong>
+        <strong style="font-size:18px;color:var(--green-d)">${fmt(b.totalRecettes)} FCFA</strong>
+      </div>
+    </div>
+
+    <div style="background:var(--red-l);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px">📤 DÉPENSES</div>
+      ${row('Journées de championnat', b.depJournees, 'var(--red)')}
+      ${row('Finale', b.depFinale, 'var(--red)')}
+      ${row('Dépenses diverses', b.depDiversTotal, 'var(--red)')}
+      <div class="flex-between" style="padding:8px 0;margin-top:4px">
+        <strong style="font-size:14px">TOTAL DÉPENSES</strong>
+        <strong style="font-size:18px;color:var(--red)">${fmt(b.totalDepenses)} FCFA</strong>
+      </div>
+    </div>
+
+    <div style="background:${b.solde>=0?'var(--amber-l)':'var(--red-l)'};border-radius:var(--radius-sm);padding:16px;text-align:center;border:2px solid ${b.solde>=0?'var(--amber)':'var(--red)'}">
+      <div style="font-size:12px;font-weight:700;color:${b.solde>=0?'var(--amber-d)':'var(--red)'};margin-bottom:4px">SOLDE EN CAISSE</div>
+      <div style="font-size:28px;font-weight:800;color:${b.solde>=0?'var(--amber-d)':'var(--red)'}">${fmt(b.solde)} FCFA</div>
+    </div>
+
+    <div class="mt" style="font-size:11px;color:var(--muted);text-align:center">
+      Commission des finances : Ibrahima DIÉMÉ · El Habib Pierre SANÉ (Trésorier) · Souleymane DIENG (Adj.)
+    </div>`;
+
+  // Remplir les destinataires
+  const recips = document.getElementById('bilan-recipients');
+  if (recips) {
+    const equipes = saison ? saison.equipes : ALL_TEAMS;
+    recips.innerHTML = ['ODGAM Bignona','Mairie de Bignona',...equipes].map(e =>
+      `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" checked style="width:auto"> ${e}
+      </label>`).join('');
+  }
+}
+
+function printBilan() {
+  renderBilan();
+  setTimeout(() => window.print(), 200);
+}
+
+function sendBilan() {
+  closeModal('modal-send-bilan');
+  showToast('📤 Bilan marqué comme envoyé aux ASC & instances supérieures.');
+}
+
+// ============================================================
+//  SOLDE DE DÉPART (sauvegarde dans la saison)
+// ============================================================
+function declarerSaisonOrig() {} // placeholder pour éviter conflit
+
+// Surcharge de declarerSaison pour inclure le solde
+const _origDeclarerSaison = declarerSaison;
+
+// ============================================================
+//  MISE À JOUR DU MODAL FICHE JOURNÉE — Quote parts par menu déroulant
+// ============================================================
+function openFicheModal() {
+  ['fj-journee','fj-terrain'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const dateEl=document.getElementById('fj-date');if(dateEl)dateEl.value='';
+  ['fj-r-porte','fj-r-chaises','fj-r-asce',
+   'fj-d-arbitres','fj-d-asp','fj-d-animateur','fj-d-croixrouge',
+   'fj-d-cordes','fj-d-filets','fj-d-chaises','fj-d-presse',
+   'fj-d-social','fj-d-transport','fj-d-college'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value=0;
+  });
+
+  // Quote parts dynamiques — menu déroulant pour ajouter des ASC
+  const saison = getSaison();
+  const equipes = saison ? saison.equipes : ALL_TEAMS;
+  const contribDiv = document.getElementById('fj-contributions');
+  if (contribDiv) {
+    contribDiv.innerHTML = `
+      <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+        <select id="fj-contrib-select" style="flex:1;font-size:12px;padding:5px 8px">
+          <option value="">-- Choisir une ASC --</option>
+          ${equipes.map(e=>`<option value="${e}">${e}</option>`).join('')}
+        </select>
+        <button type="button" class="btn primary" style="font-size:12px;padding:5px 10px;flex-shrink:0" onclick="addContribRow()">+ Ajouter</button>
+      </div>
+      <div id="contrib-rows"></div>`;
+  }
+
+  updateFicheTotaux();
+  document.getElementById('fj-error').classList.remove('show');
+  openModal('modal-fiche-journee');
+}
+
+let _contribAdded = [];
+function addContribRow() {
+  const sel = document.getElementById('fj-contrib-select');
+  const asc = sel?.value;
+  if (!asc) { showToast('⚠️ Choisissez une ASC d\'abord.'); return; }
+  if (_contribAdded.includes(asc)) { showToast('⚠️ ' + asc + ' est déjà ajoutée.'); return; }
+  _contribAdded.push(asc);
+  const rowsDiv = document.getElementById('contrib-rows');
+  if (!rowsDiv) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+  div.dataset.asc = asc;
+  div.innerHTML = `
+    <span style="font-size:12px;flex:1;font-weight:500">${asc}</span>
+    <input type="number" class="fj-contrib" data-equipe="${asc}" value="0" min="0"
+      style="width:110px;font-size:12px;padding:5px 8px" oninput="updateFicheTotaux()">
+    <button type="button" class="btn danger" style="font-size:11px;padding:3px 8px" onclick="removeContribRow(this,'${asc}')">✕</button>`;
+  rowsDiv.appendChild(div);
+  sel.value = '';
+  updateFicheTotaux();
+}
+
+function removeContribRow(btn, asc) {
+  _contribAdded = _contribAdded.filter(a=>a!==asc);
+  btn.parentElement.remove();
+  updateFicheTotaux();
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+getUsers();
+getPlayers();
+getStades(); // init stades par défaut
+initTeamTabs();
+renderFichesList();
+renderLicencesTable();
+renderDepensesList();
+renderSuspensions();
+renderLitiges();
+renderFinaleDisplay();
+updateCaisse();
+updateUI();
+</script>
+</body>
+</html>
