@@ -280,6 +280,14 @@
   <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Bureau</div>
 </nav>
 
+<!-- Barre sélecteur de saison -->
+<div id="season-bar" style="display:none;background:var(--card);border-bottom:1px solid var(--border);
+  padding:7px 16px;align-items:center;gap:10px;flex-wrap:wrap;
+  position:sticky;top:112px;z-index:98">
+  <span style="font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap">📅 Saison :</span>
+  <div id="season-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+</div>
+
 <!-- ============================
      DASHBOARD
      ============================ -->
@@ -1848,8 +1856,8 @@ async function fireLoad(key) {
 }
 
 async function initFirebase() {
-  const keys = ['users','players','saison','teams','fiches','stades',
-                 'suspensions','litiges','finale','licences','depenses','auditlog'];
+  const keys = ['users','players','saison','saisons','teams','fiches','stades',
+                 'suspensions','litiges','finale','finales','licences','depenses','auditlog'];
   await Promise.all(keys.map(k => fireLoad(k)));
 
   // Listeners temps réel — synchronisent les autres onglets/navigateurs
@@ -1863,6 +1871,17 @@ async function initFirebase() {
     localStorage.setItem('zone5r_saison', JSON.stringify(snap.data().data));
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
     updateUI();
+  });
+  _db.collection(_COL).doc('saisons').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_saisons', JSON.stringify(snap.data().data));
+    renderSeasonBar();
+    if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
+  });
+  _db.collection(_COL).doc('finales').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_finales', JSON.stringify(snap.data().data));
+    renderFinaleDisplay(); updateCaisse(); renderBilan();
   });
   _db.collection(_COL).doc('suspensions').onSnapshot(snap => {
     if (!snap.exists || !_appReady) return;
@@ -2119,6 +2138,7 @@ function updateUI() {
     updateCaisse();
     renderSuspensions();
     renderLitiges();
+    renderSeasonBar();
   } else {
     badge.textContent = 'Visiteur';
     badge.className   = 'role-badge visitor';
@@ -2130,6 +2150,8 @@ function updateUI() {
     visitorView.style.display = 'block';
     memberView.style.display  = 'none';
     adminPanel.style.display  = 'none';
+    const sbLogout = document.getElementById('season-bar');
+    if (sbLogout) sbLogout.style.display = 'none';
 
     // Remettre le formulaire de connexion propre
     const uEl = document.getElementById('login-username');
@@ -2857,14 +2879,102 @@ function showToast(msg) {
 // ============================================================
 //  GESTION DE LA SAISON
 // ============================================================
-function getSaison() {
-  try { return JSON.parse(localStorage.getItem('zone5r_saison')) || null; }
-  catch(e) { return null; }
+// ── Multi-saisons ──────────────────────────────────────────
+let _selectedSaisonId = null;
+
+function getSaisons() {
+  try { return JSON.parse(localStorage.getItem('zone5r_saisons')) || []; }
+  catch(e) { return []; }
+}
+function saveSaisons(arr) {
+  localStorage.setItem('zone5r_saisons', JSON.stringify(arr));
+  fireSync('saisons', arr);
 }
 
+function getSelectedSaison() {
+  const saisons = getSaisons();
+  if (!saisons.length) {
+    try { return JSON.parse(localStorage.getItem('zone5r_saison')) || null; }
+    catch(e) { return null; }
+  }
+  if (_selectedSaisonId) return saisons.find(s => s.id === _selectedSaisonId) || null;
+  return saisons.find(s => s.active) || saisons[saisons.length - 1] || null;
+}
+
+function getSaison() { return getSelectedSaison(); }
+
 function saveSaison(saison) {
+  const saisons = getSaisons();
+  const idx = saisons.findIndex(s => s.id === saison.id);
+  if (idx >= 0) saisons[idx] = saison; else saisons.push(saison);
+  saveSaisons(saisons);
+  // Clé legacy pour compatibilité
   localStorage.setItem('zone5r_saison', JSON.stringify(saison));
   fireSync('saison', saison);
+}
+
+function selectSaison(id) {
+  _selectedSaisonId = id;
+  renderSeasonBar();
+  renderFichesList(); renderLitiges(); renderLicencesTable();
+  renderDepensesList(); renderFinaleDisplay(); renderSuspensions();
+  updateCaisse(); renderBilan(); initTeamTabs();
+  if (currentUser && hasPermission('manage_accounts')) renderSaisonPanel();
+}
+
+function renderSeasonBar() {
+  const bar   = document.getElementById('season-bar');
+  const pills = document.getElementById('season-pills');
+  if (!bar || !pills) return;
+  const saisons = getSaisons();
+  if (!currentUser || saisons.length < 2) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const selected = getSelectedSaison();
+  pills.innerHTML = [...saisons].reverse().map(s => {
+    const isSelected = s.id === selected?.id;
+    const label = s.nom + (s.active ? ' 🟢' : '');
+    return `<button onclick="selectSaison('${s.id}')"
+      style="font-size:11px;padding:4px 12px;border-radius:20px;border:none;cursor:pointer;font-weight:600;
+             background:${isSelected ? 'var(--green)' : 'var(--gray-l)'};
+             color:${isSelected ? '#fff' : 'var(--text)'}">
+      ${label}
+    </button>`;
+  }).join('');
+}
+
+function migrateSaisonLegacy() {
+  const legacyRaw = localStorage.getItem('zone5r_saison');
+  if (!legacyRaw) return;
+  try {
+    const s = JSON.parse(legacyRaw);
+    if (!s) return;
+    const saisons = getSaisons();
+    if (saisons.length > 0) { // Already migrated
+      if (_selectedSaisonId === null) _selectedSaisonId = (saisons.find(x=>x.active)||saisons[saisons.length-1])?.id || null;
+      return;
+    }
+    if (!s.id) s.id = 'S_legacy';
+    saveSaisons([s]);
+    _selectedSaisonId = s.id;
+    // Tagger les données existantes
+    ['zone5r_fiches','zone5r_litiges','zone5r_licences','zone5r_depenses'].forEach(key => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (Array.isArray(data) && data.length) {
+          const tagged = data.map(item => item.saisonId ? item : { ...item, saisonId: s.id });
+          localStorage.setItem(key, JSON.stringify(tagged));
+        }
+      } catch(e) {}
+    });
+    // Migrer la finale
+    const finaleRaw = localStorage.getItem('zone5r_finale');
+    if (finaleRaw) {
+      const f = JSON.parse(finaleRaw);
+      if (f && !f.saisonId) {
+        localStorage.setItem('zone5r_finales', JSON.stringify([{ ...f, saisonId: s.id }]));
+      }
+    }
+  } catch(e) { console.warn('[migration saison]', e); }
 }
 
 function renderSaisonPanel() {
@@ -2968,11 +3078,16 @@ function declarerSaison() {
   if (equipes.length < 2) return showToast('⚠️ Sélectionnez au moins 2 équipes.');
 
   const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
-  const saison = { nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
+  const id = 'S' + Date.now();
+  const saison = { id, nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
+  // Clôturer l'éventuelle saison précédente
+  getSaisons().filter(s => s.active && s.id !== id).forEach(s => { s.active = false; saveSaison(s); });
   saveSaison(saison);
+  _selectedSaisonId = id;
   logAction('DECLARE_SAISON', { detail: nom + ' · ' + equipes.length + ' équipes' });
 
   renderSaisonPanel();
+  renderSeasonBar();
   showToast('🚀 Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
 }
 
@@ -2981,6 +3096,7 @@ function cloturerSaison() {
   const saison = getSaison();
   if (saison) { saison.active = false; saveSaison(saison); }
   renderSaisonPanel();
+  renderSeasonBar();
   showToast('🔒 Saison clôturée.');
 }
 
@@ -3214,9 +3330,11 @@ function declarerOuverte() {
 // ============================================================
 //  FICHES DE JOURNÉE
 // ============================================================
+function _rawFiches() { try { return JSON.parse(localStorage.getItem('zone5r_fiches')) || []; } catch(e) { return []; } }
 function getFiches() {
-  try { return JSON.parse(localStorage.getItem('zone5r_fiches')) || []; }
-  catch(e) { return []; }
+  const all = _rawFiches();
+  const sid = getSelectedSaison()?.id;
+  return sid ? all.filter(f => (f.saisonId || 'S_legacy') === sid) : all;
 }
 function saveFiches(data) { localStorage.setItem('zone5r_fiches', JSON.stringify(data)); fireSync('fiches', data); }
 
@@ -3290,11 +3408,13 @@ function saveFicheJournee() {
     v('fj-d-chaises') + v('fj-d-presse') + v('fj-d-social') +
     v('fj-d-transport') + v('fj-d-college');
 
-  const fiches = getFiches();
+  const fiches = getFiches(); // filtrées par saison → soldePrecedent correct
   const soldePrecedent = fiches.length > 0 ? fiches[fiches.length-1].soldeToutCompte : 0;
+  const sid = getSelectedSaison()?.id;
 
   const fiche = {
-    id: 'F' + Date.now(), journee, terrain: document.getElementById('fj-terrain').value.trim(),
+    id: 'F' + Date.now(), saisonId: sid,
+    journee, terrain: document.getElementById('fj-terrain').value.trim(),
     date, declaredBy: currentUser?.name,
     recettes: {
       porte: v('fj-r-porte'), chaises: v('fj-r-chaises'), asce: v('fj-r-asce'), contributions
@@ -3310,8 +3430,8 @@ function saveFicheJournee() {
     soldeToutCompte: soldePrecedent + (totalR - totalD)
   };
 
-  fiches.push(fiche);
-  saveFiches(fiches);
+  const allFiches = _rawFiches(); allFiches.push(fiche);
+  saveFiches(allFiches);
   logAction('ADD_FICHE', { detail: journee + ' · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-fiche-journee');
   renderFichesList();
@@ -3501,9 +3621,11 @@ function leverSuspension(id) {
 // ============================================================
 //  LITIGES
 // ============================================================
+function _rawLitiges() { try { return JSON.parse(localStorage.getItem('zone5r_litiges')) || []; } catch(e) { return []; } }
 function getLitiges() {
-  try { return JSON.parse(localStorage.getItem('zone5r_litiges')) || []; }
-  catch(e) { return []; }
+  const all = _rawLitiges();
+  const sid = getSelectedSaison()?.id;
+  return sid ? all.filter(l => (l.saisonId || 'S_legacy') === sid) : all;
 }
 function saveLitiges(d) { localStorage.setItem('zone5r_litiges', JSON.stringify(d)); fireSync('litiges', d); }
 
@@ -3531,7 +3653,7 @@ function saveLitige() {
   if (pvFile) pvName = pvFile.name; // Dans une vraie app, on uploadrait le fichier
 
   const litige = {
-    id: 'L' + Date.now(), match, motif,
+    id: 'L' + Date.now(), saisonId: getSelectedSaison()?.id, match, motif,
     plaignant: document.getElementById('lit-plaignant').value,
     decision:  document.getElementById('lit-decision').value,
     amende:    parseFloat(document.getElementById('lit-amende').value)||0,
@@ -3541,8 +3663,7 @@ function saveLitige() {
     date: new Date().toISOString()
   };
 
-  const litiges = getLitiges();
-  litiges.push(litige);
+  const litiges = _rawLitiges(); litiges.push(litige);
   saveLitiges(litiges);
   logAction('ADD_LITIGE', { detail: litige.match + ' · ' + litige.motif });
   closeModal('modal-litige');
@@ -3580,10 +3701,23 @@ function renderLitiges() {
 //  FINALE
 // ============================================================
 function getFinale() {
-  try { return JSON.parse(localStorage.getItem('zone5r_finale')) || null; }
-  catch(e) { return null; }
+  try {
+    const sid = getSelectedSaison()?.id;
+    const all = JSON.parse(localStorage.getItem('zone5r_finales')) || [];
+    if (all.length && sid) return all.find(f => (f.saisonId || 'S_legacy') === sid) || null;
+    // Fallback legacy
+    return JSON.parse(localStorage.getItem('zone5r_finale')) || null;
+  } catch(e) { return null; }
 }
-function saveFinaleData(d) { localStorage.setItem('zone5r_finale', JSON.stringify(d)); fireSync('finale', d); }
+function saveFinaleData(d) {
+  const sid = getSelectedSaison()?.id;
+  if (sid) d.saisonId = sid;
+  const all = JSON.parse(localStorage.getItem('zone5r_finales') || '[]');
+  const idx = all.findIndex(f => (f.saisonId || 'S_legacy') === (sid || 'S_legacy'));
+  if (idx >= 0) all[idx] = d; else all.push(d);
+  localStorage.setItem('zone5r_finales', JSON.stringify(all));
+  fireSync('finales', all);
+}
 
 function updateFinaleTotaux() {
   const v = id => parseFloat(document.getElementById(id)?.value||0)||0;
@@ -3680,9 +3814,11 @@ function renderFinaleDisplay() {
 // ============================================================
 //  LICENCES & BORDEREAUX
 // ============================================================
+function _rawLicences() { try { return JSON.parse(localStorage.getItem('zone5r_licences')) || []; } catch(e) { return []; } }
 function getLicences() {
-  try { return JSON.parse(localStorage.getItem('zone5r_licences')) || []; }
-  catch(e) { return []; }
+  const all = _rawLicences();
+  const sid = getSelectedSaison()?.id;
+  return sid ? all.filter(l => (l.saisonId || 'S_legacy') === sid) : all;
 }
 function saveLicences(d) { localStorage.setItem('zone5r_licences', JSON.stringify(d)); fireSync('licences', d); }
 
@@ -3714,8 +3850,8 @@ function saveLicence() {
   if (!asc || (j+t+b===0)) { errEl.classList.add('show'); return; }
   errEl.classList.remove('show');
 
-  const lics = getLicences();
-  lics.push({ id:'Lic'+Date.now(), asc, joueurs:j, tech:t, bordereaux:b,
+  const lics = _rawLicences();
+  lics.push({ id:'Lic'+Date.now(), saisonId: getSelectedSaison()?.id, asc, joueurs:j, tech:t, bordereaux:b,
     total: j*200+t*250+b*500, date: document.getElementById('lic-date').value,
     declaredBy: currentUser?.name });
   saveLicences(lics);
@@ -3760,9 +3896,11 @@ function renderLicencesTable() {
 // ============================================================
 //  DÉPENSES DIVERSES
 // ============================================================
+function _rawDepenses() { try { return JSON.parse(localStorage.getItem('zone5r_depenses')) || []; } catch(e) { return []; } }
 function getDepensesDiverses() {
-  try { return JSON.parse(localStorage.getItem('zone5r_depenses')) || []; }
-  catch(e) { return []; }
+  const all = _rawDepenses();
+  const sid = getSelectedSaison()?.id;
+  return sid ? all.filter(d => (d.saisonId || 'S_legacy') === sid) : all;
 }
 function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); fireSync('depenses', d); }
 
@@ -3791,8 +3929,8 @@ function saveOperation() {
   const date  = document.querySelectorAll('#modal-tx input[type="date"]')[0].value;
   const desc  = document.querySelectorAll('#modal-tx input[type="text"]')[0].value.trim();
   if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
-  const dep = getDepensesDiverses();
-  dep.push({ id:'D'+Date.now(), type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name });
+  const dep = _rawDepenses();
+  dep.push({ id:'D'+Date.now(), saisonId: getSelectedSaison()?.id, type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name });
   saveDepensesDiverses(dep);
   logAction('ADD_DEPENSE', { detail: (desc || cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-tx');
@@ -4139,6 +4277,7 @@ function removeContribRow(btn, asc) {
 //  INIT
 // ============================================================
 function _bootApp() {
+  migrateSaisonLegacy();
   // Initialiser tous les comptes (DEFAULT_USERS + bureau) s'ils n'existent pas encore
   const users = getUsers();
   BUREAU_MEMBERS.forEach(m => {
