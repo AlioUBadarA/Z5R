@@ -2221,6 +2221,7 @@ const PERM_DEFAULTS = {
   add_player:          r => CAN_ADD_PLAYER.includes(r),
   add_litige:          r => r === 'juridique',
   manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
+  declare_saison:      r => ['superadmin','admin'].includes(r),
 };
 const PERM_LABELS = {
   see_players_litiges: 'Joueurs & Litiges',
@@ -2228,6 +2229,7 @@ const PERM_LABELS = {
   add_player:          'Ajouter Joueur',
   add_litige:          'Déclarer Litige',
   manage_accounts:     'Gérer Comptes',
+  declare_saison:      'Déclarer Saison',
 };
 
 function hasPermission(perm) {
@@ -2350,6 +2352,7 @@ const ACTION_LABELS = {
   DELETE_ACCOUNT:   'Compte supprimé',
   GRANT_PERMISSION: 'Permission accordée',
   REVOKE_PERMISSION:'Permission retirée',
+  DECLARE_SAISON:   'Saison déclarée',
 };
 
 function logAction(action, details = {}) {
@@ -2854,6 +2857,9 @@ function renderSaisonPanel() {
   if (saison && saison.active) {
     active.style.display = 'block';
     form.style.display   = 'none';
+    // Bouton clôturer : superadmin + président uniquement
+    const btnCloturer = document.querySelector('#saison-panel .btn.danger');
+    if (btnCloturer) btnCloturer.style.display = hasPermission('declare_saison') ? '' : 'none';
     badge.textContent    = saison.declaredOpen ? '🚀 Ouverte' : 'En cours';
     badge.className      = saison.declaredOpen ? 'badge green' : 'badge amber';
 
@@ -2920,16 +2926,17 @@ function renderSaisonPanel() {
     }
   } else {
     active.style.display = 'none';
-    form.style.display   = 'block';
+    form.style.display   = hasPermission('declare_saison') ? 'block' : 'none';
     badge.textContent    = 'Aucune saison active';
     badge.className      = 'badge gray';
     const h = document.querySelector('#bureau h2');
     if (h) h.textContent = 'Bureau Zone 5R / 2025';
-    refreshSaisonEquipesSelect();
+    if (hasPermission('declare_saison')) refreshSaisonEquipesSelect();
   }
 }
 
 function declarerSaison() {
+  if (!hasPermission('declare_saison')) return showToast('🚫 Action réservée au Président et au Super Admin.');
   const nom   = document.getElementById('saison-nom').value.trim();
   const date  = document.getElementById('saison-date').value;
   const selEl = document.getElementById('saison-equipes-select');
@@ -2942,6 +2949,7 @@ function declarerSaison() {
   const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
   const saison = { nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
   saveSaison(saison);
+  logAction('DECLARE_SAISON', { detail: nom + ' · ' + equipes.length + ' équipes' });
 
   renderSaisonPanel();
   showToast('🚀 Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
