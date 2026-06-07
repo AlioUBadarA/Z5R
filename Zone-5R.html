@@ -1271,42 +1271,44 @@
 <!-- Modal: Saisir score -->
 <!-- Modal: Live match scoring -->
 <div id="modal-live-match" class="modal-overlay" onclick="closeModalOutside(event)">
-  <div class="modal" style="max-width:420px;width:100%">
+  <div class="modal" style="max-width:440px;width:100%">
     <div class="modal-header">
       <span class="modal-title" id="live-modal-title">⚽ Match en direct</span>
       <button class="close-btn" onclick="closeLiveMatch()">✕</button>
     </div>
-    <div style="padding:16px">
+    <div style="padding:16px;overflow-y:auto;max-height:90vh">
 
       <!-- Statut + timer -->
-      <div style="text-align:center;margin-bottom:12px">
-        <div id="live-status-badge" style="margin-bottom:6px"></div>
+      <div style="text-align:center;margin-bottom:10px">
+        <div id="live-status-badge" style="margin-bottom:4px"></div>
         <div class="live-timer" id="live-timer-display">--:--</div>
       </div>
 
-      <!-- Score principal -->
+      <!-- Score principal — + masqué (saisie via tab But), − pour correction -->
       <div class="live-score-big">
         <div style="flex:1;text-align:center;min-width:0">
           <div class="live-team-label" id="live-dom-name">—</div>
-          <div style="display:flex;justify-content:center;align-items:center;gap:8px">
-            <button class="score-ctrl minus" onclick="liveGoal('dom',-1)">−</button>
+          <div style="display:flex;justify-content:center;align-items:center;gap:10px">
+            <button class="score-ctrl minus" id="score-minus-dom" onclick="liveGoal('dom',-1)" title="Annuler 1 but">−</button>
             <span class="score-num" id="live-score-dom">0</span>
-            <button class="score-ctrl plus" onclick="liveGoal('dom',1)">+</button>
+            <button class="score-ctrl plus"  id="score-plus-dom"  onclick="liveGoal('dom',1)"  title="Correction +" style="display:none">+</button>
           </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">correction</div>
         </div>
         <div class="score-sep">–</div>
         <div style="flex:1;text-align:center;min-width:0">
           <div class="live-team-label" id="live-ext-name">—</div>
-          <div style="display:flex;justify-content:center;align-items:center;gap:8px">
-            <button class="score-ctrl minus" onclick="liveGoal('ext',-1)">−</button>
+          <div style="display:flex;justify-content:center;align-items:center;gap:10px">
+            <button class="score-ctrl plus"  id="score-plus-ext"  onclick="liveGoal('ext',1)"  title="Correction +" style="display:none">+</button>
             <span class="score-num" id="live-score-ext">0</span>
-            <button class="score-ctrl plus" onclick="liveGoal('ext',1)">+</button>
+            <button class="score-ctrl minus" id="score-minus-ext" onclick="liveGoal('ext',-1)" title="Annuler 1 but">−</button>
           </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">correction</div>
         </div>
       </div>
 
       <!-- Contrôles du match -->
-      <div id="live-ctrl-btns" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px">
         <button class="btn primary" id="btn-ls-start"  onclick="liveSetStatus('live')"     style="display:none">▶ Coup d'envoi</button>
         <button class="btn"         id="btn-ls-half"   onclick="liveSetStatus('mi-temps')" style="display:none">⏸ Mi-temps</button>
         <button class="btn primary" id="btn-ls-resume" onclick="liveSetStatus('live-2')"   style="display:none">▶ Reprendre (2ᵉ mi-temps)</button>
@@ -1338,17 +1340,72 @@
         </div>
       </div>
 
-      <!-- Cartons -->
-      <div id="live-cards-panel" style="display:none;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.05em">CARTON</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="live-card-team" style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
-            <option value="dom">-- Équipe dom.</option>
-            <option value="ext">-- Équipe ext.</option>
-          </select>
-          <input id="live-card-player" type="text" placeholder="N° ou nom joueur" style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
-          <button class="btn" style="padding:7px 11px;background:#FCD34D;border:none;font-size:15px" title="Jaune" onclick="liveCard('jaune')">🟨</button>
-          <button class="btn" style="padding:7px 11px;background:#EF4444;color:#fff;border:none;font-size:15px" title="Rouge" onclick="liveCard('rouge')">🟥</button>
+      <!-- Tabs actions : But / Carton / Remplacement -->
+      <div id="live-action-panel" style="display:none;margin-bottom:14px">
+        <div class="tabs" style="margin-bottom:10px">
+          <div class="tab active" onclick="switchTab(this,'live-tab-but','live-act-tabs')">⚽ But</div>
+          <div class="tab" onclick="switchTab(this,'live-tab-carton','live-act-tabs')">🟨 Carton</div>
+          <div class="tab" onclick="switchTab(this,'live-tab-sub','live-act-tabs')">🔄 Rempl.</div>
+        </div>
+        <div id="live-act-tabs">
+
+          <!-- Tab : But -->
+          <div id="live-tab-but">
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="live-but-team" onchange="liveLoadPlayers('live-but-player',this.value)"
+                style="flex:0 0 auto;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="dom" id="live-but-dom-opt">Dom.</option>
+                <option value="ext" id="live-but-ext-opt">Ext.</option>
+              </select>
+              <select id="live-but-player"
+                style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="">— Buteur (optionnel) —</option>
+              </select>
+              <button class="btn primary" style="padding:7px 12px;font-size:13px;white-space:nowrap;flex-shrink:0"
+                onclick="liveGoalEvent()">⚽ +1 But</button>
+            </div>
+          </div>
+
+          <!-- Tab : Carton -->
+          <div id="live-tab-carton" style="display:none">
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="live-card-team" onchange="liveLoadPlayers('live-card-player',this.value)"
+                style="flex:0 0 auto;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="dom" id="live-card-dom-opt">Dom.</option>
+                <option value="ext" id="live-card-ext-opt">Ext.</option>
+              </select>
+              <select id="live-card-player"
+                style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="">— Joueur —</option>
+              </select>
+              <button class="btn" style="padding:7px 12px;background:#FCD34D;border:none;font-size:16px;flex-shrink:0"
+                title="Carton jaune" onclick="liveCard('jaune')">🟨</button>
+              <button class="btn" style="padding:7px 12px;background:#EF4444;color:#fff;border:none;font-size:16px;flex-shrink:0"
+                title="Carton rouge" onclick="liveCard('rouge')">🟥</button>
+            </div>
+          </div>
+
+          <!-- Tab : Remplacement -->
+          <div id="live-tab-sub" style="display:none">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="live-sub-team" onchange="liveLoadPlayers('live-sub-out',this.value);liveLoadPlayers('live-sub-in',this.value)"
+                style="flex:0 0 auto;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="dom" id="live-sub-dom-opt">Dom.</option>
+                <option value="ext" id="live-sub-ext-opt">Ext.</option>
+              </select>
+              <select id="live-sub-out"
+                style="flex:1;min-width:100px;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="">↩ Sortant</option>
+              </select>
+              <select id="live-sub-in"
+                style="flex:1;min-width:100px;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="">↪ Entrant</option>
+              </select>
+              <button class="btn primary" style="padding:7px 12px;font-size:13px;flex-shrink:0"
+                onclick="liveSub()">🔄 OK</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -2343,6 +2400,8 @@ const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions'
 const CAN_CREATE_FICHE = ['superadmin','tresorier'];
 // Rôles autorisés à scorer en direct (SuperAdmin, Président, Compétitions, Juridique)
 const CAN_LIVE_SCORE = ['superadmin','admin','competitions','juridique'];
+// Rôles autorisés à modifier le score après la fin d'un match
+const CAN_EDIT_SCORE = ['superadmin','admin','competitions'];
 
 // ============================================================
 //  SYSTÈME DE PERMISSIONS (rôle + overrides individuels)
@@ -2355,6 +2414,7 @@ const PERM_DEFAULTS = {
   manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
   declare_saison:      r => ['superadmin','admin'].includes(r),
   live_score:          r => CAN_LIVE_SCORE.includes(r),
+  edit_score:          r => CAN_EDIT_SCORE.includes(r),
 };
 const PERM_LABELS = {
   see_players_litiges: 'Joueurs & Litiges',
@@ -4528,14 +4588,24 @@ function openLiveMatch(matchId) {
   if (!match) return;
   _liveMid = matchId;
   document.getElementById('live-modal-title').textContent = `⚽ Poule ${match.poule} · ${match.dom} vs ${match.ext}`;
-  document.getElementById('live-dom-name').textContent   = match.dom;
-  document.getElementById('live-ext-name').textContent   = match.ext;
-  document.getElementById('live-score-dom').textContent  = match.score.dom;
-  document.getElementById('live-score-ext').textContent  = match.score.ext;
-  document.getElementById('live-extra1').textContent     = match.live.addedTime1;
-  document.getElementById('live-extra2').textContent     = match.live.addedTime2;
-  const t = document.getElementById('live-card-team');
-  t.innerHTML = `<option value="dom">${match.dom}</option><option value="ext">${match.ext}</option>`;
+  document.getElementById('live-dom-name').textContent  = match.dom;
+  document.getElementById('live-ext-name').textContent  = match.ext;
+  document.getElementById('live-score-dom').textContent = match.score.dom;
+  document.getElementById('live-score-ext').textContent = match.score.ext;
+  document.getElementById('live-extra1').textContent    = match.live.addedTime1;
+  document.getElementById('live-extra2').textContent    = match.live.addedTime2;
+  // Noms courts dans les selects d'équipe
+  ['but','card','sub'].forEach(ctx => {
+    const dOpt = document.getElementById(`live-${ctx}-dom-opt`);
+    const eOpt = document.getElementById(`live-${ctx}-ext-opt`);
+    if (dOpt) dOpt.textContent = match.dom;
+    if (eOpt) eOpt.textContent = match.ext;
+  });
+  // Pré-charger les joueurs pour chaque dropdown
+  liveLoadPlayers('live-but-player', 'dom');
+  liveLoadPlayers('live-card-player', 'dom');
+  liveLoadPlayers('live-sub-out', 'dom');
+  liveLoadPlayers('live-sub-in', 'dom');
   _liveRefreshUI(match);
   _liveRenderEvents(match);
   document.getElementById('modal-live-match').classList.add('show');
@@ -4560,15 +4630,23 @@ function _liveRefreshUI(match) {
   show('btn-ls-resume', s === 'mi-temps');
   show('btn-ls-end',    s === 'live');
   show('live-extra-panel',  s !== 'upcoming');
-  show('live-cards-panel',  s === 'live');
+  // Actions (But / Carton / Remplacement) visibles si match actif OU si édition après fin
+  const canEditFinal = s === 'termine' && hasPermission('edit_score');
+  show('live-action-panel', s === 'live' || s === 'mi-temps' || canEditFinal);
+  // Badge + timer
   const badge = document.getElementById('live-status-badge');
   const timer = document.getElementById('live-timer-display');
-  if (s === 'upcoming') { badge.innerHTML = '<span class="badge gray">À venir</span>'; timer.textContent = '--:--'; timer.className = 'live-timer'; }
+  if (s === 'upcoming')   { badge.innerHTML = '<span class="badge gray">À venir</span>'; timer.textContent = '--:--'; timer.className = 'live-timer'; }
   else if (s === 'live')     { badge.innerHTML = '<span class="live-badge">LIVE</span>'; timer.className = 'live-timer'; }
   else if (s === 'mi-temps') { badge.innerHTML = '<span class="badge amber">Mi-temps</span>'; timer.textContent = 'Mi-temps'; timer.className = 'live-timer halftime'; }
-  else if (s === 'termine')  { badge.innerHTML = '<span class="badge green">Terminé</span>'; timer.textContent = 'Terminé'; timer.className = 'live-timer ended'; }
-  const disabled = s === 'upcoming' || s === 'termine';
-  document.querySelectorAll('#modal-live-match .score-ctrl').forEach(b => b.disabled = disabled);
+  else if (s === 'termine')  { badge.innerHTML = canEditFinal ? '<span class="badge amber">✏️ Mode correction</span>' : '<span class="badge green">Terminé</span>'; timer.textContent = 'Terminé'; timer.className = 'live-timer ended'; }
+  // Boutons − correction : actifs dès que le match a démarré ou en mode correction
+  const canMinus = s !== 'upcoming';
+  // Boutons + correction : visibles seulement en mode correction post-match
+  show('score-plus-dom', canEditFinal);
+  show('score-plus-ext', canEditFinal);
+  document.getElementById('score-minus-dom').disabled = !canMinus;
+  document.getElementById('score-minus-ext').disabled = !canMinus;
 }
 
 function _liveStartTimer(match) {
@@ -4593,13 +4671,55 @@ function _liveGetMinute(match) {
   return Math.max(1, Math.floor((Date.now() - base) / 60000) + (match.live.currentHalf === 2 ? 45 : 0));
 }
 
+// Charge les joueurs d'une équipe dans un <select>
+function liveLoadPlayers(selectId, teamValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel || !_liveMid) return;
+  const match = getMatchesData().find(m => m.id === _liveMid);
+  if (!match) return;
+  const teamName = teamValue === 'dom' ? match.dom : match.ext;
+  const roster   = (getPlayers()[teamName] || []).filter(p => p.type !== 'Technicien');
+  const isEmpty  = selectId.includes('out') ? '↩ Sortant' : selectId.includes('in') ? '↪ Entrant' : '— Joueur (optionnel) —';
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${isEmpty}</option>` +
+    roster.map(p => {
+      const label = `#${p.id} — ${p.prenom} ${p.nom}` + (p.statut === 'Suspendu' ? ' ⛔' : '');
+      return `<option value="${p.id}|${p.prenom} ${p.nom}" ${p.statut==='Suspendu'?'disabled':''}>${label}</option>`;
+    }).join('');
+  if (prev) sel.value = prev;
+}
+
+// Enregistrer un but avec déclaration du buteur
+function liveGoalEvent() {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match) return;
+  const team    = document.getElementById('live-but-team').value;
+  const pVal    = document.getElementById('live-but-player').value;
+  const [pId, pName] = pVal ? pVal.split('|') : ['',''];
+  match.score[team]++;
+  match.events.push({ type:'but', team, player: pName||'', id: pId||'', minute: _liveGetMinute(match), detail:'' });
+  document.getElementById('live-score-' + team).textContent = match.score[team];
+  document.getElementById('live-but-player').value = '';
+  saveMatchesData(matches);
+  _liveRenderEvents(match);
+  renderCompMatches();
+  renderClassementSection();
+  const tName = team === 'dom' ? match.dom : match.ext;
+  showToast('⚽ But — ' + tName + (pName ? ' · ' + pName : ''));
+  logAction('LIVE_GOAL', { match: match.id, team, player: pName, score: `${match.score.dom}-${match.score.ext}` });
+}
+
+// Correction directe du score (+ ou -)
 function liveGoal(team, delta) {
   if (!_liveMid) return;
   const matches = getMatchesData();
   const match   = matches.find(m => m.id === _liveMid);
   if (!match || match.statut === 'upcoming') return;
   match.score[team] = Math.max(0, match.score[team] + delta);
-  if (delta > 0) match.events.push({ type:'but', team, player:'', minute:_liveGetMinute(match), detail:'' });
+  if (delta < 0) match.events.push({ type:'correction', team, player:'', minute: _liveGetMinute(match), detail:`But annulé (${team})` });
+  if (delta > 0) match.events.push({ type:'but', team, player:'', minute: _liveGetMinute(match), detail:'correction' });
   document.getElementById('live-score-' + team).textContent = match.score[team];
   saveMatchesData(matches);
   _liveRenderEvents(match);
@@ -4611,17 +4731,41 @@ function liveCard(type) {
   if (!_liveMid) return;
   const matches = getMatchesData();
   const match   = matches.find(m => m.id === _liveMid);
-  if (!match || match.statut !== 'live') return;
-  const team   = document.getElementById('live-card-team').value;
-  const player = (document.getElementById('live-card-player').value || '').trim() || '?';
-  const min    = _liveGetMinute(match);
-  match.events.push({ type:'carton', team, player, minute:min, detail:type });
+  if (!match || (match.statut !== 'live' && match.statut !== 'mi-temps')) return;
+  const team  = document.getElementById('live-card-team').value;
+  const pVal  = document.getElementById('live-card-player').value;
+  const [pId, pName] = pVal ? pVal.split('|') : ['',''];
+  if (!pVal) { showToast('⚠️ Sélectionner un joueur.'); return; }
+  const min = _liveGetMinute(match);
+  match.events.push({ type:'carton', team, player: pName||'', id: pId||'', minute: min, detail: type });
   document.getElementById('live-card-player').value = '';
   saveMatchesData(matches);
   _liveRenderEvents(match);
   const tName = team === 'dom' ? match.dom : match.ext;
-  showToast((type === 'jaune' ? '🟨 Carton jaune' : '🟥 Carton rouge') + ' — ' + tName + ' (' + player + ')');
-  logAction('LIVE_CARD', { match: match.id, team, type, player, min });
+  showToast((type === 'jaune' ? '🟨 Carton jaune' : '🟥 Carton rouge') + ' — ' + tName + ' · ' + pName);
+  logAction('LIVE_CARD', { match: match.id, team, type, player: pName, min });
+}
+
+function liveSub() {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match || (match.statut !== 'live' && match.statut !== 'mi-temps')) { showToast('⚠️ Le match doit être en cours.'); return; }
+  const team   = document.getElementById('live-sub-team').value;
+  const outVal = document.getElementById('live-sub-out').value;
+  const inVal  = document.getElementById('live-sub-in').value;
+  if (!outVal || !inVal) { showToast('⚠️ Sélectionner les deux joueurs.'); return; }
+  const [outId, outName] = outVal.split('|');
+  const [inId,  inName]  = inVal.split('|');
+  const min = _liveGetMinute(match);
+  match.events.push({ type:'remplacement', team, player: outName, playerIn: inName, id: outId, idIn: inId, minute: min, detail:'' });
+  document.getElementById('live-sub-out').value = '';
+  document.getElementById('live-sub-in').value  = '';
+  saveMatchesData(matches);
+  _liveRenderEvents(match);
+  const tName = team === 'dom' ? match.dom : match.ext;
+  showToast('🔄 ' + tName + ' : ' + outName + ' ↩ → ↪ ' + inName);
+  logAction('LIVE_SUB', { match: match.id, team, out: outName, in: inName, min });
 }
 
 function liveExtraTime(half, delta) {
@@ -4672,12 +4816,26 @@ function _liveRenderEvents(match) {
   if (!el) return;
   const evts = [...match.events].reverse();
   if (evts.length === 0) { el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Aucun événement</div>'; return; }
-  const icons = { but:'⚽', jaune:'🟨', rouge:'🟥', statut:'⏱️', carton:'🟨' };
   el.innerHTML = evts.map(e => {
-    const icon = e.type === 'carton' ? icons[e.detail] || '🟨' : (icons[e.type] || '📍');
-    const team = e.team === 'dom' ? match.dom : (e.team === 'ext' ? match.ext : '');
-    const desc = e.type === 'but' ? `But — ${team}` : (e.type === 'carton' ? `${team} — ${e.player}` : (e.detail || ''));
-    return `<div class="event-item"><span class="event-min">${e.minute}'</span><span>${icon}</span><span style="flex:1">${desc}</span></div>`;
+    const tName = e.team === 'dom' ? match.dom : (e.team === 'ext' ? match.ext : '');
+    let icon, desc;
+    if (e.type === 'but') {
+      icon = '⚽';
+      desc = `<strong>${tName}</strong>${e.player ? ' · ' + e.player : ''}${e.detail === 'correction' ? ' <em style="color:var(--muted)">(correction)</em>' : ''}`;
+    } else if (e.type === 'carton') {
+      icon = e.detail === 'rouge' ? '🟥' : '🟨';
+      desc = `<strong>${tName}</strong> · ${e.player}`;
+    } else if (e.type === 'remplacement') {
+      icon = '🔄';
+      desc = `<strong>${tName}</strong> : ↩ ${e.player} → ↪ ${e.playerIn}`;
+    } else if (e.type === 'correction') {
+      icon = '↩';
+      desc = `<em style="color:var(--muted)">${e.detail || 'Correction score'}</em>`;
+    } else {
+      icon = '⏱️';
+      desc = e.detail || '';
+    }
+    return `<div class="event-item"><span class="event-min">${e.minute}'</span><span style="margin-right:4px">${icon}</span><span style="flex:1;font-size:12px">${desc}</span></div>`;
   }).join('');
 }
 
