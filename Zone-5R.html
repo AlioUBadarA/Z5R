@@ -1986,7 +1986,7 @@ async function fireLoad(key) {
 
 async function initFirebase() {
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
-                 'suspensions','litiges','finale','finales','licences','depenses','auditlog'];
+                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
   await Promise.all(keys.map(k => fireLoad(k)));
 
   // Listeners temps réel — synchronisent les autres onglets/navigateurs
@@ -2057,6 +2057,24 @@ async function initFirebase() {
     if (!snap.exists || !_appReady) return;
     localStorage.setItem('zone5r_auditlog', JSON.stringify(snap.data().data));
     if (currentUser?.role === 'superadmin') renderAuditPanel();
+  });
+
+  // Matches — sync temps réel (scores live, cartons, remplacements)
+  _db.collection(_COL).doc('matches').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem(MATCH_KEY, JSON.stringify(snap.data().data));
+    renderCompMatches();
+    renderClassementSection();
+    // Si le modal live est ouvert, rafraîchir le score affiché
+    if (_liveMid) {
+      const m = getMatchesData().find(x => x.id === _liveMid);
+      if (m) {
+        document.getElementById('live-score-dom').textContent = m.score.dom;
+        document.getElementById('live-score-ext').textContent = m.score.ext;
+        _liveRenderEvents(m);
+        _liveRefreshUI(m);
+      }
+    }
   });
 }
 
@@ -4462,7 +4480,10 @@ const MATCH_KEY = 'zone5r_matches';
 function getMatchesData() {
   try { return JSON.parse(localStorage.getItem(MATCH_KEY) || '[]'); } catch { return []; }
 }
-function saveMatchesData(m) { localStorage.setItem(MATCH_KEY, JSON.stringify(m)); }
+function saveMatchesData(m) {
+  localStorage.setItem(MATCH_KEY, JSON.stringify(m));
+  fireSync('matches', m);
+}
 
 function initMatchesData() {
   if (getMatchesData().length > 0) return;
