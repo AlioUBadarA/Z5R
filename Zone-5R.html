@@ -2046,7 +2046,7 @@ function updateUI() {
     // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
     const btnAddJoueur = document.getElementById('btn-add-joueur');
     if (btnAddJoueur) {
-      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.role) ? '' : 'none';
+      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.username) ? '' : 'none';
     }
 
     // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
@@ -2167,8 +2167,8 @@ const ALL_TEAMS = [
   'ASC Nafacounda','ASC Tankoron','ASC Diengue','ASC Renaissance'
 ];
 
-// Rôles autorisés à ajouter des joueurs
-const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','tresorier','juridique','communication','audit','finances'];
+// Membres autorisés à ajouter un joueur
+const CAN_ADD_PLAYER = ['djiby.diatta','boubacar.camara','papis.sagna','sidiky.doumbia','fode.goudiaby','nouha.coly'];
 // Rôles autorisés à créer des comptes
 const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
 // Membres autorisés à voir la liste des joueurs et la liste des litiges en cours
