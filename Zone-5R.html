@@ -2075,7 +2075,7 @@ function updateUI() {
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
     if (btnLitige) {
-      btnLitige.style.display = currentUser.role === 'juridique' ? '' : 'none';
+      btnLitige.style.display = (currentUser.role === 'juridique' || currentUser.role === 'superadmin') ? '' : 'none';
     }
 
     // Onglet Bilan → recalcul à l'ouverture
@@ -2168,7 +2168,7 @@ const ALL_TEAMS = [
 ];
 
 // Rôles autorisés à ajouter un joueur (Président, Secrétaires, Compétitions, Juridique)
-const CAN_ADD_PLAYER = ['admin','secretaire','competitions','juridique'];
+const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','juridique'];
 // Rôles autorisés à créer des comptes
 const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
 // Rôles autorisés à voir la liste des joueurs et la liste des litiges en cours
