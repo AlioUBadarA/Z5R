@@ -632,9 +632,23 @@
      COMPETITION
      ============================ -->
 <div id="competition" class="section">
-  <div class="mb" style="padding-bottom:2px">
+  <div class="mb" style="padding-bottom:4px">
     <h2 style="font-size:18px;font-weight:700">⚽ Compétition</h2>
-    <p style="font-size:12px;color:var(--muted);margin-top:2px">Planning & Matchs · Joueurs licenciés</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Navetanes 2025 · Zone 5R ODGAM Bignona</p>
+  </div>
+
+  <!-- Sélecteur Cadets / Seniors -->
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button id="btn-comp-seniors" onclick="switchCompetition('seniors')"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:10px;border:2px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-family:inherit;transition:.15s">
+      <span style="font-size:15px;font-weight:700">⚽ Seniors</span>
+      <span style="font-size:11px;opacity:.85">15h – 19h</span>
+    </button>
+    <button id="btn-comp-cadets" onclick="switchCompetition('cadets')"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--fg);cursor:pointer;font-family:inherit;transition:.15s">
+      <span style="font-size:15px;font-weight:700">🌟 Cadets</span>
+      <span style="font-size:11px;opacity:.75">8h – 13h</span>
+    </button>
   </div>
 
   <!-- SUBNAV Compétition -->
@@ -2812,15 +2826,25 @@ function savePlayer() {
 //  RECHERCHE DE MATCHS (visiteur)
 // ============================================================
 const ALL_MATCHES = [
-  { dom: 'ASC Walidane',      ext: 'ASC Chicago',        poule: 'A', date: "Auj. 16h",      score: null,  statut: 'upcoming' },
-  { dom: 'ASC Walidane',      ext: 'ASC Chicago',        poule: 'A', date: '07/09',          score: '2-0', statut: 'joue'     },
-  { dom: 'ASC Kafesse',       ext: 'ASC Baraka',         poule: 'A', date: '07/09',          score: '1-1', statut: 'joue'     },
-  { dom: 'ASC Oryx MTG',      ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 16h',   score: null,  statut: 'upcoming' },
-  { dom: 'ASC Chicago',       ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 15h',   score: null,  statut: 'upcoming' },
-  { dom: 'ASC Baraka',        ext: 'ASC Deggo',          poule: 'B', date: '29/08',          score: '2-1', statut: 'joue'     },
-  { dom: 'ASC Médina Plateau',ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 16h',   score: null,  statut: 'upcoming' },
-  { dom: 'ASC Yengoulène',    ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
-  { dom: 'ASC Santhiaba',     ext: 'ASC Médina Plateau', poule: 'B', date: '08/09',          score: '0-2', statut: 'joue'     },
+  // ── SENIORS (15h – 19h) ──────────────────────────────────────
+  { competition:'seniors', dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: "Auj. 16h",      score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: '07/09',          score: '2-0', statut: 'joue'     },
+  { competition:'seniors', dom: 'ASC Kafesse',        ext: 'ASC Baraka',         poule: 'A', date: '07/09',          score: '1-1', statut: 'joue'     },
+  { competition:'seniors', dom: 'ASC Oryx MTG',       ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 16h',   score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Chicago',        ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 15h',   score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Baraka',         ext: 'ASC Deggo',          poule: 'B', date: '29/08',          score: '2-1', statut: 'joue'     },
+  { competition:'seniors', dom: 'ASC Médina Plateau', ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 16h',   score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Santhiaba',      ext: 'ASC Médina Plateau', poule: 'B', date: '08/09',          score: '0-2', statut: 'joue'     },
+  // ── CADETS (8h – 13h) ───────────────────────────────────────
+  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Kafesse',        poule: 'A', date: '07/09 · 9h',    score: '1-0', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Chicago',        ext: 'ASC Oryx MTG',       poule: 'A', date: '07/09 · 10h30', score: '2-2', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Oryx MTG',       poule: 'A', date: '10/09 · 9h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Kafesse',        ext: 'ASC Chicago',        poule: 'A', date: '12/09 · 10h',   score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Baraka',         ext: 'ASC Santhiaba',      poule: 'B', date: '08/09 · 8h30',  score: '3-1', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Deggo',          ext: 'ASC Médina Plateau', poule: 'B', date: '11/09 · 9h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Yengoulène',     ext: 'ASC Baraka',         poule: 'C', date: '13/09 · 8h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Nafacounda',     ext: 'ASC Santhiaba',      poule: 'C', date: '14/09 · 10h',   score: null,  statut: 'upcoming' },
 ];
 
 function searchMatches(query) {
@@ -4476,9 +4500,36 @@ function removeContribRow(btn, asc) {
 //  MATCHES — stockage dynamique + classement calculé
 // ============================================================
 const MATCH_KEY = 'zone5r_matches';
+let _currentComp = 'seniors';
+
+function switchCompetition(comp) {
+  _currentComp = comp;
+  const isSeniors = comp === 'seniors';
+  const btnS = document.getElementById('btn-comp-seniors');
+  const btnC = document.getElementById('btn-comp-cadets');
+  if (btnS) {
+    btnS.style.background  = isSeniors ? 'var(--primary)' : 'var(--surface)';
+    btnS.style.color       = isSeniors ? '#fff' : 'var(--fg)';
+    btnS.style.borderColor = isSeniors ? 'var(--primary)' : 'var(--border)';
+  }
+  if (btnC) {
+    btnC.style.background  = !isSeniors ? 'var(--primary)' : 'var(--surface)';
+    btnC.style.color       = !isSeniors ? '#fff' : 'var(--fg)';
+    btnC.style.borderColor = !isSeniors ? 'var(--primary)' : 'var(--border)';
+  }
+  renderCompMatches();
+  renderClassementSection();
+}
 
 function getMatchesData() {
-  try { return JSON.parse(localStorage.getItem(MATCH_KEY) || '[]'); } catch { return []; }
+  try {
+    const data = JSON.parse(localStorage.getItem(MATCH_KEY) || '[]');
+    // Migration silencieuse : assure le champ competition sur les anciens enregistrements
+    let dirty = false;
+    data.forEach(m => { if (!m.competition) { m.competition = 'seniors'; dirty = true; } });
+    if (dirty) localStorage.setItem(MATCH_KEY, JSON.stringify(data));
+    return data;
+  } catch { return []; }
 }
 function saveMatchesData(m) {
   localStorage.setItem(MATCH_KEY, JSON.stringify(m));
@@ -4493,6 +4544,7 @@ function initMatchesData() {
     return {
       id: 'M' + String(i + 1).padStart(3, '0'),
       saisonId,
+      competition: m.competition || 'seniors',
       poule: m.poule,
       dom: m.dom,
       ext: m.ext,
@@ -4514,7 +4566,7 @@ function renderCompMatches() {
   ['a','b','c','d'].forEach(p => {
     const el = document.getElementById('poule-' + p);
     if (!el) return;
-    const pm = matches.filter(m => m.poule.toLowerCase() === p);
+    const pm = matches.filter(m => m.poule.toLowerCase() === p && (m.competition || 'seniors') === _currentComp);
     if (pm.length === 0) {
       el.innerHTML = '<div class="alert info">ℹ️ Programme Poule ' + p.toUpperCase() + ' en attente.</div>';
       return;
@@ -4523,7 +4575,7 @@ function renderCompMatches() {
     el.innerHTML = `
       <div class="card mb">
         <div class="card-header">
-          <span class="card-title">Poule ${p.toUpperCase()} · Programme</span>
+          <span class="card-title">Poule ${p.toUpperCase()} · ${_currentComp === 'cadets' ? '🌟 Cadets' : '⚽ Seniors'}</span>
           <span class="badge green">${teams.length} équipes</span>
         </div>
         <div class="gap" style="padding:12px;gap:6px">
@@ -4565,8 +4617,8 @@ function renderClassementSection() {
   ['a','b','c','d'].forEach(p => {
     const el = document.getElementById('cls-' + p);
     if (!el) return;
-    const done = matches.filter(m => m.poule.toLowerCase() === p && m.statut === 'termine');
-    const all  = matches.filter(m => m.poule.toLowerCase() === p);
+    const done = matches.filter(m => m.poule.toLowerCase() === p && m.statut === 'termine' && (m.competition || 'seniors') === _currentComp);
+    const all  = matches.filter(m => m.poule.toLowerCase() === p && (m.competition || 'seniors') === _currentComp);
     if (all.length === 0) {
       el.innerHTML = '<div class="alert info">ℹ️ Phase de poules ' + p.toUpperCase() + ' non encore commencée.</div>';
       return;
@@ -4591,7 +4643,8 @@ function renderClassementSection() {
       const cls = i < 3 ? `class="rank-${i+1}"` : '';
       return `<tr ${cls}><td>${medals[i]||i+1}</td><td>${i<2?`<strong>${name}</strong>`:name}</td><td>${s.j}</td><td>${s.g}</td><td>${s.n}</td><td>${s.p}</td><td>${s.bp}</td><td>${s.bc}</td><td>${db}</td><td><strong>${s.pts}</strong></td></tr>`;
     }).join('');
-    el.innerHTML = `<div class="card"><div class="table-wrap"><table>
+    const compTitle = _currentComp === 'cadets' ? '🌟 Cadets' : '⚽ Seniors';
+    el.innerHTML = `<div class="card"><div style="padding:10px 12px 0;font-size:12px;font-weight:700;color:var(--muted)">${compTitle} · Poule ${p.toUpperCase()}</div><div class="table-wrap"><table>
       <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>
       <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>`;
@@ -4608,7 +4661,8 @@ function openLiveMatch(matchId) {
   const match = getMatchesData().find(m => m.id === matchId);
   if (!match) return;
   _liveMid = matchId;
-  document.getElementById('live-modal-title').textContent = `⚽ Poule ${match.poule} · ${match.dom} vs ${match.ext}`;
+  const _compLabel = match.competition === 'cadets' ? '🌟 Cadets' : '⚽ Seniors';
+  document.getElementById('live-modal-title').textContent = `${_compLabel} · Poule ${match.poule} · ${match.dom} vs ${match.ext}`;
   document.getElementById('live-dom-name').textContent  = match.dom;
   document.getElementById('live-ext-name').textContent  = match.ext;
   document.getElementById('live-score-dom').textContent = match.score.dom;
