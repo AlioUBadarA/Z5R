@@ -287,7 +287,6 @@
   <div class="nav-item" data-section="competition" onclick="showSection('competition')">⚽ Compétition</div>
   <div class="nav-item" data-section="classement" onclick="showSection('classement')">🏆 Classements</div>
   <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')">💰 Trésorerie</div>
-  <div class="nav-item member-only" data-section="joueurs" onclick="showSection('joueurs')">⚽ Compétitions</div>
   <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">⚖️ Juridique</div>
   <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Administration</div>
 </nav>
@@ -606,12 +605,23 @@
      COMPETITION
      ============================ -->
 <div id="competition" class="section">
-  <div class="flex-between mb">
-    <h2 style="font-size:18px;font-weight:700">Compétition</h2>
-    <div style="display:flex;gap:8px">
-      <button class="btn member-action" onclick="openModal('modal-match')">+ Saisir score</button>
-      <button class="btn primary member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
-    </div>
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700">⚽ Compétition</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Planning & Matchs · Joueurs licenciés</p>
+  </div>
+
+  <!-- SUBNAV Compétition -->
+  <div class="subnav">
+    <div class="subnav-item active" id="subnav-comp-planning" onclick="showSubSection('competition','comp-planning',this)">📅 Planning & Matchs</div>
+    <div class="subnav-item" id="subnav-comp-joueurs" onclick="showSubSection('competition','comp-joueurs',this)" style="display:none">👥 Joueurs & Licences</div>
+    <div class="subnav-item" id="subnav-comp-stats" onclick="showSubSection('competition','comp-stats',this)" style="display:none">📊 Vue d'ensemble</div>
+  </div>
+
+  <!-- SUB : Planning & Matchs -->
+  <div id="comp-planning" class="subsection active">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px">
+    <button class="btn member-action" onclick="openModal('modal-match')">+ Saisir score</button>
+    <button class="btn primary member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
   </div>
 
   <div class="tabs">
@@ -682,7 +692,73 @@
       <div class="alert info">ℹ️ Programme Poule D en attente de validation par le Secrétaire.</div>
     </div>
   </div>
-</div>
+  </div><!-- /comp-planning -->
+
+  <!-- SUB : Joueurs & Licences -->
+  <div id="comp-joueurs" class="subsection">
+  <div class="flex-between mb">
+    <div></div>
+    <button class="btn primary member-action" id="btn-add-joueur" onclick="openAddPlayerModal()">+ Ajouter joueur</button>
+  </div>
+
+  <div class="grid-2 mb">
+    <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs"></div><div class="stat-sub">Cadets + Seniors</div></div>
+    <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes"></div><div class="stat-sub">saison 2025</div></div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-header"><span class="card-title">Choisir une équipe</span></div>
+    <div id="team-tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px">
+      <!-- Généré par JS -->
+    </div>
+  </div>
+
+  <div class="card" id="team-players-card">
+    <div class="card-header">
+      <span class="card-title" id="team-players-title">Aucune équipe sélectionnée</span>
+      <input type="text" placeholder="Rechercher joueur..." style="width:160px;padding:6px 10px;font-size:12px"
+             oninput="filterTeamPlayers(this.value)">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>N° Lic.</th><th>Joueur</th><th>Catégorie</th><th>Type</th><th>Statut</th><th>Cartons</th></tr></thead>
+        <tbody id="team-players-body">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">
+            Cliquer sur une équipe ci-dessus pour afficher ses joueurs
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div><!-- /comp-joueurs -->
+
+  <!-- SUB : Vue d'ensemble -->
+  <div id="comp-stats" class="subsection">
+    <div class="grid-2 mb">
+      <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs-stats"></div><div class="stat-sub">Cadets + Seniors</div></div>
+      <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes-stats"></div><div class="stat-sub">saison en cours</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card" style="cursor:pointer" onclick="showSection('competition');showSubSection('competition','comp-planning',document.getElementById('subnav-comp-planning'))">
+        <div style="padding:20px;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">⚽</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Planning & Matchs</div>
+          <div style="font-size:12px;color:var(--muted)">Calendrier, résultats, scores</div>
+          <div style="margin-top:12px"><span class="badge green">Voir →</span></div>
+        </div>
+      </div>
+      <div class="card" style="cursor:pointer" onclick="showSection('classement')">
+        <div style="padding:20px;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">🏆</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Classements</div>
+          <div style="font-size:12px;color:var(--muted)">Poules, points, buts</div>
+          <div style="margin-top:12px"><span class="badge amber">Voir →</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /comp-stats -->
+
+</div><!-- /competition -->
 
 <!-- ============================
      CLASSEMENTS
@@ -866,88 +942,6 @@
   </div>
 </div>
 
-<!-- ============================
-     JOUEURS & LICENCES
-     ============================ -->
-<div id="joueurs" class="section">
-  <div class="mb" style="padding-bottom:2px">
-    <h2 style="font-size:18px;font-weight:700">⚽ Compétitions</h2>
-    <p style="font-size:12px;color:var(--muted);margin-top:2px" id="joueurs-subtitle">Joueurs licenciés · Équipes participantes</p>
-  </div>
-
-  <!-- SUBNAV Compétitions -->
-  <div class="subnav">
-    <div class="subnav-item active" onclick="showSubSection('joueurs','comp-joueurs',this)">👥 Joueurs & Licences</div>
-    <div class="subnav-item" onclick="showSubSection('joueurs','comp-stats',this)">📊 Vue d'ensemble</div>
-  </div>
-
-  <!-- SUB : Joueurs & Licences -->
-  <div id="comp-joueurs" class="subsection active">
-  <div class="flex-between mb">
-    <div></div>
-    <button class="btn primary member-action" id="btn-add-joueur" onclick="openAddPlayerModal()">+ Ajouter joueur</button>
-  </div>
-
-  <div class="grid-2 mb">
-    <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs"></div><div class="stat-sub">Cadets + Seniors</div></div>
-    <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes"></div><div class="stat-sub">saison 2025</div></div>
-  </div>
-
-  <!-- Sélecteur d'équipes -->
-  <div class="card mb">
-    <div class="card-header"><span class="card-title">Choisir une équipe</span></div>
-    <div id="team-tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px">
-      <!-- Généré par JS -->
-    </div>
-  </div>
-
-  <!-- Liste des joueurs de l'équipe sélectionnée -->
-  <div class="card" id="team-players-card">
-    <div class="card-header">
-      <span class="card-title" id="team-players-title">Aucune équipe sélectionnée</span>
-      <input type="text" placeholder="Rechercher joueur..." style="width:160px;padding:6px 10px;font-size:12px"
-             oninput="filterTeamPlayers(this.value)">
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>N° Lic.</th><th>Joueur</th><th>Catégorie</th><th>Type</th><th>Statut</th><th>Cartons</th></tr></thead>
-        <tbody id="team-players-body">
-          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">
-            Cliquer sur une équipe ci-dessus pour afficher ses joueurs
-          </td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  </div><!-- /comp-joueurs -->
-
-  <!-- SUB : Vue d'ensemble -->
-  <div id="comp-stats" class="subsection">
-    <div class="grid-2 mb">
-      <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs-stats"></div><div class="stat-sub">Cadets + Seniors</div></div>
-      <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes-stats"></div><div class="stat-sub">saison en cours</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="card" style="cursor:pointer" onclick="showSection('competition')">
-        <div style="padding:20px;text-align:center">
-          <div style="font-size:32px;margin-bottom:8px">⚽</div>
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Planning & Matchs</div>
-          <div style="font-size:12px;color:var(--muted)">Calendrier, résultats, scores</div>
-          <div style="margin-top:12px"><span class="badge green">Voir →</span></div>
-        </div>
-      </div>
-      <div class="card" style="cursor:pointer" onclick="showSection('classement')">
-        <div style="padding:20px;text-align:center">
-          <div style="font-size:32px;margin-bottom:8px">🏆</div>
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Classements</div>
-          <div style="font-size:12px;color:var(--muted)">Poules, points, buts</div>
-          <div style="margin-top:12px"><span class="badge amber">Voir →</span></div>
-        </div>
-      </div>
-    </div>
-  </div><!-- /comp-stats -->
-
-</div>
 
 <!-- ============================
      CARTONS & DISCIPLINAIRE
@@ -2160,18 +2154,27 @@ function updateUI() {
     // FIX: display explicite pour surcharger le CSS .member-only { display:none }
     memberNavItems.forEach(n => n.style.display = 'block');
 
-    // Onglet Joueurs et carte Litiges : réservés aux membres autorisés
+    // Onglets Joueurs (dans Compétition) et carte Litiges : réservés aux membres autorisés
     const canSeePlayersLitiges = hasPermission('see_players_litiges');
-    const joueurNavItem = document.querySelector('.nav-item[data-section="joueurs"]');
-    const litigesCard   = document.getElementById('litiges-card');
-    if (joueurNavItem) joueurNavItem.style.display = canSeePlayersLitiges ? 'block' : 'none';
-    if (litigesCard)   litigesCard.style.display   = canSeePlayersLitiges ? '' : 'none';
+    const litigesCard      = document.getElementById('litiges-card');
     const litigesSubnavTab = document.getElementById('subnav-jur-litiges');
+    const compJoueursTab   = document.getElementById('subnav-comp-joueurs');
+    const compStatsTab     = document.getElementById('subnav-comp-stats');
+    if (litigesCard)      litigesCard.style.display      = canSeePlayersLitiges ? '' : 'none';
     if (litigesSubnavTab) litigesSubnavTab.style.display = canSeePlayersLitiges ? '' : 'none';
-    // Si l'utilisateur est sur la section joueurs sans y avoir accès, rediriger
+    if (compJoueursTab)   compJoueursTab.style.display   = canSeePlayersLitiges ? '' : 'none';
+    if (compStatsTab)     compStatsTab.style.display     = canSeePlayersLitiges ? '' : 'none';
+    // Si l'utilisateur est sur comp-joueurs/comp-stats sans accès, revenir au planning
     if (!canSeePlayersLitiges) {
-      const joueurSection = document.getElementById('joueurs');
-      if (joueurSection && joueurSection.classList.contains('active')) showSection('dashboard');
+      const compSection = document.getElementById('competition');
+      const joueurs = document.getElementById('comp-joueurs');
+      const stats   = document.getElementById('comp-stats');
+      if (compSection && compSection.classList.contains('active')) {
+        if ((joueurs && joueurs.classList.contains('active')) ||
+            (stats   && stats.classList.contains('active'))) {
+          showSubSection('competition','comp-planning',document.getElementById('subnav-comp-planning'));
+        }
+      }
     }
 
     // Le rôle visiteur peut consulter mais ne peut pas modifier
