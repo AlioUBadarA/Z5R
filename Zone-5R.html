@@ -1076,6 +1076,24 @@
     </div>
   </div>
 
+  <!-- SUPERADMIN : Gestion des autorisations -->
+  <div id="permissions-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">🔐 Gestion des autorisations</span>
+      <span style="font-size:11px;color:var(--muted)">Cliquer sur ✅ / 🔒 pour modifier · <span style="color:var(--amber);font-weight:700">★</span> = override individuel</span>
+    </div>
+    <div id="permissions-body"><!-- Rempli par JS --></div>
+  </div>
+
+  <!-- SUPERADMIN : Historique des actions -->
+  <div id="audit-panel" class="card mb" style="display:none">
+    <div class="card-header">
+      <span class="card-title">📋 Historique des actions</span>
+      <button class="btn" style="font-size:12px" onclick="renderAuditPanel()">🔄 Actualiser</button>
+    </div>
+    <div id="audit-log-body"><!-- Rempli par JS --></div>
+  </div>
+
   <div class="card mb">
     <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
     <div class="card-body">
@@ -1831,7 +1849,7 @@ async function fireLoad(key) {
 
 async function initFirebase() {
   const keys = ['users','players','saison','teams','fiches','stades',
-                 'suspensions','litiges','finale','licences','depenses'];
+                 'suspensions','litiges','finale','licences','depenses','auditlog'];
   await Promise.all(keys.map(k => fireLoad(k)));
 
   // Listeners temps réel — synchronisent les autres onglets/navigateurs
@@ -1886,6 +1904,11 @@ async function initFirebase() {
     if (!snap.exists || !_appReady) return;
     const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_USERS)), snap.data().data);
     localStorage.setItem('zone5r_users', JSON.stringify(merged));
+  });
+  _db.collection(_COL).doc('auditlog').onSnapshot(snap => {
+    if (!snap.exists || !_appReady) return;
+    localStorage.setItem('zone5r_auditlog', JSON.stringify(snap.data().data));
+    if (currentUser?.role === 'superadmin') renderAuditPanel();
   });
 }
 
@@ -1971,6 +1994,7 @@ function doLogin() {
     localStorage.setItem('zone5r_session', JSON.stringify(currentUser));
     errorEl.classList.remove('show');
     updateUI();
+    logAction('LOGIN', { detail: 'Connexion depuis ' + (navigator.platform || 'inconnu') });
     showToast('Bienvenue, ' + currentUser.name.split(' ')[0] + ' !');
   } else {
     errorEl.classList.add('show');
@@ -1979,6 +2003,7 @@ function doLogin() {
 }
 
 function doLogout() {
+  logAction('LOGOUT', { detail: '' });
   currentUser = null;
   localStorage.removeItem('zone5r_session');
   updateUI();
@@ -2026,7 +2051,7 @@ function updateUI() {
     memberNavItems.forEach(n => n.style.display = 'block');
 
     // Onglet Joueurs et carte Litiges : réservés aux membres autorisés
-    const canSeePlayersLitiges = CAN_SEE_PLAYERS_LITIGES.includes(currentUser.role);
+    const canSeePlayersLitiges = hasPermission('see_players_litiges');
     const joueurNavItem = document.querySelector('.nav-item[data-section="joueurs"]');
     const litigesCard   = document.getElementById('litiges-card');
     if (joueurNavItem) joueurNavItem.style.display = canSeePlayersLitiges ? 'block' : 'none';
@@ -2046,20 +2071,20 @@ function updateUI() {
     // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
     const btnAddJoueur = document.getElementById('btn-add-joueur');
     if (btnAddJoueur) {
-      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.role) ? '' : 'none';
+      btnAddJoueur.style.display = hasPermission('add_player') ? '' : 'none';
     }
 
     // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
     const btnAddFiche = document.getElementById('btn-add-fiche');
     if (btnAddFiche) {
-      btnAddFiche.style.display = CAN_CREATE_FICHE.includes(currentUser.role) ? '' : 'none';
+      btnAddFiche.style.display = hasPermission('create_fiche') ? '' : 'none';
     }
 
     // Panneaux réservés Admin/SuperAdmin
     const saisonPanel  = document.getElementById('saison-panel');
     const equipesPanel = document.getElementById('equipes-panel');
     const stadesPanel = document.getElementById('stades-panel');
-    if (CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) {
+    if (hasPermission('manage_accounts')) {
       adminPanel.style.display = 'block';
       renderMembersTable();
       if (saisonPanel)  { saisonPanel.style.display  = 'block'; renderSaisonPanel(); }
@@ -2072,10 +2097,21 @@ function updateUI() {
       if (stadesPanel)  stadesPanel.style.display  = 'none';
     }
 
+    // Panneaux superadmin : audit + gestion permissions
+    const auditPanel   = document.getElementById('audit-panel');
+    const permsPanel   = document.getElementById('permissions-panel');
+    if (currentUser.role === 'superadmin') {
+      if (auditPanel)  { auditPanel.style.display  = 'block'; renderAuditPanel(); }
+      if (permsPanel)  { permsPanel.style.display  = 'block'; renderPermissionsPanel(); }
+    } else {
+      if (auditPanel)  auditPanel.style.display  = 'none';
+      if (permsPanel)  permsPanel.style.display  = 'none';
+    }
+
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
     if (btnLitige) {
-      btnLitige.style.display = (currentUser.role === 'juridique' || currentUser.role === 'superadmin') ? '' : 'none';
+      btnLitige.style.display = hasPermission('add_litige') ? '' : 'none';
     }
 
     // Onglet Bilan → recalcul à l'ouverture
@@ -2175,6 +2211,196 @@ const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
 const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions','juridique','secretaire'];
 // Rôles autorisés à créer une fiche journée (Trésoriers + Super Admin)
 const CAN_CREATE_FICHE = ['superadmin','tresorier'];
+
+// ============================================================
+//  SYSTÈME DE PERMISSIONS (rôle + overrides individuels)
+// ============================================================
+const PERM_DEFAULTS = {
+  see_players_litiges: r => CAN_SEE_PLAYERS_LITIGES.includes(r),
+  create_fiche:        r => CAN_CREATE_FICHE.includes(r),
+  add_player:          r => CAN_ADD_PLAYER.includes(r),
+  add_litige:          r => r === 'juridique',
+  manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
+};
+const PERM_LABELS = {
+  see_players_litiges: 'Joueurs & Litiges',
+  create_fiche:        'Fiche Journée',
+  add_player:          'Ajouter Joueur',
+  add_litige:          'Déclarer Litige',
+  manage_accounts:     'Gérer Comptes',
+};
+
+function hasPermission(perm) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'superadmin') return true;
+  const users    = getUsers();
+  const overrides = users[currentUser.username]?.permissions || {};
+  if (perm in overrides) return overrides[perm];
+  return PERM_DEFAULTS[perm] ? PERM_DEFAULTS[perm](currentUser.role) : false;
+}
+
+function setPermission(username, perm, value) {
+  if (!currentUser || currentUser.role !== 'superadmin') return;
+  const users = getUsers();
+  if (!users[username]) return;
+  if (!users[username].permissions) users[username].permissions = {};
+  const roleDefault = PERM_DEFAULTS[perm] ? PERM_DEFAULTS[perm](users[username].role) : false;
+  if (value === roleDefault) {
+    delete users[username].permissions[perm];
+  } else {
+    users[username].permissions[perm] = value;
+  }
+  saveUsers(users);
+  logAction(value ? 'GRANT_PERMISSION' : 'REVOKE_PERMISSION', {
+    target: username,
+    targetName: users[username].name,
+    permission: PERM_LABELS[perm] || perm
+  });
+  renderPermissionsPanel();
+  showToast(value ? '✅ Permission accordée à ' + users[username].name.split(' ')[0] + '.'
+                  : '🚫 Permission retirée à ' + users[username].name.split(' ')[0] + '.');
+}
+
+function renderPermissionsPanel() {
+  const body = document.getElementById('permissions-body');
+  if (!body) return;
+  const users = getUsers();
+  const perms = Object.keys(PERM_LABELS);
+
+  // En-tête
+  const thPerms = perms.map(p => `<th style="font-size:10px;text-align:center;min-width:80px">${PERM_LABELS[p]}</th>`).join('');
+  let html = `<div class="table-wrap"><table>
+    <thead><tr><th>Membre</th><th>Rôle</th>${thPerms}</tr></thead><tbody>`;
+
+  const allMembers = [
+    ...BUREAU_MEMBERS,
+    ...Object.entries(DEFAULT_USERS)
+      .filter(([u, d]) => d.role !== 'visiteur' && u !== 'test.admin')
+      .map(([username, d]) => ({ username, ...d }))
+  ].filter(m => users[m.username]);
+
+  allMembers.forEach(m => {
+    const userData   = users[m.username] || {};
+    const overrides  = userData.permissions || {};
+    const isSelf     = m.username === currentUser?.username;
+    const roleCls    = { superadmin:'purple', admin:'amber', tresorier:'amber',
+                         secretaire:'blue', competitions:'green', juridique:'red',
+                         finances:'amber', audit:'gray', communication:'blue' };
+    const roleBadge  = `<span class="badge ${roleCls[userData.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[userData.role]?.label || userData.role}</span>`;
+
+    const cells = perms.map(p => {
+      if (isSelf || userData.role === 'superadmin') {
+        return `<td style="text-align:center"><span style="font-size:18px">✅</span></td>`;
+      }
+      const roleGrant = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](userData.role) : false;
+      const hasOverride = p in overrides;
+      const effective   = hasOverride ? overrides[p] : roleGrant;
+      const overrideMark = hasOverride ? `<span style="font-size:9px;color:var(--amber);font-weight:700" title="Override actif">★</span>` : '';
+
+      if (effective) {
+        return `<td style="text-align:center">
+          ${overrideMark}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)">✅</span>
+        </td>`;
+      } else {
+        return `<td style="text-align:center">
+          ${overrideMark}<span style="font-size:16px;cursor:pointer;opacity:0.35" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)">🔒</span>
+        </td>`;
+      }
+    }).join('');
+
+    html += `<tr>
+      <td><strong style="font-size:13px">${userData.name || m.name}</strong></td>
+      <td>${roleBadge}</td>
+      ${cells}
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  html += `<p style="font-size:11px;color:var(--muted);padding:8px 16px 12px">
+    ✅ = accès accordé &nbsp;·&nbsp; 🔒 = accès refusé &nbsp;·&nbsp;
+    <span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)
+  </p>`;
+  body.innerHTML = html;
+}
+
+// ============================================================
+//  JOURNAL D'AUDIT
+// ============================================================
+function getAuditLog() {
+  try { return JSON.parse(localStorage.getItem('zone5r_auditlog')) || []; }
+  catch(e) { return []; }
+}
+function saveAuditLog(data) {
+  localStorage.setItem('zone5r_auditlog', JSON.stringify(data));
+  fireSync('auditlog', data);
+}
+
+const ACTION_LABELS = {
+  LOGIN:            'Connexion',
+  LOGOUT:           'Déconnexion',
+  ADD_PLAYER:       'Joueur ajouté',
+  ADD_FICHE:        'Fiche journée créée',
+  ADD_LITIGE:       'Litige déclaré',
+  EDIT_LITIGE:      'Litige modifié',
+  LEVER_SUSPENSION: 'Suspension levée',
+  ADD_LICENCE:      'Vente licence enregistrée',
+  ADD_DEPENSE:      'Dépense enregistrée',
+  CHANGE_PASSWORD:  'Mot de passe modifié',
+  CREATE_ACCOUNT:   'Compte créé',
+  DELETE_ACCOUNT:   'Compte supprimé',
+  GRANT_PERMISSION: 'Permission accordée',
+  REVOKE_PERMISSION:'Permission retirée',
+};
+
+function logAction(action, details = {}) {
+  if (!currentUser) return;
+  const entry = {
+    id: 'A' + Date.now(),
+    ts: new Date().toISOString(),
+    username: currentUser.username,
+    name: currentUser.name,
+    role: currentUser.role,
+    action,
+    detail: details.detail || Object.entries(details)
+      .filter(([k]) => k !== 'detail')
+      .map(([k,v]) => v).join(' · ') || ''
+  };
+  const logs = getAuditLog();
+  logs.unshift(entry);
+  saveAuditLog(logs.slice(0, 500));
+  if (currentUser.role === 'superadmin') renderAuditPanel();
+}
+
+function renderAuditPanel() {
+  const body = document.getElementById('audit-log-body');
+  if (!body) return;
+  const logs = getAuditLog();
+  if (!logs.length) {
+    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Aucune action enregistrée</div>';
+    return;
+  }
+  const fmtDate = ts => {
+    const d = new Date(ts);
+    return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  };
+  const roleCls = { superadmin:'purple', admin:'amber', tresorier:'amber',
+                    secretaire:'blue', competitions:'green', juridique:'red',
+                    finances:'amber', audit:'gray', communication:'blue', visiteur:'gray' };
+  body.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Date / Heure</th><th>Membre</th><th>Action</th><th>Détail</th></tr></thead>
+    <tbody>
+    ${logs.slice(0,200).map(e => `
+      <tr>
+        <td style="font-size:11px;white-space:nowrap;color:var(--muted)">${fmtDate(e.ts)}</td>
+        <td>
+          <span style="font-size:12px;font-weight:600">${e.name}</span><br>
+          <span class="badge ${roleCls[e.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[e.role]?.label || e.role}</span>
+        </td>
+        <td><span class="badge ${e.action.includes('REVOKE')||e.action==='DELETE_ACCOUNT'||e.action==='LOGOUT'?'red':'green'}" style="font-size:11px">${ACTION_LABELS[e.action]||e.action}</span></td>
+        <td style="font-size:12px;color:var(--muted)">${e.detail}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
 
 function getPlayers() {
   try {
@@ -2334,6 +2560,7 @@ function savePlayer() {
 
   data[team].push({ id, prenom, nom, cat, type, statut: 'Actif', cartons: '–' });
   savePlayers(data);
+  logAction('ADD_PLAYER', { detail: prenom + ' ' + nom + ' · ' + team });
 
   closeModal('modal-joueur');
   initTeamTabs();                    // Rafraîchir les compteurs
@@ -2462,6 +2689,7 @@ function renderMembersTable() {
 function deleteAccount(username, name) {
   if (!confirm('Supprimer le compte de ' + name + ' ?\nIl pourra être recréé en 1 clic.')) return;
   const users = getUsers();
+  logAction('DELETE_ACCOUNT', { detail: username + ' · ' + name });
   delete users[username];
   saveUsers(users);
   renderMembersTable();
@@ -2541,6 +2769,7 @@ function saveNewPassword() {
   if (users[username]) {
     users[username].password = newPwd;
     saveUsers(users);
+    logAction('CHANGE_PASSWORD', { detail: 'Compte : ' + username + ' (' + users[username].name + ')' });
     closeModal('modal-change-pwd');
     showToast('✅ Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
   }
@@ -2580,6 +2809,7 @@ function createAccount() {
 
   users[username] = { password: pwd, role, name, poste };
   saveUsers(users);
+  logAction('CREATE_ACCOUNT', { detail: username + ' · ' + name + ' · ' + role });
   closeModal('modal-create-account');
   renderMembersTable();
   showToast('✅ Compte ' + username + ' créé avec succès.');
@@ -3053,6 +3283,7 @@ function saveFicheJournee() {
 
   fiches.push(fiche);
   saveFiches(fiches);
+  logAction('ADD_FICHE', { detail: journee + ' · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-fiche-journee');
   renderFichesList();
   showToast('✅ Fiche ' + journee + ' enregistrée · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA');
@@ -3232,6 +3463,7 @@ function leverSuspension(id) {
   if (!confirm('Lever définitivement cette suspension ?')) return;
   const susp = getSuspensions().filter(s => s.id !== id);
   saveSuspensions(susp);
+  logAction('LEVER_SUSPENSION', { detail: 'Suspension #' + id });
   renderSuspensions();
   updateCaisse();
   showToast('✅ Suspension levée.');
@@ -3283,6 +3515,7 @@ function saveLitige() {
   const litiges = getLitiges();
   litiges.push(litige);
   saveLitiges(litiges);
+  logAction('ADD_LITIGE', { detail: litige.match + ' · ' + litige.motif });
   closeModal('modal-litige');
   renderLitiges();
   updateCaisse(); // Les amendes sont des recettes
@@ -3457,6 +3690,7 @@ function saveLicence() {
     total: j*200+t*250+b*500, date: document.getElementById('lic-date').value,
     declaredBy: currentUser?.name });
   saveLicences(lics);
+  logAction('ADD_LICENCE', { detail: asc + ' · ' + (j*200+t*250+b*500).toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-licence');
   renderLicencesTable();
   updateCaisse();
@@ -3531,6 +3765,7 @@ function saveOperation() {
   const dep = getDepensesDiverses();
   dep.push({ id:'D'+Date.now(), type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name });
   saveDepensesDiverses(dep);
+  logAction('ADD_DEPENSE', { detail: (desc || cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-tx');
   renderDepensesList();
   updateCaisse();
