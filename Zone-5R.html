@@ -916,7 +916,7 @@
   </div>
 
   <!-- LITIGES & RÉCLAMATIONS -->
-  <div class="card">
+  <div class="card" id="litiges-card">
     <div class="card-header">
       <span class="card-title">⚖️ Litiges & Réclamations</span>
       <span class="badge amber" id="litiges-count-badge">0 en cours</span>
@@ -1912,6 +1912,7 @@ const BUREAU_MEMBERS = [
   { username: 'cheikh.diatta',   defaultPwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
   { username: 'aicha.mbaye',     defaultPwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
   { username: 'idrissa.diallo',  defaultPwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
+  { username: 'nouha.coly',      defaultPwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',               poste: 'Secrétaire Administratif'   },
 ];
 
 const ROLE_CONFIG = {
@@ -2023,6 +2024,19 @@ function updateUI() {
 
     // FIX: display explicite pour surcharger le CSS .member-only { display:none }
     memberNavItems.forEach(n => n.style.display = 'block');
+
+    // Onglet Joueurs et carte Litiges : réservés aux membres autorisés
+    const canSeePlayersLitiges = CAN_SEE_PLAYERS_LITIGES.includes(currentUser.username);
+    const joueurNavItem = document.querySelector('.nav-item[data-section="joueurs"]');
+    const litigesCard   = document.getElementById('litiges-card');
+    if (joueurNavItem) joueurNavItem.style.display = canSeePlayersLitiges ? 'block' : 'none';
+    if (litigesCard)   litigesCard.style.display   = canSeePlayersLitiges ? '' : 'none';
+    // Si l'utilisateur est sur la section joueurs sans y avoir accès, rediriger
+    if (!canSeePlayersLitiges) {
+      const joueurSection = document.getElementById('joueurs');
+      if (joueurSection && joueurSection.classList.contains('active')) showSection('dashboard');
+    }
+
     // Le rôle visiteur peut consulter mais ne peut pas modifier
     const isReadOnly = currentUser.role === 'visiteur';
     memberActions.forEach(b => b.style.display = isReadOnly ? 'none' : '');
@@ -2151,6 +2165,8 @@ const ALL_TEAMS = [
 const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','tresorier','juridique','communication','audit','finances'];
 // Rôles autorisés à créer des comptes
 const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
+// Membres autorisés à voir la liste des joueurs et la liste des litiges en cours
+const CAN_SEE_PLAYERS_LITIGES = ['agnile.dieng','sidiky.doumbia','habib.sane','djiby.diatta','fode.goudiaby','aliou.sagna','nouha.coly','test.admin'];
 
 function getPlayers() {
   try {
