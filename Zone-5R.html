@@ -180,6 +180,13 @@
   .subsection { display: none; }
   .subsection.active { display: block; }
 
+  /* COMPETITION SELECTOR */
+  .comp-btn { display:flex;flex:1;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;
+    border-radius:10px;border:2px solid var(--border);background:var(--surface);
+    color:var(--fg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s,color .15s; }
+  .comp-btn.comp-active { background:var(--primary);border-color:var(--primary);color:#fff; }
+  .comp-btn.comp-active span { color:#fff; }
+
   /* LIVE MATCH */
   .live-badge { display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;
     background:var(--red);color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em; }
@@ -639,15 +646,13 @@
 
   <!-- Sélecteur Cadets / Seniors -->
   <div style="display:flex;gap:8px;margin-bottom:14px">
-    <button id="btn-comp-seniors" onclick="switchCompetition('seniors')"
-      style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:10px;border:2px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-family:inherit;transition:.15s">
+    <button id="btn-comp-seniors" class="comp-btn comp-active" onclick="switchCompetition('seniors')">
       <span style="font-size:15px;font-weight:700">⚽ Seniors</span>
       <span style="font-size:11px;opacity:.85">15h – 19h</span>
     </button>
-    <button id="btn-comp-cadets" onclick="switchCompetition('cadets')"
-      style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--fg);cursor:pointer;font-family:inherit;transition:.15s">
+    <button id="btn-comp-cadets" class="comp-btn" onclick="switchCompetition('cadets')">
       <span style="font-size:15px;font-weight:700">🌟 Cadets</span>
-      <span style="font-size:11px;opacity:.75">8h – 13h</span>
+      <span style="font-size:11px;opacity:.85">8h – 13h</span>
     </button>
   </div>
 
@@ -4504,19 +4509,10 @@ let _currentComp = 'seniors';
 
 function switchCompetition(comp) {
   _currentComp = comp;
-  const isSeniors = comp === 'seniors';
   const btnS = document.getElementById('btn-comp-seniors');
   const btnC = document.getElementById('btn-comp-cadets');
-  if (btnS) {
-    btnS.style.background  = isSeniors ? 'var(--primary)' : 'var(--surface)';
-    btnS.style.color       = isSeniors ? '#fff' : 'var(--fg)';
-    btnS.style.borderColor = isSeniors ? 'var(--primary)' : 'var(--border)';
-  }
-  if (btnC) {
-    btnC.style.background  = !isSeniors ? 'var(--primary)' : 'var(--surface)';
-    btnC.style.color       = !isSeniors ? '#fff' : 'var(--fg)';
-    btnC.style.borderColor = !isSeniors ? 'var(--primary)' : 'var(--border)';
-  }
+  if (btnS) btnS.classList.toggle('comp-active', comp === 'seniors');
+  if (btnC) btnC.classList.toggle('comp-active', comp === 'cadets');
   renderCompMatches();
   renderClassementSection();
 }
