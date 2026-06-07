@@ -180,6 +180,34 @@
   .subsection { display: none; }
   .subsection.active { display: block; }
 
+  /* LIVE MATCH */
+  .live-badge { display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;
+    background:var(--red);color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em; }
+  .live-badge::before { content:'';width:7px;height:7px;border-radius:50%;background:#fff;
+    animation:live-pulse 1.2s ease-in-out infinite; }
+  @keyframes live-pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+  .live-score-big { display:flex;align-items:center;justify-content:center;gap:12px;margin:8px 0 16px; }
+  .live-score-big .score-num { font-size:52px;font-weight:900;line-height:1;min-width:64px;text-align:center; }
+  .live-score-big .score-sep { font-size:28px;color:var(--muted);font-weight:300; }
+  .live-team-label { font-size:12px;font-weight:700;text-align:center;color:var(--muted);
+    margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .score-ctrl { width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:22px;
+    font-weight:900;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0; }
+  .score-ctrl.plus  { background:var(--green);color:#fff; }
+  .score-ctrl.plus:hover  { background:var(--green-d); }
+  .score-ctrl.minus { background:var(--gray-l);color:var(--muted); }
+  .score-ctrl.minus:hover { background:var(--border); }
+  .score-ctrl:disabled { opacity:.35;cursor:not-allowed; }
+  .live-timer { font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;
+    color:var(--green);text-align:center;letter-spacing:.02em; }
+  .live-timer.halftime { color:var(--amber); }
+  .live-timer.ended    { color:var(--muted); }
+  .event-log { max-height:170px;overflow-y:auto;font-size:12px; }
+  .event-item { display:flex;gap:8px;align-items:baseline;padding:5px 0;
+    border-bottom:1px solid var(--border); }
+  .event-item:last-child { border-bottom:none; }
+  .event-min  { font-weight:700;color:var(--muted);min-width:26px;flex-shrink:0; }
+
   /* ALERT */
   .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px;
     display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
@@ -285,7 +313,6 @@
 <nav id="main-nav">
   <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">🏠 Accueil</div>
   <div class="nav-item" data-section="competition" onclick="showSection('competition')">⚽ Compétition</div>
-  <div class="nav-item" data-section="classement" onclick="showSection('classement')">🏆 Classements</div>
   <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')">💰 Trésorerie</div>
   <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">⚖️ Juridique</div>
   <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Administration</div>
@@ -386,7 +413,7 @@
     <div class="card mb">
       <div class="card-header">
         <span class="card-title">Classement · Poule A</span>
-        <button class="btn" onclick="showSection('classement')">Voir tout 🏆</button>
+        <button class="btn" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">Voir tout 🏆</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -613,6 +640,7 @@
   <!-- SUBNAV Compétition -->
   <div class="subnav">
     <div class="subnav-item active" id="subnav-comp-planning" onclick="showSubSection('competition','comp-planning',this)">📅 Planning & Matchs</div>
+    <div class="subnav-item" id="subnav-comp-classement" onclick="showSubSection('competition','comp-classement',this);renderClassementSection()">🏆 Classements</div>
     <div class="subnav-item" id="subnav-comp-joueurs" onclick="showSubSection('competition','comp-joueurs',this)" style="display:none">👥 Joueurs & Licences</div>
     <div class="subnav-item" id="subnav-comp-stats" onclick="showSubSection('competition','comp-stats',this)" style="display:none">📊 Vue d'ensemble</div>
   </div>
@@ -620,8 +648,8 @@
   <!-- SUB : Planning & Matchs -->
   <div id="comp-planning" class="subsection active">
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px">
-    <button class="btn member-action" onclick="openModal('modal-match')">+ Saisir score</button>
-    <button class="btn primary member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
+    <button class="btn primary member-action" id="btn-live-new" onclick="openLiveMatchNew()" style="display:none">🔴 Nouveau match live</button>
+    <button class="btn member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
   </div>
 
   <div class="tabs">
@@ -632,67 +660,28 @@
   </div>
 
   <div id="comp-tabs">
-    <div id="poule-a">
-      <div class="card mb">
-        <div class="card-header">
-          <span class="card-title">Poule A · Programme</span>
-          <span class="badge green">5 équipes</span>
-        </div>
-        <div class="gap" style="padding:12px;gap:6px">
-          <div class="match-card">
-            <div class="match-team">ASC Walidane</div>
-            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">0</div></div>
-            <div class="match-team right">ASC Chicago</div>
-            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Kafesse</div>
-            <div class="match-score"><div class="score-box">1</div><div class="match-vs">–</div><div class="score-box">1</div></div>
-            <div class="match-team right">ASC Baraka</div>
-            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Oryx MTG</div>
-            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
-            <div class="match-team right">ASC Walidane</div>
-            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--amber);font-weight:600">10/09 · 16h</div></div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Chicago</div>
-            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
-            <div class="match-team right">ASC Kafesse</div>
-            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--muted)">12/09 · 15h</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="poule-b" style="display:none">
-      <div class="card mb">
-        <div class="card-header"><span class="card-title">Poule B · Programme</span><span class="badge amber">4 équipes</span></div>
-        <div class="gap" style="padding:12px;gap:6px">
-          <div class="match-card">
-            <div class="match-team">ASC Baraka</div>
-            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
-            <div class="match-team right">ASC Deggo</div>
-            <div style="flex-shrink:0"><span class="badge green">Joué</span></div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Médina Plateau</div>
-            <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
-            <div class="match-team right">ASC Baraka</div>
-            <div style="flex-shrink:0"><div style="font-size:11px;color:var(--muted)">11/09 · 16h</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="poule-c" style="display:none">
-      <div class="alert info">ℹ️ Programme Poule C en attente de validation par le Secrétaire.</div>
-    </div>
-    <div id="poule-d" style="display:none">
-      <div class="alert info">ℹ️ Programme Poule D en attente de validation par le Secrétaire.</div>
-    </div>
+    <div id="poule-a"><!-- Généré par JS --></div>
+    <div id="poule-b" style="display:none"><!-- Généré par JS --></div>
+    <div id="poule-c" style="display:none"><!-- Généré par JS --></div>
+    <div id="poule-d" style="display:none"><!-- Généré par JS --></div>
   </div>
   </div><!-- /comp-planning -->
+
+  <!-- SUB : Classements -->
+  <div id="comp-classement" class="subsection">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'cls-a','cls-tabs')">Poule A</div>
+      <div class="tab" onclick="switchTab(this,'cls-b','cls-tabs')">Poule B</div>
+      <div class="tab" onclick="switchTab(this,'cls-c','cls-tabs')">Poule C</div>
+      <div class="tab" onclick="switchTab(this,'cls-d','cls-tabs')">Poule D</div>
+    </div>
+    <div id="cls-tabs">
+      <div id="cls-a"><!-- Généré par JS --></div>
+      <div id="cls-b" style="display:none"><!-- Généré par JS --></div>
+      <div id="cls-c" style="display:none"><!-- Généré par JS --></div>
+      <div id="cls-d" style="display:none"><!-- Généré par JS --></div>
+    </div>
+  </div><!-- /comp-classement -->
 
   <!-- SUB : Joueurs & Licences -->
   <div id="comp-joueurs" class="subsection">
@@ -747,7 +736,7 @@
           <div style="margin-top:12px"><span class="badge green">Voir →</span></div>
         </div>
       </div>
-      <div class="card" style="cursor:pointer" onclick="showSection('classement')">
+      <div class="card" style="cursor:pointer" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">
         <div style="padding:20px;text-align:center">
           <div style="font-size:32px;margin-bottom:8px">🏆</div>
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">Classements</div>
@@ -763,54 +752,6 @@
 <!-- ============================
      CLASSEMENTS
      ============================ -->
-<div id="classement" class="section">
-  <div class="flex-between mb">
-    <h2 style="font-size:18px;font-weight:700">Classements</h2>
-  </div>
-
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab(this,'cls-a','cls-tabs')">Poule A</div>
-    <div class="tab" onclick="switchTab(this,'cls-b','cls-tabs')">Poule B</div>
-    <div class="tab" onclick="switchTab(this,'cls-c','cls-tabs')">Poule C</div>
-    <div class="tab" onclick="switchTab(this,'cls-d','cls-tabs')">Poule D</div>
-  </div>
-  <div id="cls-tabs">
-    <div id="cls-a">
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
-            <tbody>
-              <tr class="rank-1"><td>🥇</td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td>5</td><td>1</td><td><span class="badge green">+4</span></td><td><strong>7</strong></td></tr>
-              <tr class="rank-2"><td>🥈</td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td>4</td><td>2</td><td><span class="badge green">+2</span></td><td><strong>5</strong></td></tr>
-              <tr class="rank-3"><td>🥉</td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td>3</td><td>3</td><td><span class="badge gray">0</span></td><td><strong>3</strong></td></tr>
-              <tr><td>4</td><td>ASC Kafesse</td><td>3</td><td>0</td><td>1</td><td>2</td><td>2</td><td>5</td><td><span class="badge red">-3</span></td><td><strong>1</strong></td></tr>
-              <tr><td>5</td><td>ASC Chicago</td><td>2</td><td>0</td><td>0</td><td>2</td><td>1</td><td>4</td><td><span class="badge red">-3</span></td><td><strong>0</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>
-    </div>
-    <div id="cls-b" style="display:none">
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
-            <tbody>
-              <tr class="rank-1"><td>🥇</td><td><strong>ASC Baraka</strong></td><td>2</td><td>2</td><td>0</td><td>0</td><td>4</td><td>1</td><td><span class="badge green">+3</span></td><td><strong>6</strong></td></tr>
-              <tr class="rank-2"><td>🥈</td><td>ASC Médina Plateau</td><td>1</td><td>1</td><td>0</td><td>0</td><td>2</td><td>0</td><td><span class="badge green">+2</span></td><td><strong>3</strong></td></tr>
-              <tr class="rank-3"><td>🥉</td><td>ASC Deggo</td><td>2</td><td>0</td><td>0</td><td>2</td><td>1</td><td>3</td><td><span class="badge red">-2</span></td><td><strong>0</strong></td></tr>
-              <tr><td>4</td><td>ASC Santhiaba</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>3</td><td><span class="badge red">-3</span></td><td><strong>0</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div id="cls-c" style="display:none"><div class="alert info">ℹ️ Phase de poules C non encore commencée.</div></div>
-    <div id="cls-d" style="display:none"><div class="alert info">ℹ️ Phase de poules D non encore commencée.</div></div>
-  </div>
-</div>
 
 <!-- ============================
      TRÉSORERIE
@@ -1328,51 +1269,97 @@
 </div>
 
 <!-- Modal: Saisir score -->
-<div id="modal-match" class="modal-overlay" onclick="closeModalOutside(event)">
-  <div class="modal">
+<!-- Modal: Live match scoring -->
+<div id="modal-live-match" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:420px;width:100%">
     <div class="modal-header">
-      <span class="modal-title">⚽ Saisir un résultat</span>
-      <button class="close-btn" onclick="closeModal('modal-match')">✕</button>
+      <span class="modal-title" id="live-modal-title">⚽ Match en direct</span>
+      <button class="close-btn" onclick="closeLiveMatch()">✕</button>
     </div>
-    <div class="form-group">
-      <label>Poule</label>
-      <select><option>Poule A</option><option>Poule B</option><option>Poule C</option><option>Poule D</option></select>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Équipe Domicile</label>
-        <select><option>ASC Walidane</option><option>ASC Baraka</option><option>ASC Chicago</option><option>ASC Kafesse</option></select>
+    <div style="padding:16px">
+
+      <!-- Statut + timer -->
+      <div style="text-align:center;margin-bottom:12px">
+        <div id="live-status-badge" style="margin-bottom:6px"></div>
+        <div class="live-timer" id="live-timer-display">--:--</div>
       </div>
-      <div class="form-group">
-        <label>Score Domicile</label>
-        <input type="number" min="0" value="0">
+
+      <!-- Score principal -->
+      <div class="live-score-big">
+        <div style="flex:1;text-align:center;min-width:0">
+          <div class="live-team-label" id="live-dom-name">—</div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:8px">
+            <button class="score-ctrl minus" onclick="liveGoal('dom',-1)">−</button>
+            <span class="score-num" id="live-score-dom">0</span>
+            <button class="score-ctrl plus" onclick="liveGoal('dom',1)">+</button>
+          </div>
+        </div>
+        <div class="score-sep">–</div>
+        <div style="flex:1;text-align:center;min-width:0">
+          <div class="live-team-label" id="live-ext-name">—</div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:8px">
+            <button class="score-ctrl minus" onclick="liveGoal('ext',-1)">−</button>
+            <span class="score-num" id="live-score-ext">0</span>
+            <button class="score-ctrl plus" onclick="liveGoal('ext',1)">+</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Équipe Extérieur</label>
-        <select><option>ASC Oryx MTG</option><option>ASC Deggo</option><option>ASC Nafacounda</option></select>
+
+      <!-- Contrôles du match -->
+      <div id="live-ctrl-btns" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
+        <button class="btn primary" id="btn-ls-start"  onclick="liveSetStatus('live')"     style="display:none">▶ Coup d'envoi</button>
+        <button class="btn"         id="btn-ls-half"   onclick="liveSetStatus('mi-temps')" style="display:none">⏸ Mi-temps</button>
+        <button class="btn primary" id="btn-ls-resume" onclick="liveSetStatus('live-2')"   style="display:none">▶ Reprendre (2ᵉ mi-temps)</button>
+        <button class="btn"         id="btn-ls-end"    onclick="liveSetStatus('termine')"  style="display:none">🏁 Fin du match</button>
       </div>
-      <div class="form-group">
-        <label>Score Extérieur</label>
-        <input type="number" min="0" value="0">
+
+      <!-- Temps additionnel -->
+      <div id="live-extra-panel" style="display:none;background:var(--gray-l);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-align:center;letter-spacing:.05em">TEMPS ADDITIONNEL</div>
+        <div style="display:flex;gap:16px">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">1ʳᵉ mi-temps</div>
+            <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+              <button class="score-ctrl minus" style="width:34px;height:34px;font-size:16px" onclick="liveExtraTime(1,-1)">−</button>
+              <span id="live-extra1" style="font-weight:700;font-size:18px;min-width:20px;text-align:center">0</span>
+              <span style="font-size:11px;color:var(--muted)">min</span>
+              <button class="score-ctrl plus"  style="width:34px;height:34px;font-size:16px" onclick="liveExtraTime(1,1)">+</button>
+            </div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">2ᵉ mi-temps</div>
+            <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+              <button class="score-ctrl minus" style="width:34px;height:34px;font-size:16px" onclick="liveExtraTime(2,-1)">−</button>
+              <span id="live-extra2" style="font-weight:700;font-size:18px;min-width:20px;text-align:center">0</span>
+              <span style="font-size:11px;color:var(--muted)">min</span>
+              <button class="score-ctrl plus"  style="width:34px;height:34px;font-size:16px" onclick="liveExtraTime(2,1)">+</button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="form-group">
-      <label>Date de la rencontre</label>
-      <input type="date">
-    </div>
-    <div class="form-group">
-      <label>Terrain</label>
-      <select><option>Stade René COLY</option><option>CEM Arfang Bessire Sonko</option><option>Terrain HLM</option><option>Terrain JKS</option></select>
-    </div>
-    <div class="form-group">
-      <label>Observations / Incidents</label>
-      <textarea placeholder="Cartons reçus, incidents, réclamations..."></textarea>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn" onclick="closeModal('modal-match')">Annuler</button>
-      <button class="btn primary" onclick="alert('Score sauvegardé ! Classement mis à jour.');closeModal('modal-match')">Valider le résultat</button>
+
+      <!-- Cartons -->
+      <div id="live-cards-panel" style="display:none;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;letter-spacing:.05em">CARTON</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="live-card-team" style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+            <option value="dom">-- Équipe dom.</option>
+            <option value="ext">-- Équipe ext.</option>
+          </select>
+          <input id="live-card-player" type="text" placeholder="N° ou nom joueur" style="flex:1;padding:7px 8px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+          <button class="btn" style="padding:7px 11px;background:#FCD34D;border:none;font-size:15px" title="Jaune" onclick="liveCard('jaune')">🟨</button>
+          <button class="btn" style="padding:7px 11px;background:#EF4444;color:#fff;border:none;font-size:15px" title="Rouge" onclick="liveCard('rouge')">🟥</button>
+        </div>
+      </div>
+
+      <!-- Événements -->
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;letter-spacing:.05em">ÉVÉNEMENTS</div>
+        <div class="event-log" id="live-event-log">
+          <div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Aucun événement</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2183,6 +2170,12 @@ function updateUI() {
     visitorView.style.display = 'none';
     memberView.style.display  = 'block';
 
+    // Bouton Live Match : Commission compétitions, juridique, admin, superadmin
+    const canLive = hasPermission('live_score');
+    const btnLiveNew = document.getElementById('btn-live-new');
+    if (btnLiveNew) btnLiveNew.style.display = canLive ? '' : 'none';
+    renderCompMatches(); // refresh boutons "Démarrer/En direct" selon permission
+
     // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
     const btnAddJoueur = document.getElementById('btn-add-joueur');
     if (btnAddJoueur) {
@@ -2348,6 +2341,8 @@ const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
 const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions','juridique','secretaire'];
 // Rôles autorisés à créer une fiche journée (Trésoriers + Super Admin)
 const CAN_CREATE_FICHE = ['superadmin','tresorier'];
+// Rôles autorisés à scorer en direct (SuperAdmin, Président, Compétitions, Juridique)
+const CAN_LIVE_SCORE = ['superadmin','admin','competitions','juridique'];
 
 // ============================================================
 //  SYSTÈME DE PERMISSIONS (rôle + overrides individuels)
@@ -2359,6 +2354,7 @@ const PERM_DEFAULTS = {
   add_litige:          r => r === 'juridique',
   manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
   declare_saison:      r => ['superadmin','admin'].includes(r),
+  live_score:          r => CAN_LIVE_SCORE.includes(r),
 };
 const PERM_LABELS = {
   see_players_litiges: 'Joueurs & Litiges',
@@ -4399,6 +4395,293 @@ function removeContribRow(btn, asc) {
 }
 
 // ============================================================
+//  MATCHES — stockage dynamique + classement calculé
+// ============================================================
+const MATCH_KEY = 'zone5r_matches';
+
+function getMatchesData() {
+  try { return JSON.parse(localStorage.getItem(MATCH_KEY) || '[]'); } catch { return []; }
+}
+function saveMatchesData(m) { localStorage.setItem(MATCH_KEY, JSON.stringify(m)); }
+
+function initMatchesData() {
+  if (getMatchesData().length > 0) return;
+  const saisonId = getSelectedSaison()?.id || 'default';
+  const initial = ALL_MATCHES.map((m, i) => {
+    const parts = (m.score || '0-0').split('-').map(Number);
+    return {
+      id: 'M' + String(i + 1).padStart(3, '0'),
+      saisonId,
+      poule: m.poule,
+      dom: m.dom,
+      ext: m.ext,
+      date: m.date,
+      terrain: '',
+      statut: m.statut === 'joue' ? 'termine' : 'upcoming',
+      score: { dom: parts[0] || 0, ext: parts[1] || 0 },
+      live: { startedAt: null, halfAt: null, resumedAt: null, endedAt: null,
+              addedTime1: 0, addedTime2: 0, currentHalf: 0 },
+      events: []
+    };
+  });
+  saveMatchesData(initial);
+}
+
+function renderCompMatches() {
+  const matches  = getMatchesData();
+  const canLive  = hasPermission('live_score');
+  ['a','b','c','d'].forEach(p => {
+    const el = document.getElementById('poule-' + p);
+    if (!el) return;
+    const pm = matches.filter(m => m.poule.toLowerCase() === p);
+    if (pm.length === 0) {
+      el.innerHTML = '<div class="alert info">ℹ️ Programme Poule ' + p.toUpperCase() + ' en attente.</div>';
+      return;
+    }
+    const teams = [...new Set(pm.flatMap(m => [m.dom, m.ext]))];
+    el.innerHTML = `
+      <div class="card mb">
+        <div class="card-header">
+          <span class="card-title">Poule ${p.toUpperCase()} · Programme</span>
+          <span class="badge green">${teams.length} équipes</span>
+        </div>
+        <div class="gap" style="padding:12px;gap:6px">
+          ${pm.map(m => _matchCardHtml(m, canLive)).join('')}
+        </div>
+      </div>`;
+  });
+}
+
+function _matchCardHtml(m, canLive) {
+  const isLive  = m.statut === 'live' || m.statut === 'mi-temps';
+  const isDone  = m.statut === 'termine';
+  let scoreHtml, badgeHtml;
+  if (isLive || isDone) {
+    scoreHtml = `<div class="score-box">${m.score.dom}</div><div class="match-vs">–</div><div class="score-box">${m.score.ext}</div>`;
+  } else {
+    scoreHtml = `<div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div>`;
+  }
+  if (m.statut === 'live')      badgeHtml = `<span class="live-badge">LIVE</span>`;
+  else if (m.statut === 'mi-temps') badgeHtml = `<span class="badge amber">Mi-temps</span>`;
+  else if (isDone)              badgeHtml = `<span class="badge green">Joué</span>`;
+  else                          badgeHtml = `<span style="font-size:11px;color:var(--muted)">${m.date}</span>`;
+  const liveBtn = canLive
+    ? `<button class="btn" style="padding:4px 10px;font-size:11px;flex-shrink:0" onclick="openLiveMatch('${m.id}')">
+         ${m.statut === 'live' ? '🔴 En direct' : (isDone ? '✏️ Modifier' : '▶ Démarrer')}
+       </button>`
+    : '';
+  return `
+    <div class="match-card" id="mc-${m.id}">
+      <div class="match-team">${m.dom}</div>
+      <div class="match-score">${scoreHtml}</div>
+      <div class="match-team right">${m.ext}</div>
+      <div style="flex-shrink:0;display:flex;gap:6px;align-items:center">${badgeHtml}${liveBtn}</div>
+    </div>`;
+}
+
+function renderClassementSection() {
+  const matches = getMatchesData();
+  ['a','b','c','d'].forEach(p => {
+    const el = document.getElementById('cls-' + p);
+    if (!el) return;
+    const done = matches.filter(m => m.poule.toLowerCase() === p && m.statut === 'termine');
+    const all  = matches.filter(m => m.poule.toLowerCase() === p);
+    if (all.length === 0) {
+      el.innerHTML = '<div class="alert info">ℹ️ Phase de poules ' + p.toUpperCase() + ' non encore commencée.</div>';
+      return;
+    }
+    const teams = {};
+    all.forEach(m => { if (!teams[m.dom]) teams[m.dom] = {j:0,g:0,n:0,p:0,bp:0,bc:0,pts:0}; if (!teams[m.ext]) teams[m.ext] = {j:0,g:0,n:0,p:0,bp:0,bc:0,pts:0}; });
+    done.forEach(m => {
+      const d = m.score.dom, e = m.score.ext;
+      teams[m.dom].j++; teams[m.dom].bp += d; teams[m.dom].bc += e;
+      teams[m.ext].j++; teams[m.ext].bp += e; teams[m.ext].bc += d;
+      if (d > e)      { teams[m.dom].g++; teams[m.dom].pts += 3; teams[m.ext].p++; }
+      else if (d < e) { teams[m.ext].g++; teams[m.ext].pts += 3; teams[m.dom].p++; }
+      else            { teams[m.dom].n++; teams[m.dom].pts++; teams[m.ext].n++; teams[m.ext].pts++; }
+    });
+    const sorted = Object.entries(teams).sort(([,a],[,b]) =>
+      b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp
+    );
+    const medals = ['🥇','🥈','🥉'];
+    const rows = sorted.map(([name, s], i) => {
+      const diff = s.bp - s.bc;
+      const db = diff > 0 ? `<span class="badge green">+${diff}</span>` : diff < 0 ? `<span class="badge red">${diff}</span>` : `<span class="badge gray">0</span>`;
+      const cls = i < 3 ? `class="rank-${i+1}"` : '';
+      return `<tr ${cls}><td>${medals[i]||i+1}</td><td>${i<2?`<strong>${name}</strong>`:name}</td><td>${s.j}</td><td>${s.g}</td><td>${s.n}</td><td>${s.p}</td><td>${s.bp}</td><td>${s.bc}</td><td>${db}</td><td><strong>${s.pts}</strong></td></tr>`;
+    }).join('');
+    el.innerHTML = `<div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>`;
+  });
+}
+
+// ============================================================
+//  LIVE MATCH SCORING
+// ============================================================
+let _liveMid = null;
+let _liveTimer = null;
+
+function openLiveMatch(matchId) {
+  const match = getMatchesData().find(m => m.id === matchId);
+  if (!match) return;
+  _liveMid = matchId;
+  document.getElementById('live-modal-title').textContent = `⚽ Poule ${match.poule} · ${match.dom} vs ${match.ext}`;
+  document.getElementById('live-dom-name').textContent   = match.dom;
+  document.getElementById('live-ext-name').textContent   = match.ext;
+  document.getElementById('live-score-dom').textContent  = match.score.dom;
+  document.getElementById('live-score-ext').textContent  = match.score.ext;
+  document.getElementById('live-extra1').textContent     = match.live.addedTime1;
+  document.getElementById('live-extra2').textContent     = match.live.addedTime2;
+  const t = document.getElementById('live-card-team');
+  t.innerHTML = `<option value="dom">${match.dom}</option><option value="ext">${match.ext}</option>`;
+  _liveRefreshUI(match);
+  _liveRenderEvents(match);
+  document.getElementById('modal-live-match').classList.add('show');
+  if (match.statut === 'live') _liveStartTimer(match);
+}
+
+function openLiveMatchNew() {
+  showToast('Sélectionner un match dans la liste et cliquer sur ▶ Démarrer.');
+}
+
+function closeLiveMatch() {
+  document.getElementById('modal-live-match').classList.remove('show');
+  if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+  _liveMid = null;
+}
+
+function _liveRefreshUI(match) {
+  const s = match.statut;
+  const show = (id, v) => { const e = document.getElementById(id); if (e) e.style.display = v ? '' : 'none'; };
+  show('btn-ls-start',  s === 'upcoming');
+  show('btn-ls-half',   s === 'live' && match.live.currentHalf === 1);
+  show('btn-ls-resume', s === 'mi-temps');
+  show('btn-ls-end',    s === 'live');
+  show('live-extra-panel',  s !== 'upcoming');
+  show('live-cards-panel',  s === 'live');
+  const badge = document.getElementById('live-status-badge');
+  const timer = document.getElementById('live-timer-display');
+  if (s === 'upcoming') { badge.innerHTML = '<span class="badge gray">À venir</span>'; timer.textContent = '--:--'; timer.className = 'live-timer'; }
+  else if (s === 'live')     { badge.innerHTML = '<span class="live-badge">LIVE</span>'; timer.className = 'live-timer'; }
+  else if (s === 'mi-temps') { badge.innerHTML = '<span class="badge amber">Mi-temps</span>'; timer.textContent = 'Mi-temps'; timer.className = 'live-timer halftime'; }
+  else if (s === 'termine')  { badge.innerHTML = '<span class="badge green">Terminé</span>'; timer.textContent = 'Terminé'; timer.className = 'live-timer ended'; }
+  const disabled = s === 'upcoming' || s === 'termine';
+  document.querySelectorAll('#modal-live-match .score-ctrl').forEach(b => b.disabled = disabled);
+}
+
+function _liveStartTimer(match) {
+  if (_liveTimer) clearInterval(_liveTimer);
+  const tick = () => {
+    const el = document.getElementById('live-timer-display');
+    if (!el) return;
+    const m = getMatchesData().find(x => x.id === _liveMid);
+    if (!m || m.statut !== 'live') return;
+    const base = m.live.currentHalf === 2 ? (m.live.resumedAt || Date.now()) : (m.live.startedAt || Date.now());
+    const elapsed = Math.floor((Date.now() - base) / 60000);
+    const offset  = m.live.currentHalf === 2 ? 45 : 0;
+    el.textContent = (elapsed + offset) + "'";
+  };
+  tick();
+  _liveTimer = setInterval(tick, 15000);
+}
+
+function _liveGetMinute(match) {
+  if (!match.live.startedAt) return 0;
+  const base = match.live.currentHalf === 2 ? (match.live.resumedAt || Date.now()) : match.live.startedAt;
+  return Math.max(1, Math.floor((Date.now() - base) / 60000) + (match.live.currentHalf === 2 ? 45 : 0));
+}
+
+function liveGoal(team, delta) {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match || match.statut === 'upcoming') return;
+  match.score[team] = Math.max(0, match.score[team] + delta);
+  if (delta > 0) match.events.push({ type:'but', team, player:'', minute:_liveGetMinute(match), detail:'' });
+  document.getElementById('live-score-' + team).textContent = match.score[team];
+  saveMatchesData(matches);
+  _liveRenderEvents(match);
+  renderCompMatches();
+  renderClassementSection();
+}
+
+function liveCard(type) {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match || match.statut !== 'live') return;
+  const team   = document.getElementById('live-card-team').value;
+  const player = (document.getElementById('live-card-player').value || '').trim() || '?';
+  const min    = _liveGetMinute(match);
+  match.events.push({ type:'carton', team, player, minute:min, detail:type });
+  document.getElementById('live-card-player').value = '';
+  saveMatchesData(matches);
+  _liveRenderEvents(match);
+  const tName = team === 'dom' ? match.dom : match.ext;
+  showToast((type === 'jaune' ? '🟨 Carton jaune' : '🟥 Carton rouge') + ' — ' + tName + ' (' + player + ')');
+  logAction('LIVE_CARD', { match: match.id, team, type, player, min });
+}
+
+function liveExtraTime(half, delta) {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match) return;
+  if (half === 1) match.live.addedTime1 = Math.max(0, match.live.addedTime1 + delta);
+  else            match.live.addedTime2 = Math.max(0, match.live.addedTime2 + delta);
+  document.getElementById('live-extra' + half).textContent = half === 1 ? match.live.addedTime1 : match.live.addedTime2;
+  saveMatchesData(matches);
+}
+
+function liveSetStatus(status) {
+  if (!_liveMid) return;
+  const matches = getMatchesData();
+  const match   = matches.find(m => m.id === _liveMid);
+  if (!match) return;
+  const now = Date.now();
+  if (status === 'live' && match.statut === 'upcoming') {
+    match.statut = 'live'; match.live.startedAt = now; match.live.currentHalf = 1;
+    match.events.push({ type:'statut', team:'', player:'', minute:0, detail:'Coup d\'envoi' });
+    _liveStartTimer(match);
+  } else if (status === 'mi-temps') {
+    match.statut = 'mi-temps'; match.live.halfAt = now;
+    match.events.push({ type:'statut', team:'', player:'', minute:45 + match.live.addedTime1, detail:'Mi-temps' });
+    if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+  } else if (status === 'live-2') {
+    match.statut = 'live'; match.live.resumedAt = now; match.live.currentHalf = 2;
+    match.events.push({ type:'statut', team:'', player:'', minute:45, detail:'Début 2ᵉ mi-temps' });
+    _liveStartTimer(match);
+  } else if (status === 'termine') {
+    match.statut = 'termine'; match.live.endedAt = now;
+    const min = match.live.currentHalf === 2 ? 90 + match.live.addedTime2 : 90;
+    match.events.push({ type:'statut', team:'', player:'', minute:min, detail:'Coup de sifflet final' });
+    if (_liveTimer) { clearInterval(_liveTimer); _liveTimer = null; }
+    logAction('MATCH_END', { match:match.id, score:`${match.score.dom}-${match.score.ext}` });
+  }
+  saveMatchesData(matches);
+  _liveRefreshUI(match);
+  _liveRenderEvents(match);
+  renderCompMatches();
+  renderClassementSection();
+}
+
+function _liveRenderEvents(match) {
+  const el = document.getElementById('live-event-log');
+  if (!el) return;
+  const evts = [...match.events].reverse();
+  if (evts.length === 0) { el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:12px">Aucun événement</div>'; return; }
+  const icons = { but:'⚽', jaune:'🟨', rouge:'🟥', statut:'⏱️', carton:'🟨' };
+  el.innerHTML = evts.map(e => {
+    const icon = e.type === 'carton' ? icons[e.detail] || '🟨' : (icons[e.type] || '📍');
+    const team = e.team === 'dom' ? match.dom : (e.team === 'ext' ? match.ext : '');
+    const desc = e.type === 'but' ? `But — ${team}` : (e.type === 'carton' ? `${team} — ${e.player}` : (e.detail || ''));
+    return `<div class="event-item"><span class="event-min">${e.minute}'</span><span>${icon}</span><span style="flex:1">${desc}</span></div>`;
+  }).join('');
+}
+
+// ============================================================
 //  INIT
 // ============================================================
 function _bootApp() {
@@ -4413,6 +4696,9 @@ function _bootApp() {
   saveUsers(users);
   getPlayers();
   getStades();
+  initMatchesData();
+  renderCompMatches();
+  renderClassementSection();
   initTeamTabs();
   renderFichesList();
   renderLicencesTable();
