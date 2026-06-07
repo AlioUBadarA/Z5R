@@ -168,6 +168,18 @@
     border-radius: 6px; cursor: pointer; transition: all 0.15s; color: var(--muted); }
   .tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
 
+  /* SUBNAV */
+  .subnav { display: flex; gap: 6px; padding: 4px 0 16px; margin-bottom: 8px;
+    border-bottom: 2px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav-item { padding: 7px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.18s;
+    background: var(--gray-l); color: var(--muted); border: 1.5px solid transparent; }
+  .subnav-item:hover:not(.active) { background: var(--border); color: var(--text); }
+  .subnav-item.active { background: var(--green); color: #fff; border-color: var(--green-d); box-shadow: 0 2px 8px rgba(22,163,74,.25); }
+  .subsection { display: none; }
+  .subsection.active { display: block; }
+
   /* ALERT */
   .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px;
     display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
@@ -275,9 +287,9 @@
   <div class="nav-item" data-section="competition" onclick="showSection('competition')">⚽ Compétition</div>
   <div class="nav-item" data-section="classement" onclick="showSection('classement')">🏆 Classements</div>
   <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')">💰 Trésorerie</div>
-  <div class="nav-item member-only" data-section="joueurs" onclick="showSection('joueurs')">👥 Joueurs</div>
-  <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">🟨 Cartons</div>
-  <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Bureau</div>
+  <div class="nav-item member-only" data-section="joueurs" onclick="showSection('joueurs')">⚽ Compétitions</div>
+  <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">⚖️ Juridique</div>
+  <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Administration</div>
 </nav>
 
 <!-- Barre sélecteur de saison -->
@@ -754,8 +766,9 @@
     </div>
   </div>
 
-  <div class="flex-between mb">
-    <h2 style="font-size:18px;font-weight:700">Trésorerie</h2>
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700">💰 Trésorerie</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Fiches journées · Licences · Dépenses · Bilan financier</p>
   </div>
 
   <div class="tabs" style="flex-wrap:wrap;gap:2px">
@@ -857,11 +870,21 @@
      JOUEURS & LICENCES
      ============================ -->
 <div id="joueurs" class="section">
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700">⚽ Compétitions</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px" id="joueurs-subtitle">Joueurs licenciés · Équipes participantes</p>
+  </div>
+
+  <!-- SUBNAV Compétitions -->
+  <div class="subnav">
+    <div class="subnav-item active" onclick="showSubSection('joueurs','comp-joueurs',this)">👥 Joueurs & Licences</div>
+    <div class="subnav-item" onclick="showSubSection('joueurs','comp-stats',this)">📊 Vue d'ensemble</div>
+  </div>
+
+  <!-- SUB : Joueurs & Licences -->
+  <div id="comp-joueurs" class="subsection active">
   <div class="flex-between mb">
-    <div>
-      <h2 style="font-size:18px;font-weight:700">Joueurs & Licences</h2>
-      <p style="font-size:12px;color:var(--muted)" id="joueurs-subtitle">Sélectionner une équipe pour voir ses joueurs</p>
-    </div>
+    <div></div>
     <button class="btn primary member-action" id="btn-add-joueur" onclick="openAddPlayerModal()">+ Ajouter joueur</button>
   </div>
 
@@ -896,60 +919,207 @@
       </table>
     </div>
   </div>
+  </div><!-- /comp-joueurs -->
+
+  <!-- SUB : Vue d'ensemble -->
+  <div id="comp-stats" class="subsection">
+    <div class="grid-2 mb">
+      <div class="stat blue"><div class="stat-label">Joueurs licenciés</div><div class="stat-value" id="total-joueurs-stats"></div><div class="stat-sub">Cadets + Seniors</div></div>
+      <div class="stat green"><div class="stat-label">Équipes enregistrées</div><div class="stat-value" id="total-equipes-stats"></div><div class="stat-sub">saison en cours</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card" style="cursor:pointer" onclick="showSection('competition')">
+        <div style="padding:20px;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">⚽</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Planning & Matchs</div>
+          <div style="font-size:12px;color:var(--muted)">Calendrier, résultats, scores</div>
+          <div style="margin-top:12px"><span class="badge green">Voir →</span></div>
+        </div>
+      </div>
+      <div class="card" style="cursor:pointer" onclick="showSection('classement')">
+        <div style="padding:20px;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">🏆</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Classements</div>
+          <div style="font-size:12px;color:var(--muted)">Poules, points, buts</div>
+          <div style="margin-top:12px"><span class="badge amber">Voir →</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /comp-stats -->
+
 </div>
 
 <!-- ============================
      CARTONS & DISCIPLINAIRE
      ============================ -->
 <div id="cartons" class="section">
-  <div class="flex-between mb">
-    <h2 style="font-size:18px;font-weight:700">Discipline</h2>
-    <div style="display:flex;gap:8px">
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700">⚖️ Juridique</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Discipline · Suspensions · Litiges & Réclamations</p>
+  </div>
+
+  <!-- SUBNAV Juridique -->
+  <div class="subnav">
+    <div class="subnav-item active" onclick="showSubSection('cartons','jur-suspensions',this)">🟨 Suspensions</div>
+    <div class="subnav-item" id="subnav-jur-litiges" onclick="showSubSection('cartons','jur-litiges',this)">⚖️ Litiges & Réclamations</div>
+  </div>
+
+  <!-- SUB : Suspensions -->
+  <div id="jur-suspensions" class="subsection active">
+    <div class="flex-between mb">
+      <span style="font-size:13px;color:var(--muted)">Joueurs actuellement suspendus</span>
       <button class="btn danger member-action" onclick="openModal('modal-carton')">+ Carton</button>
+    </div>
+    <div class="alert danger" id="suspensions-alert">🟥 Chargement…</div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Suspensions actives</span><span class="badge red" id="suspensions-count">0</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Joueur</th><th>ASC</th><th>Motif</th><th>Matchs restants</th><th>Action</th></tr></thead>
+          <tbody id="suspensions-body"><!-- Généré par JS --></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB : Litiges & Réclamations -->
+  <div id="jur-litiges" class="subsection">
+    <div class="flex-between mb">
+      <span style="font-size:13px;color:var(--muted)">Réclamations & délibérations officielles</span>
       <button class="btn" id="btn-add-litige" style="display:none" onclick="initLitigeModal();openModal('modal-litige')">⚖️ + Litige</button>
     </div>
-  </div>
-
-  <div class="alert danger" id="suspensions-alert">🟥 Chargement…</div>
-
-  <!-- SUSPENSIONS -->
-  <div class="card mb">
-    <div class="card-header"><span class="card-title">Suspensions actives</span><span class="badge red" id="suspensions-count">0</span></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Joueur</th><th>ASC</th><th>Motif</th><th>Matchs restants</th><th>Action</th></tr></thead>
-        <tbody id="suspensions-body"><!-- Généré par JS --></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- LITIGES & RÉCLAMATIONS -->
-  <div class="card" id="litiges-card">
-    <div class="card-header">
-      <span class="card-title">⚖️ Litiges & Réclamations</span>
-      <span class="badge amber" id="litiges-count-badge">0 en cours</span>
-    </div>
-    <div class="alert info" style="margin:12px 16px;margin-bottom:0;font-size:12px">
-      ℹ️ Les litiges sont déclarés exclusivement par le <strong>Président de la Commission Juridique</strong>. Le PV de délibération est visible par tous.
-    </div>
-    <div class="table-wrap" style="margin-top:12px">
-      <table>
-        <thead><tr><th>Match</th><th>Motif</th><th>Amende (FCFA)</th><th>Statut</th><th>PV</th><th>Action</th></tr></thead>
-        <tbody id="litiges-body"><!-- Généré par JS --></tbody>
-      </table>
+    <div class="card" id="litiges-card">
+      <div class="card-header">
+        <span class="card-title">⚖️ Litiges & Réclamations</span>
+        <span class="badge amber" id="litiges-count-badge">0 en cours</span>
+      </div>
+      <div class="alert info" style="margin:12px 16px;margin-bottom:0;font-size:12px">
+        ℹ️ Les litiges sont déclarés exclusivement par le <strong>Président de la Commission Juridique</strong>. Le PV de délibération est visible par tous.
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>Match</th><th>Motif</th><th>Amende (FCFA)</th><th>Statut</th><th>PV</th><th>Action</th></tr></thead>
+          <tbody id="litiges-body"><!-- Généré par JS --></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ============================
-     BUREAU & RÔLES
+     ADMINISTRATION
      ============================ -->
 <div id="bureau" class="section">
-  <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">Bureau Zone 5R / 2025</h2>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:16px">ODGAM Bignona · Siège : Collège René COLY</p>
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700">🏛️ Administration</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Bureau Zone 5R · ODGAM Bignona · Siège : Collège René COLY</p>
+  </div>
 
-  <!-- ADMIN/SUPERADMIN : Gestion de la saison -->
-  <div id="saison-panel" class="card mb" style="display:none">
+  <!-- SUBNAV Administration -->
+  <div class="subnav">
+    <div class="subnav-item active" id="subnav-adm-bureau" onclick="showSubSection('bureau','adm-bureau',this)">🏛️ Bureau & Membres</div>
+    <div class="subnav-item" id="subnav-adm-gestion" onclick="showSubSection('bureau','adm-gestion',this)" style="display:none">⚙️ Gestion</div>
+    <div class="subnav-item" id="subnav-adm-acces" onclick="showSubSection('bureau','adm-acces',this)" style="display:none">🔑 Accès membres</div>
+    <div class="subnav-item" id="subnav-adm-autorisations" onclick="showSubSection('bureau','adm-autorisations',this)" style="display:none">🔐 Autorisations</div>
+    <div class="subnav-item" id="subnav-adm-historique" onclick="showSubSection('bureau','adm-historique',this)" style="display:none">📋 Historique</div>
+  </div>
+
+  <!-- SUB : Bureau & Membres -->
+  <div id="adm-bureau" class="subsection active">
+    <div class="card mb">
+      <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
+      <div class="card-body">
+        <div class="role-grid">
+          <div class="role-card" style="border-color:var(--purple)">
+            <div class="role-name">Super Admin</div>
+            <div class="role-pos">Aliou Badara Sadia SAGNA</div>
+            <div class="role-perms">
+              <span class="badge purple">Accès total</span>
+              <span class="badge purple">Gestion MDP</span>
+            </div>
+          </div>
+          <div class="role-card" style="border-color:var(--amber)">
+            <div class="role-name">Président</div>
+            <div class="role-pos">Djiby Diouf DIATTA</div>
+            <div class="role-perms">
+              <span class="badge amber">Accès total</span>
+              <span class="badge blue">Validation</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-name">Secrétaire Général</div>
+            <div class="role-pos">Boubacar CAMARA</div>
+            <div class="role-perms">
+              <span class="badge blue">Résultats</span>
+              <span class="badge blue">Licences</span>
+              <span class="badge blue">Calendrier</span>
+            </div>
+          </div>
+          <div class="role-card" style="border-color:var(--amber)">
+            <div class="role-name">Trésorier Général</div>
+            <div class="role-pos">El Habib Pierre SANÉ</div>
+            <div class="role-perms">
+              <span class="badge amber">Finances</span>
+              <span class="badge amber">Rapports</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-name">Commission Compétitions</div>
+            <div class="role-pos">Sidiky DOUMBIA (Pdt)</div>
+            <div class="role-perms">
+              <span class="badge green">Scores</span>
+              <span class="badge green">Cartons</span>
+              <span class="badge green">Poules</span>
+            </div>
+          </div>
+          <div class="role-card" style="border-color:var(--red)">
+            <div class="role-name">Commission Juridique</div>
+            <div class="role-pos">Fodé GOUDIABY (Pdt)</div>
+            <div class="role-perms">
+              <span class="badge red">Réclamations</span>
+              <span class="badge red">Sanctions</span>
+            </div>
+          </div>
+          <div class="role-card" style="border-color:var(--gray)">
+            <div class="role-name">Public / Supporters</div>
+            <div class="role-pos">Consultation uniquement</div>
+            <div class="role-perms">
+              <span class="badge gray">Résultats</span>
+              <span class="badge gray">Classements</span>
+              <span class="badge gray">Fiches recettes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Membres du Bureau</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nom</th><th>Poste</th><th>Accès</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Aliou Badara Sadia SAGNA</strong></td><td>1er VP Marketing / Super Admin</td><td><span class="badge purple">Super Admin</span></td></tr>
+            <tr><td><strong>Djiby Diouf DIATTA</strong></td><td>Président Zone 5R</td><td><span class="badge amber">Admin</span></td></tr>
+            <tr><td>Boubacar CAMARA</td><td>Secrétaire Général</td><td><span class="badge blue">Secrétaire</span></td></tr>
+            <tr><td>Aliou SAGNA (Papis)</td><td>SG Adjoint</td><td><span class="badge blue">Secrétaire</span></td></tr>
+            <tr><td>El Habib Pierre SANÉ</td><td>Trésorier Général</td><td><span class="badge amber">Trésorier</span></td></tr>
+            <tr><td>Souleymane DIENG (Agnile)</td><td>Trésorier Adjoint</td><td><span class="badge amber">Trésorier</span></td></tr>
+            <tr><td>Ibrahima DIEME</td><td>Président Commission Finances</td><td><span class="badge amber">Finances</span></td></tr>
+            <tr><td>Sidiky DOUMBIA</td><td>Commission des Sports (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
+            <tr><td>Fodé GOUDIABY</td><td>Commission Juridique (Pdt)</td><td><span class="badge red">Juridique</span></td></tr>
+            <tr><td>Cheikh S. DIATTA</td><td>Commission Communication (Pdt)</td><td><span class="badge blue">Communication</span></td></tr>
+            <tr><td>Aïcha MBAYE</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
+            <tr><td>Idrissa DIALLO</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUB : Gestion (Saison, Stades, Équipes) -->
+  <div id="adm-gestion" class="subsection">
+    <!-- ADMIN/SUPERADMIN : Gestion de la saison -->
+    <div id="saison-panel" class="card mb" style="display:none">
     <div class="card-header">
       <span class="card-title">🗓️ Gestion de la saison</span>
       <span class="badge amber" id="saison-statut-badge"></span>
@@ -1064,7 +1234,10 @@
       <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Aucune équipe enregistrée</div>
     </div>
   </div>
+  </div><!-- /adm-gestion -->
 
+  <!-- SUB : Accès membres -->
+  <div id="adm-acces" class="subsection">
   <!-- SUPERADMIN/ADMIN : Gestion des accès -->
   <div id="admin-access-panel" class="card mb" style="display:none">
     <div class="card-header">
@@ -1083,7 +1256,10 @@
       </table>
     </div>
   </div>
+  </div><!-- /adm-acces -->
 
+  <!-- SUB : Autorisations -->
+  <div id="adm-autorisations" class="subsection">
   <!-- SUPERADMIN : Gestion des autorisations -->
   <div id="permissions-panel" class="card mb" style="display:none">
     <div class="card-header">
@@ -1092,7 +1268,10 @@
     </div>
     <div id="permissions-body"><!-- Rempli par JS --></div>
   </div>
+  </div><!-- /adm-autorisations -->
 
+  <!-- SUB : Historique -->
+  <div id="adm-historique" class="subsection">
   <!-- SUPERADMIN : Historique des actions -->
   <div id="audit-panel" class="card mb" style="display:none">
     <div class="card-header">
@@ -1101,97 +1280,9 @@
     </div>
     <div id="audit-log-body"><!-- Rempli par JS --></div>
   </div>
+  </div><!-- /adm-historique -->
 
-  <div class="card mb">
-    <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
-    <div class="card-body">
-      <div class="role-grid">
-        <div class="role-card" style="border-color:var(--purple)">
-          <div class="role-name">Super Admin</div>
-          <div class="role-pos">Aliou Badara Sadia SAGNA</div>
-          <div class="role-perms">
-            <span class="badge purple">Accès total</span>
-            <span class="badge purple">Gestion MDP</span>
-          </div>
-        </div>
-        <div class="role-card" style="border-color:var(--amber)">
-          <div class="role-name">Président</div>
-          <div class="role-pos">Djiby Diouf DIATTA</div>
-          <div class="role-perms">
-            <span class="badge amber">Accès total</span>
-            <span class="badge blue">Validation</span>
-          </div>
-        </div>
-        <div class="role-card">
-          <div class="role-name">Secrétaire Général</div>
-          <div class="role-pos">Boubacar CAMARA</div>
-          <div class="role-perms">
-            <span class="badge blue">Résultats</span>
-            <span class="badge blue">Licences</span>
-            <span class="badge blue">Calendrier</span>
-          </div>
-        </div>
-        <div class="role-card" style="border-color:var(--amber)">
-          <div class="role-name">Trésorier Général</div>
-          <div class="role-pos">El Habib Pierre SANÉ</div>
-          <div class="role-perms">
-            <span class="badge amber">Finances</span>
-            <span class="badge amber">Rapports</span>
-          </div>
-        </div>
-        <div class="role-card">
-          <div class="role-name">Commission Compétitions</div>
-          <div class="role-pos">Sidiky DOUMBIA (Pdt)</div>
-          <div class="role-perms">
-            <span class="badge green">Scores</span>
-            <span class="badge green">Cartons</span>
-            <span class="badge green">Poules</span>
-          </div>
-        </div>
-        <div class="role-card" style="border-color:var(--red)">
-          <div class="role-name">Commission Juridique</div>
-          <div class="role-pos">Fodé GOUDIABY (Pdt)</div>
-          <div class="role-perms">
-            <span class="badge red">Réclamations</span>
-            <span class="badge red">Sanctions</span>
-          </div>
-        </div>
-        <div class="role-card" style="border-color:var(--gray)">
-          <div class="role-name">Public / Supporters</div>
-          <div class="role-pos">Consultation uniquement</div>
-          <div class="role-perms">
-            <span class="badge gray">Résultats</span>
-            <span class="badge gray">Classements</span>
-            <span class="badge gray">Fiches recettes</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><span class="card-title">Membres du Bureau</span></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Nom</th><th>Poste</th><th>Accès</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Aliou Badara Sadia SAGNA</strong></td><td>1er VP Marketing / Super Admin</td><td><span class="badge purple">Super Admin</span></td></tr>
-          <tr><td><strong>Djiby Diouf DIATTA</strong></td><td>Président Zone 5R</td><td><span class="badge amber">Admin</span></td></tr>
-          <tr><td>Boubacar CAMARA</td><td>Secrétaire Général</td><td><span class="badge blue">Secrétaire</span></td></tr>
-          <tr><td>Aliou SAGNA (Papis)</td><td>SG Adjoint</td><td><span class="badge blue">Secrétaire</span></td></tr>
-          <tr><td>El Habib Pierre SANÉ</td><td>Trésorier Général</td><td><span class="badge amber">Trésorier</span></td></tr>
-          <tr><td>Souleymane DIENG (Agnile)</td><td>Trésorier Adjoint</td><td><span class="badge amber">Trésorier</span></td></tr>
-          <tr><td>Ibrahima DIEME</td><td>Président Commission Finances</td><td><span class="badge amber">Finances</span></td></tr>
-          <tr><td>Sidiky DOUMBIA</td><td>Commission des Sports (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
-          <tr><td>Fodé GOUDIABY</td><td>Commission Juridique (Pdt)</td><td><span class="badge red">Juridique</span></td></tr>
-          <tr><td>Cheikh S. DIATTA</td><td>Commission Communication (Pdt)</td><td><span class="badge blue">Communication</span></td></tr>
-          <tr><td>Aïcha MBAYE</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
-          <tr><td>Idrissa DIALLO</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+</div><!-- /bureau section -->
 
 <!-- ============================
      MODALS
@@ -2075,6 +2166,8 @@ function updateUI() {
     const litigesCard   = document.getElementById('litiges-card');
     if (joueurNavItem) joueurNavItem.style.display = canSeePlayersLitiges ? 'block' : 'none';
     if (litigesCard)   litigesCard.style.display   = canSeePlayersLitiges ? '' : 'none';
+    const litigesSubnavTab = document.getElementById('subnav-jur-litiges');
+    if (litigesSubnavTab) litigesSubnavTab.style.display = canSeePlayersLitiges ? '' : 'none';
     // Si l'utilisateur est sur la section joueurs sans y avoir accès, rediriger
     if (!canSeePlayersLitiges) {
       const joueurSection = document.getElementById('joueurs');
@@ -2127,6 +2220,14 @@ function updateUI() {
       if (permsPanel)  permsPanel.style.display  = 'none';
     }
 
+    // Sous-onglets Administration : visibilité selon rôle
+    const isAdmin = hasPermission('manage_accounts');
+    const isSuperAdmin = currentUser.role === 'superadmin';
+    const _st = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+    const _sh = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+    if (isAdmin)     { _st('subnav-adm-gestion'); _st('subnav-adm-acces'); } else { _sh('subnav-adm-gestion'); _sh('subnav-adm-acces'); }
+    if (isSuperAdmin){ _st('subnav-adm-autorisations'); _st('subnav-adm-historique'); } else { _sh('subnav-adm-autorisations'); _sh('subnav-adm-historique'); }
+
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
     if (btnLitige) {
@@ -2175,6 +2276,17 @@ function showSection(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.section === id);
   });
+}
+
+// Sous-navigation interne aux sections
+function showSubSection(sectionId, subId, tabEl) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  section.querySelectorAll('.subsection').forEach(s => s.classList.remove('active'));
+  const sub = document.getElementById(subId);
+  if (sub) sub.classList.add('active');
+  section.querySelectorAll('.subnav-item').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
 }
 
 // ============================================================
@@ -2497,6 +2609,11 @@ function initTeamTabs() {
   const equipesEl = document.getElementById('total-equipes');
   if (totalEl) totalEl.textContent = allPlayers.length;
   if (equipesEl) equipesEl.textContent = Object.keys(players).length;
+  // Synchronise aussi la vue d'ensemble
+  const totalEl2 = document.getElementById('total-joueurs-stats');
+  const equipesEl2 = document.getElementById('total-equipes-stats');
+  if (totalEl2) totalEl2.textContent = allPlayers.length;
+  if (equipesEl2) equipesEl2.textContent = Object.keys(players).length;
 }
 
 function selectTeam(team) {
