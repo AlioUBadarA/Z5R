@@ -764,7 +764,7 @@
     <div id="tx-journees">
       <div class="flex-between mb">
         <div style="font-size:13px;color:var(--muted)">Chaque fiche valide une journée et alimente le bilan</div>
-        <button class="btn primary member-action" onclick="openFicheModal()">+ Nouvelle fiche journée</button>
+        <button class="btn primary" id="btn-add-fiche" style="display:none" onclick="openFicheModal()">+ Nouvelle fiche journée</button>
       </div>
       <div id="fiches-list">
         <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune fiche enregistrée</div>
@@ -2049,6 +2049,12 @@ function updateUI() {
       btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.role) ? '' : 'none';
     }
 
+    // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
+    const btnAddFiche = document.getElementById('btn-add-fiche');
+    if (btnAddFiche) {
+      btnAddFiche.style.display = CAN_CREATE_FICHE.includes(currentUser.username) ? '' : 'none';
+    }
+
     // Panneaux réservés Admin/SuperAdmin
     const saisonPanel  = document.getElementById('saison-panel');
     const equipesPanel = document.getElementById('equipes-panel');
@@ -2167,6 +2173,8 @@ const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','tresor
 const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
 // Membres autorisés à voir la liste des joueurs et la liste des litiges en cours
 const CAN_SEE_PLAYERS_LITIGES = ['agnile.dieng','sidiky.doumbia','habib.sane','djiby.diatta','fode.goudiaby','aliou.sagna','nouha.coly','test.admin'];
+// Membres autorisés à créer une fiche journée
+const CAN_CREATE_FICHE = ['aliou.sagna','habib.sane','agnile.dieng'];
 
 function getPlayers() {
   try {
