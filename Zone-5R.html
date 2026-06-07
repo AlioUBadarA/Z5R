@@ -2840,17 +2840,18 @@ const ALL_MATCHES = [
   { competition:'seniors', dom: 'ASC Chicago',        ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 15h',   score: null,  statut: 'upcoming' },
   { competition:'seniors', dom: 'ASC Baraka',         ext: 'ASC Deggo',          poule: 'B', date: '29/08',          score: '2-1', statut: 'joue'     },
   { competition:'seniors', dom: 'ASC Médina Plateau', ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 16h',   score: null,  statut: 'upcoming' },
-  { competition:'seniors', dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
   { competition:'seniors', dom: 'ASC Santhiaba',      ext: 'ASC Médina Plateau', poule: 'B', date: '08/09',          score: '0-2', statut: 'joue'     },
-  // ── CADETS (8h – 13h) ───────────────────────────────────────
-  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Kafesse',        poule: 'A', date: '07/09 · 9h',    score: '1-0', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Chicago',        ext: 'ASC Oryx MTG',       poule: 'A', date: '07/09 · 10h30', score: '2-2', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Oryx MTG',       poule: 'A', date: '10/09 · 9h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Kafesse',        ext: 'ASC Chicago',        poule: 'A', date: '12/09 · 10h',   score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Baraka',         ext: 'ASC Santhiaba',      poule: 'B', date: '08/09 · 8h30',  score: '3-1', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Deggo',          ext: 'ASC Médina Plateau', poule: 'B', date: '11/09 · 9h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Yengoulène',     ext: 'ASC Baraka',         poule: 'C', date: '13/09 · 8h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Nafacounda',     ext: 'ASC Santhiaba',      poule: 'C', date: '14/09 · 10h',   score: null,  statut: 'upcoming' },
+  { competition:'seniors', dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
+  // ── CADETS (8h – 13h) — mêmes clubs, horaires matin ────────
+  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: "Auj. 9h",       score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: '07/09 · 8h',    score: '1-2', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Kafesse',        ext: 'ASC Baraka',         poule: 'A', date: '07/09 · 10h',   score: '0-0', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Oryx MTG',       ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 9h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Chicago',        ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 9h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Baraka',         ext: 'ASC Deggo',          poule: 'B', date: '29/08 · 8h30',  score: '3-1', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Médina Plateau', ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 9h',    score: null,  statut: 'upcoming' },
+  { competition:'cadets',  dom: 'ASC Santhiaba',      ext: 'ASC Médina Plateau', poule: 'B', date: '08/09 · 8h',    score: '2-1', statut: 'joue'     },
+  { competition:'cadets',  dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 8h',    score: null,  statut: 'upcoming' },
 ];
 
 function searchMatches(query) {
@@ -4560,10 +4561,15 @@ function initMatchesData() {
 function renderCompMatches() {
   const matches  = getMatchesData();
   const canLive  = hasPermission('live_score');
+  const sid      = getSelectedSaison()?.id;
   ['a','b','c','d'].forEach(p => {
     const el = document.getElementById('poule-' + p);
     if (!el) return;
-    const pm = matches.filter(m => m.poule.toLowerCase() === p && (m.competition || 'seniors') === _currentComp);
+    const pm = matches.filter(m =>
+      m.poule.toLowerCase() === p &&
+      (m.competition || 'seniors') === _currentComp &&
+      (!sid || (m.saisonId || 'default') === sid)
+    );
     if (pm.length === 0) {
       el.innerHTML = '<div class="alert info">ℹ️ Programme Poule ' + p.toUpperCase() + ' en attente.</div>';
       return;
@@ -4611,11 +4617,16 @@ function _matchCardHtml(m, canLive) {
 
 function renderClassementSection() {
   const matches = getMatchesData();
+  const sid     = getSelectedSaison()?.id;
   ['a','b','c','d'].forEach(p => {
     const el = document.getElementById('cls-' + p);
     if (!el) return;
-    const done = matches.filter(m => m.poule.toLowerCase() === p && m.statut === 'termine' && (m.competition || 'seniors') === _currentComp);
-    const all  = matches.filter(m => m.poule.toLowerCase() === p && (m.competition || 'seniors') === _currentComp);
+    const byPouleComp = m =>
+      m.poule.toLowerCase() === p &&
+      (m.competition || 'seniors') === _currentComp &&
+      (!sid || (m.saisonId || 'default') === sid);
+    const done = matches.filter(m => byPouleComp(m) && m.statut === 'termine');
+    const all  = matches.filter(m => byPouleComp(m));
     if (all.length === 0) {
       el.innerHTML = '<div class="alert info">ℹ️ Phase de poules ' + p.toUpperCase() + ' non encore commencée.</div>';
       return;
