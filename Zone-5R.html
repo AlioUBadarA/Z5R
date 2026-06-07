@@ -2026,7 +2026,7 @@ function updateUI() {
     memberNavItems.forEach(n => n.style.display = 'block');
 
     // Onglet Joueurs et carte Litiges : réservés aux membres autorisés
-    const canSeePlayersLitiges = CAN_SEE_PLAYERS_LITIGES.includes(currentUser.username);
+    const canSeePlayersLitiges = CAN_SEE_PLAYERS_LITIGES.includes(currentUser.role);
     const joueurNavItem = document.querySelector('.nav-item[data-section="joueurs"]');
     const litigesCard   = document.getElementById('litiges-card');
     if (joueurNavItem) joueurNavItem.style.display = canSeePlayersLitiges ? 'block' : 'none';
@@ -2046,13 +2046,13 @@ function updateUI() {
     // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
     const btnAddJoueur = document.getElementById('btn-add-joueur');
     if (btnAddJoueur) {
-      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.username) ? '' : 'none';
+      btnAddJoueur.style.display = CAN_ADD_PLAYER.includes(currentUser.role) ? '' : 'none';
     }
 
     // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
     const btnAddFiche = document.getElementById('btn-add-fiche');
     if (btnAddFiche) {
-      btnAddFiche.style.display = CAN_CREATE_FICHE.includes(currentUser.username) ? '' : 'none';
+      btnAddFiche.style.display = CAN_CREATE_FICHE.includes(currentUser.role) ? '' : 'none';
     }
 
     // Panneaux réservés Admin/SuperAdmin
@@ -2167,14 +2167,14 @@ const ALL_TEAMS = [
   'ASC Nafacounda','ASC Tankoron','ASC Diengue','ASC Renaissance'
 ];
 
-// Membres autorisés à ajouter un joueur
-const CAN_ADD_PLAYER = ['djiby.diatta','boubacar.camara','papis.sagna','sidiky.doumbia','fode.goudiaby','nouha.coly'];
+// Rôles autorisés à ajouter un joueur (Président, Secrétaires, Compétitions, Juridique)
+const CAN_ADD_PLAYER = ['admin','secretaire','competitions','juridique'];
 // Rôles autorisés à créer des comptes
 const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
-// Membres autorisés à voir la liste des joueurs et la liste des litiges en cours
-const CAN_SEE_PLAYERS_LITIGES = ['agnile.dieng','sidiky.doumbia','habib.sane','djiby.diatta','fode.goudiaby','aliou.sagna','nouha.coly','test.admin'];
-// Membres autorisés à créer une fiche journée
-const CAN_CREATE_FICHE = ['aliou.sagna','habib.sane','agnile.dieng'];
+// Rôles autorisés à voir la liste des joueurs et la liste des litiges en cours
+const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions','juridique','secretaire'];
+// Rôles autorisés à créer une fiche journée (Trésoriers + Super Admin)
+const CAN_CREATE_FICHE = ['superadmin','tresorier'];
 
 function getPlayers() {
   try {
