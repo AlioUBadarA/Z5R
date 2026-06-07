@@ -2341,6 +2341,7 @@ const ACTION_LABELS = {
   LOGIN:            'Connexion',
   LOGOUT:           'Déconnexion',
   ADD_PLAYER:       'Joueur ajouté',
+  DELETE_PLAYER:    'Joueur supprimé',
   ADD_FICHE:        'Fiche journée créée',
   ADD_LITIGE:       'Litige déclaré',
   EDIT_LITIGE:      'Litige modifié',
@@ -2507,9 +2508,14 @@ function renderTeamPlayers(team) {
     return;
   }
 
+  const isSuperAdmin = currentUser?.role === 'superadmin';
   tbody.innerHTML = list.map(p => {
     const catCls    = p.cat === 'Senior' ? 'blue' : p.cat === 'Cadet' ? 'amber' : 'gray';
     const statutCls = p.statut === 'Actif' ? 'green' : p.statut === 'Suspendu' ? 'red' : 'amber';
+    const delBtn    = isSuperAdmin
+      ? `<button class="btn danger" style="font-size:11px;padding:3px 8px"
+           onclick="deletePlayer('${team}','${p.id}','${p.prenom} ${p.nom}')">🗑️</button>`
+      : '';
     return `<tr>
       <td style="font-family:monospace;font-size:12px">${p.id}</td>
       <td><strong>${p.prenom} ${p.nom}</strong></td>
@@ -2517,8 +2523,23 @@ function renderTeamPlayers(team) {
       <td><span class="badge gray">${p.type}</span></td>
       <td><span class="badge ${statutCls}">${p.statut}</span></td>
       <td>${p.cartons}</td>
+      <td>${delBtn}</td>
     </tr>`;
   }).join('');
+}
+
+function deletePlayer(team, playerId, playerName) {
+  if (currentUser?.role !== 'superadmin') return;
+  if (!confirm('Supprimer définitivement ' + playerName + ' de ' + team + ' ?')) return;
+  const data = getPlayers();
+  if (data[team]) {
+    data[team] = data[team].filter(p => p.id !== playerId);
+    savePlayers(data);
+    logAction('DELETE_PLAYER', { detail: playerName + ' · ' + team });
+    initTeamTabs();
+    renderTeamPlayers(team);
+    showToast('🗑️ ' + playerName + ' supprimé(e).');
+  }
 }
 
 function filterTeamPlayers(val) {
