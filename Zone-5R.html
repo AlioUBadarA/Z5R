@@ -1096,7 +1096,7 @@
       </div>
       <div class="card-body">
         <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
-          Sync automatique toutes les <strong>10 secondes</strong>. Si un appareil ne voit pas les dernières données, utilisez le bouton ci-dessous pour forcer la synchronisation complète.
+          Sync automatique toutes les <strong>secondes</strong>. Si un appareil ne voit pas les dernières données, utilisez le bouton ci-dessous pour forcer la synchronisation complète.
         </p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn primary" onclick="forceSyncAllToFirebase()">☁️ Forcer la synchronisation complète</button>
@@ -2104,7 +2104,7 @@ setInterval(async () => {
     if (banner) banner.remove();
   }
   _updateSyncIndicator();
-}, 10000);
+}, 1000);
 
 // Force-sync : re-pousse tout le localStorage vers Firestore
 async function forceSyncAllToFirebase() {
