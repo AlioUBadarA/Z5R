@@ -2579,6 +2579,8 @@ const ACTION_LABELS = {
   LEVER_SUSPENSION: 'Suspension levée',
   ADD_LICENCE:      'Vente licence enregistrée',
   ADD_DEPENSE:      'Dépense enregistrée',
+  APPROVE_DEPENSE:  'Dépense validée',
+  REJECT_DEPENSE:   'Dépense rejetée',
   CHANGE_PASSWORD:  'Mot de passe modifié',
   CREATE_ACCOUNT:   'Compte créé',
   DELETE_ACCOUNT:   'Compte supprimé',
@@ -4133,17 +4135,91 @@ function renderDepensesList() {
   const dep = getDepensesDiverses();
   const div = document.getElementById('depenses-list');
   if (!div) return;
-  const fmt = n => (n||0).toLocaleString('fr-FR');
-  div.innerHTML = dep.length ? dep.map(d => `
-    <div class="tx-row">
-      <div class="tx-icon depense">💸</div>
+  const fmt  = n => (n||0).toLocaleString('fr-FR');
+  const role = currentUser?.role;
+  const canValidTresor   = ['superadmin','tresorier'].includes(role);
+  const canValidPresident= ['superadmin','admin'].includes(role);
+  const canReject        = ['superadmin','admin'].includes(role);
+
+  if (!dep.length) {
+    div.innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>';
+    return;
+  }
+
+  div.innerHTML = dep.map(d => {
+    const isD   = d.type === 'depense';
+    // Legacy (pas de statut) = considérée validée pour rétrocompatibilité
+    const statut = d.statut || (isD ? 'validee' : 'ok');
+
+    // Badges de validation (uniquement pour les dépenses)
+    let valBadges = '';
+    if (isD && statut !== 'rejetee') {
+      const tb = d.approvals?.tresorier
+        ? `<span class="badge green" style="font-size:10px">✓ Trésorier · ${d.approvals.tresorier.name}</span>`
+        : `<span class="badge gray"  style="font-size:10px">⏳ Trésorier</span>`;
+      const pb = d.approvals?.president
+        ? `<span class="badge green" style="font-size:10px">✓ Président · ${d.approvals.president.name}</span>`
+        : `<span class="badge gray"  style="font-size:10px">⏳ Président</span>`;
+      valBadges = `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${tb}${pb}</div>`;
+    }
+
+    // Boutons d'action
+    let actionBtns = '';
+    if (isD && statut === 'en_attente') {
+      if (canValidTresor && !d.approvals?.tresorier)
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','tresorier')">✓ Trésorier</button>`;
+      if (canValidPresident && !d.approvals?.president)
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','president')">✓ Président</button>`;
+      if (canReject)
+        actionBtns += `<button class="btn danger" style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')">✗ Rejeter</button>`;
+    }
+
+    // Badge statut principal
+    const statusBadge = isD
+      ? (statut === 'validee'    ? `<span class="badge green" style="font-size:10px">✅ Validée</span>`
+       : statut === 'rejetee'   ? `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`
+       :                          `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`)
+      : '';
+
+    return `
+    <div class="tx-row" id="dep-${d.id}">
+      <div class="tx-icon ${isD ? 'depense' : 'recette'}">${isD ? '💸' : '💰'}</div>
       <div class="tx-info">
-        <div class="tx-desc">${d.description}</div>
-        <div class="tx-date">${d.categorie} · ${d.date||''} · ${d.declaredBy||''}</div>
+        <div class="tx-desc">${d.description || d.categorie}</div>
+        <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${d.categorie} · ${d.date||''} · ${d.declaredBy||''} ${statusBadge}
+        </div>
+        ${valBadges}
+        ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${actionBtns}</div>` : ''}
       </div>
-      <div class="tx-amount depense">– ${fmt(d.montant)}</div>
-    </div>`).join('')
-  : '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>';
+      <div class="tx-amount ${isD ? 'depense' : 'recette'}">${isD ? '–' : '+'} ${fmt(d.montant)}</div>
+    </div>`;
+  }).join('');
+}
+
+function approveDepense(id, role) {
+  const dep = _rawDepenses();
+  const d   = dep.find(x => x.id === id);
+  if (!d) return;
+  if (!d.approvals) d.approvals = { tresorier: null, president: null };
+  d.approvals[role] = { by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() };
+  if (d.approvals.tresorier && d.approvals.president) d.statut = 'validee';
+  saveDepensesDiverses(dep);
+  renderDepensesList(); updateCaisse(); renderBilan();
+  const lbl = role === 'tresorier' ? 'Trésorier' : 'Président';
+  showToast('✅ Validation ' + lbl + ' enregistrée.');
+  logAction('APPROVE_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA · ' + lbl });
+}
+
+function rejectDepense(id) {
+  const dep = _rawDepenses();
+  const d   = dep.find(x => x.id === id);
+  if (!d) return;
+  d.statut = 'rejetee';
+  saveDepensesDiverses(dep);
+  renderDepensesList(); updateCaisse(); renderBilan();
+  showToast('❌ Dépense rejetée.');
+  logAction('REJECT_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
 // Surcharger la sauvegarde de l'opération existante
@@ -4155,7 +4231,17 @@ function saveOperation() {
   const desc  = document.querySelectorAll('#modal-tx input[type="text"]')[0].value.trim();
   if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
   const dep = _rawDepenses();
-  dep.push({ id:'D'+Date.now(), saisonId: getSelectedSaison()?.id, type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name });
+  // Pré-valider selon le rôle du créateur
+  let statut = 'validee', approvals = null;
+  if (type === 'depense') {
+    approvals = { tresorier: null, president: null };
+    if (['superadmin','tresorier'].includes(currentUser?.role))
+      approvals.tresorier = { by: currentUser.username, name: currentUser.name, at: new Date().toISOString() };
+    if (['superadmin','admin'].includes(currentUser?.role))
+      approvals.president = { by: currentUser.username, name: currentUser.name, at: new Date().toISOString() };
+    statut = (approvals.tresorier && approvals.president) ? 'validee' : 'en_attente';
+  }
+  dep.push({ id:'D'+Date.now(), saisonId: getSelectedSaison()?.id, type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name, statut, approvals });
   saveDepensesDiverses(dep);
   logAction('ADD_DEPENSE', { detail: (desc || cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-tx');
@@ -4182,7 +4268,7 @@ function computeBilan() {
   const depFinale    = finale ? (finale.totalDepenses||0) : 0;
   const recLicences  = licences.reduce((s,l) => s+(l.total||0), 0);
   const recAmendes   = litiges.reduce((s,l) => s+(l.amende||0), 0);
-  const depDiversTotal = depDiverses.filter(d=>d.type==='depense').reduce((s,d) => s+(d.montant||0), 0);
+  const depDiversTotal = depDiverses.filter(d=>d.type==='depense' && (d.statut==='validee'||!d.statut)).reduce((s,d) => s+(d.montant||0), 0);
   const recDiversTotal = depDiverses.filter(d=>d.type==='recette').reduce((s,d) => s+(d.montant||0), 0);
 
   const totalRecettes = soldeDep + recJournees + recFinale + recLicences + recAmendes + recDiversTotal;
