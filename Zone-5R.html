@@ -4451,7 +4451,7 @@ function renderDepensesList() {
       } else if (statut === 'recue') {
         const dec = d.decaissement;
         const rec = d.reception;
-        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px">🤝 Décaissé par <strong>${dec?.name||'?'}</strong> · Reçu confirmé par <strong>${rec?.name||'?'}</strong></div>`;
+        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px">🤝 Décaissé par <strong>${dec?.name||'?'}</strong> · Réception confirmée par <strong>${rec?.name||'?'}</strong></div>`;
       } else if (statut === 'rejetee') {
         const by   = d.history?.slice().reverse().find(h => h.action === 'rejet');
         const raison = by?.raison ? ` — <em>"${by.raison}"</em>` : '';
