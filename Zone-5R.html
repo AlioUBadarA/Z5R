@@ -879,6 +879,14 @@
         </div>
         <button class="btn danger member-action" onclick="openModal('modal-tx')">+ Opération</button>
       </div>
+      <!-- Filtres -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <button id="df-all"        class="btn primary" onclick="setDepFilter('all')">Toutes</button>
+        <button id="df-en_attente" class="btn"         onclick="setDepFilter('en_attente')">⏳ En attente</button>
+        <button id="df-validee"    class="btn"         onclick="setDepFilter('validee')">✅ Validées</button>
+        <button id="df-rejetee"    class="btn"         onclick="setDepFilter('rejetee')">❌ Rejetées</button>
+        <button id="df-mine"       class="btn"         onclick="setDepFilter('mine')">📋 Mes demandes</button>
+      </div>
       <div id="depenses-list">
         <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>
       </div>
@@ -4131,68 +4139,128 @@ function getDepensesDiverses() {
 }
 function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); fireSync('depenses', d); }
 
+let _depFilter = 'all';
+
+function setDepFilter(f) {
+  _depFilter = f;
+  ['all','en_attente','validee','rejetee','mine'].forEach(id => {
+    const el = document.getElementById('df-' + id);
+    if (el) el.className = 'btn' + (id === f ? ' primary' : '');
+  });
+  renderDepensesList();
+}
+
+function toggleDepHistory(id) {
+  const el = document.getElementById('dep-hist-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
 function renderDepensesList() {
-  const dep = getDepensesDiverses();
-  const div = document.getElementById('depenses-list');
+  const allDep = getDepensesDiverses();
+  const div    = document.getElementById('depenses-list');
   if (!div) return;
   const fmt  = n => (n||0).toLocaleString('fr-FR');
   const role = currentUser?.role;
-  const canValidTresor   = ['superadmin','tresorier'].includes(role);
-  const canValidPresident= ['superadmin','admin'].includes(role);
-  const canReject        = ['superadmin','admin'].includes(role);
+  const me   = currentUser?.username;
+  const canValidTresor    = ['superadmin','tresorier'].includes(role);
+  const canValidPresident = ['superadmin','admin'].includes(role);
+  const canReject         = ['superadmin','admin'].includes(role);
+
+  // Compteur badge "En attente"
+  const pendingCount = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente').length;
+  const btnP = document.getElementById('df-en_attente');
+  if (btnP) btnP.innerHTML = pendingCount
+    ? `⏳ En attente <span style="background:var(--amber);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${pendingCount}</span>`
+    : '⏳ En attente';
+
+  // Appliquer le filtre
+  let dep = allDep;
+  if      (_depFilter === 'en_attente') dep = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente');
+  else if (_depFilter === 'validee')    dep = allDep.filter(d => d.statut === 'validee' || !d.statut);
+  else if (_depFilter === 'rejetee')    dep = allDep.filter(d => d.statut === 'rejetee');
+  else if (_depFilter === 'mine')       dep = allDep.filter(d => d.createdBy === me);
 
   if (!dep.length) {
-    div.innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>';
+    div.innerHTML = '<div class="card" style="padding:24px;text-align:center;color:var(--muted)">Aucune dépense pour ce filtre</div>';
     return;
   }
 
   div.innerHTML = dep.map(d => {
     const isD   = d.type === 'depense';
-    // Legacy (pas de statut) = considérée validée pour rétrocompatibilité
     const statut = d.statut || (isD ? 'validee' : 'ok');
 
-    // Badges de validation (uniquement pour les dépenses)
-    let valBadges = '';
-    if (isD && statut !== 'rejetee') {
-      const tb = d.approvals?.tresorier
-        ? `<span class="badge green" style="font-size:10px">✓ Trésorier · ${d.approvals.tresorier.name}</span>`
-        : `<span class="badge gray"  style="font-size:10px">⏳ Trésorier</span>`;
-      const pb = d.approvals?.president
-        ? `<span class="badge green" style="font-size:10px">✓ Président · ${d.approvals.president.name}</span>`
-        : `<span class="badge gray"  style="font-size:10px">⏳ Président</span>`;
-      valBadges = `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${tb}${pb}</div>`;
+    // Ligne "Validé par" ou état partiel
+    let validePar = '';
+    if (isD) {
+      if (statut === 'validee') {
+        const t = d.approvals?.tresorier?.name || '?';
+        const p = d.approvals?.president?.name || '?';
+        validePar = `<div style="font-size:11px;color:var(--muted);margin-top:3px">
+          Validé par <strong>${t}</strong> (Trésorier) &amp; <strong>${p}</strong> (Président)
+        </div>`;
+      } else if (statut === 'en_attente') {
+        const tPart = d.approvals?.tresorier
+          ? `<span style="color:var(--green);font-weight:600">✓ ${d.approvals.tresorier.name} (Tréso.)</span>`
+          : `<span style="color:var(--amber)">⏳ Trésorier</span>`;
+        const pPart = d.approvals?.president
+          ? `<span style="color:var(--green);font-weight:600">✓ ${d.approvals.president.name} (Prés.)</span>`
+          : `<span style="color:var(--amber)">⏳ Président</span>`;
+        validePar = `<div style="font-size:11px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">${tPart} · ${pPart}</div>`;
+      } else if (statut === 'rejetee') {
+        const by = d.history?.slice().reverse().find(h => h.action === 'rejet');
+        validePar = `<div style="font-size:11px;color:var(--red);margin-top:3px">❌ Rejetée par <strong>${by?.name || '?'}</strong></div>`;
+      }
     }
 
     // Boutons d'action
     let actionBtns = '';
     if (isD && statut === 'en_attente') {
       if (canValidTresor && !d.approvals?.tresorier)
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','tresorier')">✓ Trésorier</button>`;
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','tresorier')">✓ Valider (Tréso.)</button>`;
       if (canValidPresident && !d.approvals?.president)
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','president')">✓ Président</button>`;
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','president')">✓ Valider (Prés.)</button>`;
       if (canReject)
         actionBtns += `<button class="btn danger" style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')">✗ Rejeter</button>`;
     }
 
-    // Badge statut principal
+    // Historique timeline
+    const hist = d.history || [];
+    const HIST_ICONS  = { creation:'📝', approbation_tresorier:'✅', approbation_president:'✅', rejet:'❌' };
+    const HIST_LABELS = { creation:'Demande créée', approbation_tresorier:'Validation Trésorier', approbation_president:'Validation Président', rejet:'Dépense rejetée' };
+    const histRows = hist.map(h => {
+      const dt = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div style="display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px">
+        <span style="flex-shrink:0">${HIST_ICONS[h.action]||'•'}</span>
+        <span style="flex:1"><strong>${HIST_LABELS[h.action]||h.action}</strong> — ${h.name||h.by||'?'}</span>
+        <span style="color:var(--muted);white-space:nowrap">${dt}</span>
+      </div>`;
+    }).join('');
+
+    // Badge statut
     const statusBadge = isD
-      ? (statut === 'validee'    ? `<span class="badge green" style="font-size:10px">✅ Validée</span>`
-       : statut === 'rejetee'   ? `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`
-       :                          `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`)
+      ? (statut === 'validee'  ? `<span class="badge green" style="font-size:10px">✅ Validée</span>`
+       : statut === 'rejetee' ? `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`
+       :                        `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`)
       : '';
 
     return `
-    <div class="tx-row" id="dep-${d.id}">
-      <div class="tx-icon ${isD ? 'depense' : 'recette'}">${isD ? '💸' : '💰'}</div>
-      <div class="tx-info">
-        <div class="tx-desc">${d.description || d.categorie}</div>
-        <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          ${d.categorie} · ${d.date||''} · ${d.declaredBy||''} ${statusBadge}
+    <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'💸':'💰'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="tx-desc">${d.description||d.categorie}</div>
+          <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${d.categorie} · ${d.date||''} · <em>${d.declaredBy||''}</em> ${statusBadge}
+          </div>
+          ${validePar}
+          ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${actionBtns}</div>` : ''}
         </div>
-        ${valBadges}
-        ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${actionBtns}</div>` : ''}
+        <div style="text-align:right;flex-shrink:0;align-self:flex-start">
+          <div class="tx-amount ${isD?'depense':'recette'}" style="margin:0">${isD?'–':'+'} ${fmt(d.montant)}</div>
+          ${hist.length ? `<button class="btn" style="font-size:10px;padding:2px 7px;margin-top:4px" onclick="toggleDepHistory('${d.id}')">📋 Historique (${hist.length})</button>` : ''}
+        </div>
       </div>
-      <div class="tx-amount ${isD ? 'depense' : 'recette'}">${isD ? '–' : '+'} ${fmt(d.montant)}</div>
+      ${hist.length ? `<div id="dep-hist-${d.id}" style="display:none;margin-top:8px;padding:8px;background:var(--gray-l);border-radius:6px;margin-left:38px">${histRows}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -4202,7 +4270,9 @@ function approveDepense(id, role) {
   const d   = dep.find(x => x.id === id);
   if (!d) return;
   if (!d.approvals) d.approvals = { tresorier: null, president: null };
+  if (!d.history)   d.history   = [];
   d.approvals[role] = { by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() };
+  d.history.push({ action: 'approbation_' + role, by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() });
   if (d.approvals.tresorier && d.approvals.president) d.statut = 'validee';
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
@@ -4215,7 +4285,9 @@ function rejectDepense(id) {
   const dep = _rawDepenses();
   const d   = dep.find(x => x.id === id);
   if (!d) return;
+  if (!d.history) d.history = [];
   d.statut = 'rejetee';
+  d.history.push({ action: 'rejet', by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
   showToast('❌ Dépense rejetée.');
@@ -4241,7 +4313,15 @@ function saveOperation() {
       approvals.president = { by: currentUser.username, name: currentUser.name, at: new Date().toISOString() };
     statut = (approvals.tresorier && approvals.president) ? 'validee' : 'en_attente';
   }
-  dep.push({ id:'D'+Date.now(), saisonId: getSelectedSaison()?.id, type, categorie:cat, montant, date, description:desc, declaredBy:currentUser?.name, statut, approvals });
+  const now = new Date().toISOString();
+  const history = [{ action:'creation', by:currentUser?.username, name:currentUser?.name, at:now,
+    detail:`${cat} · ${montant.toLocaleString('fr-FR')} FCFA${desc?' · '+desc:''}` }];
+  if (type === 'depense' && approvals?.tresorier)
+    history.push({ action:'approbation_tresorier', by:approvals.tresorier.by, name:approvals.tresorier.name, at:now });
+  if (type === 'depense' && approvals?.president)
+    history.push({ action:'approbation_president', by:approvals.president.by, name:approvals.president.name, at:now });
+  dep.push({ id:'D'+Date.now(), saisonId:getSelectedSaison()?.id, type, categorie:cat, montant, date,
+    description:desc, declaredBy:currentUser?.name, createdBy:currentUser?.username, statut, approvals, history });
   saveDepensesDiverses(dep);
   logAction('ADD_DEPENSE', { detail: (desc || cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-tx');
