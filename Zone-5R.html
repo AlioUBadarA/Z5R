@@ -537,7 +537,7 @@
           <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
                  onkeydown="if(event.key==='Enter') doLogin()">
         </div>
-        <button class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Se connecter</button>
+        <button id="btn-login" class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Se connecter</button>
         <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">
           Identifiants fournis par le Super Admin · Aliou B. S. SAGNA
         </p>
@@ -1238,9 +1238,15 @@
   <!-- SUPERADMIN : Historique des actions -->
   <div id="audit-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">📋 Historique des actions</span>
-      <button class="btn" style="font-size:12px" onclick="renderAuditPanel()">🔄 Actualiser</button>
+      <span class="card-title">📋 Historique des actions · 30 jours</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="audit-filter-date" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg)"
+          oninput="renderAuditPanel()" title="Filtrer par jour">
+        <button class="btn" style="font-size:12px" onclick="document.getElementById('audit-filter-date').value='';renderAuditPanel()">✕ Tout</button>
+        <button class="btn primary" style="font-size:12px" onclick="renderAuditPanel()">🔄 Actualiser</button>
+      </div>
     </div>
+    <div id="audit-stats" style="display:flex;gap:12px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)"></div>
     <div id="audit-log-body"><!-- Rempli par JS --></div>
   </div>
   </div><!-- /adm-historique -->
@@ -2080,10 +2086,15 @@ async function initFirebase() {
     if (!snap.exists || !_appReady) return;
     const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_USERS)), snap.data().data);
     localStorage.setItem('zone5r_users', JSON.stringify(merged));
+    // Rafraîchir la liste des membres si l'admin est connecté
+    if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderMembersTable();
   });
   _db.collection(_COL).doc('auditlog').onSnapshot(snap => {
     if (!snap.exists || !_appReady) return;
-    localStorage.setItem('zone5r_auditlog', JSON.stringify(snap.data().data));
+    // Trier par date DESC, garder 1000 entrées max
+    const raw = snap.data().data || [];
+    const sorted = raw.slice().sort((a,b) => (b.ts||'').localeCompare(a.ts||'')).slice(0, 1000);
+    localStorage.setItem('zone5r_auditlog', JSON.stringify(sorted));
     if (currentUser?.role === 'superadmin') renderAuditPanel();
   });
 
@@ -2177,11 +2188,21 @@ function saveUsers(users) {
 // ============================================================
 //  AUTHENTIFICATION
 // ============================================================
-function doLogin() {
+async function doLogin() {
   const username = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   const errorEl  = document.getElementById('login-error');
-  const users    = getUsers();
+  const btnLogin = document.getElementById('btn-login');
+  let users = getUsers();
+
+  // Si les credentials ne correspondent pas localement, recharger depuis Firestore
+  // (cas : compte créé sur un autre appareil, données pas encore en cache local)
+  if (!users[username] || users[username].password !== password) {
+    if (btnLogin) { btnLogin.disabled = true; btnLogin.textContent = '⏳ Vérification…'; }
+    await fireLoad('users');
+    users = getUsers();
+    if (btnLogin) { btnLogin.disabled = false; btnLogin.textContent = 'Se connecter'; }
+  }
 
   if (users[username] && users[username].password === password) {
     currentUser = { username, ...users[username] };
@@ -2610,39 +2631,76 @@ function logAction(action, details = {}) {
       .filter(([k]) => k !== 'detail')
       .map(([k,v]) => v).join(' · ') || ''
   };
+  // Mise à jour locale immédiate
   const logs = getAuditLog();
   logs.unshift(entry);
-  saveAuditLog(logs.slice(0, 500));
+  localStorage.setItem('zone5r_auditlog', JSON.stringify(logs.slice(0, 1000)));
+  // Firestore — écriture ATOMIQUE (arrayUnion évite les race conditions entre appareils)
+  if (_db) {
+    _db.collection(_COL).doc('auditlog').set(
+      { data: firebase.firestore.FieldValue.arrayUnion(entry) },
+      { merge: true }
+    ).catch(e => console.warn('[FS] log append:', e.message));
+  }
   if (currentUser.role === 'superadmin') renderAuditPanel();
 }
 
 function renderAuditPanel() {
-  const body = document.getElementById('audit-log-body');
+  const body    = document.getElementById('audit-log-body');
+  const stats   = document.getElementById('audit-stats');
   if (!body) return;
-  const logs = getAuditLog();
+
+  const allLogs = getAuditLog();
+
+  // Fenêtre 30 jours
+  const cutoff30 = new Date();
+  cutoff30.setDate(cutoff30.getDate() - 30);
+  const logs30 = allLogs.filter(e => e.ts && new Date(e.ts) >= cutoff30);
+
+  // Filtre par jour (optionnel)
+  const filterDate = document.getElementById('audit-filter-date')?.value; // 'YYYY-MM-DD'
+  const logs = filterDate
+    ? logs30.filter(e => e.ts && e.ts.startsWith(filterDate))
+    : logs30;
+
+  // Statistiques
+  const today = new Date().toISOString().slice(0,10);
+  const todayCount   = logs30.filter(e => e.ts?.startsWith(today)).length;
+  const activeUsers  = [...new Set(logs30.map(e => e.username))].length;
+  if (stats) stats.innerHTML = `
+    <span>📅 <strong>${logs30.length}</strong> actions sur 30 jours</span>
+    <span>⚡ <strong>${todayCount}</strong> aujourd'hui</span>
+    <span>👥 <strong>${activeUsers}</strong> membres actifs</span>
+    ${filterDate ? `<span style="color:var(--amber)">🔍 Filtre : ${new Date(filterDate+'T12:00').toLocaleDateString('fr-FR')} · <strong>${logs.length}</strong> entrée(s)</span>` : ''}`;
+
   if (!logs.length) {
-    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Aucune action enregistrée</div>';
+    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">'
+      + (filterDate ? 'Aucune action ce jour-là.' : 'Aucune action sur 30 jours.') + '</div>';
     return;
   }
+
   const fmtDate = ts => {
     const d = new Date(ts);
-    return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) + ' '
+         + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   };
   const roleCls = { superadmin:'purple', admin:'amber', tresorier:'amber',
                     secretaire:'blue', competitions:'green', juridique:'red',
                     finances:'amber', audit:'gray', communication:'blue', visiteur:'gray' };
+  const isDanger = a => ['REVOKE_PERMISSION','DELETE_ACCOUNT','LOGOUT','REJECT_DEPENSE'].includes(a);
+
   body.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Date / Heure</th><th>Membre</th><th>Action</th><th>Détail</th></tr></thead>
+    <thead><tr><th>Date/Heure</th><th>Membre</th><th>Action</th><th>Détail</th></tr></thead>
     <tbody>
-    ${logs.slice(0,200).map(e => `
+    ${logs.map(e => `
       <tr>
         <td style="font-size:11px;white-space:nowrap;color:var(--muted)">${fmtDate(e.ts)}</td>
         <td>
-          <span style="font-size:12px;font-weight:600">${e.name}</span><br>
-          <span class="badge ${roleCls[e.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[e.role]?.label || e.role}</span>
+          <span style="font-size:12px;font-weight:600">${e.name||e.username}</span><br>
+          <span class="badge ${roleCls[e.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[e.role]?.label||e.role}</span>
         </td>
-        <td><span class="badge ${e.action.includes('REVOKE')||e.action==='DELETE_ACCOUNT'||e.action==='LOGOUT'?'red':'green'}" style="font-size:11px">${ACTION_LABELS[e.action]||e.action}</span></td>
-        <td style="font-size:12px;color:var(--muted)">${e.detail}</td>
+        <td><span class="badge ${isDanger(e.action)?'red':'green'}" style="font-size:11px">${ACTION_LABELS[e.action]||e.action}</span></td>
+        <td style="font-size:12px;color:var(--muted);max-width:200px;word-break:break-word">${e.detail||''}</td>
       </tr>`).join('')}
     </tbody></table></div>`;
 }
