@@ -2332,21 +2332,18 @@ function updateUI() {
     // Panneaux superadmin : audit + gestion permissions
     const auditPanel   = document.getElementById('audit-panel');
     const permsPanel   = document.getElementById('permissions-panel');
-    if (currentUser.role === 'superadmin') {
-      if (auditPanel)  { auditPanel.style.display  = 'block'; renderAuditPanel(); }
-      if (permsPanel)  { permsPanel.style.display  = 'block'; renderPermissionsPanel(); }
-    } else {
-      if (auditPanel)  auditPanel.style.display  = 'none';
-      if (permsPanel)  permsPanel.style.display  = 'none';
-    }
+    const canAudit     = hasPermission('view_audit');
+    const isSuperAdmin = currentUser.role === 'superadmin';
+    if (auditPanel)  { auditPanel.style.display  = canAudit ? 'block' : 'none'; if (canAudit) renderAuditPanel(); }
+    if (permsPanel)  { permsPanel.style.display  = isSuperAdmin ? 'block' : 'none'; if (isSuperAdmin) renderPermissionsPanel(); }
 
     // Sous-onglets Administration : visibilité selon rôle
     const isAdmin = hasPermission('manage_accounts');
-    const isSuperAdmin = currentUser.role === 'superadmin';
     const _st = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
     const _sh = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
     if (isAdmin)     { _st('subnav-adm-gestion'); _st('subnav-adm-acces'); } else { _sh('subnav-adm-gestion'); _sh('subnav-adm-acces'); }
-    if (isSuperAdmin){ _st('subnav-adm-autorisations'); _st('subnav-adm-historique'); } else { _sh('subnav-adm-autorisations'); _sh('subnav-adm-historique'); }
+    if (isSuperAdmin){ _st('subnav-adm-autorisations'); } else { _sh('subnav-adm-autorisations'); }
+    if (canAudit)    { _st('subnav-adm-historique');    } else { _sh('subnav-adm-historique');    }
 
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
@@ -2458,39 +2455,65 @@ const ALL_TEAMS = [
 ];
 
 // Rôles autorisés à ajouter un joueur (Président, Secrétaires, Compétitions, Juridique)
-const CAN_ADD_PLAYER = ['superadmin','admin','secretaire','competitions','juridique'];
-// Rôles autorisés à créer des comptes
-const CAN_MANAGE_ACCOUNTS = ['superadmin','admin'];
-// Rôles autorisés à voir la liste des joueurs et la liste des litiges en cours
+const CAN_ADD_PLAYER        = ['superadmin','admin','secretaire','competitions','juridique'];
+const CAN_MANAGE_ACCOUNTS   = ['superadmin','admin'];
 const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions','juridique','secretaire'];
-// Rôles autorisés à créer une fiche journée (Trésoriers + Super Admin)
-const CAN_CREATE_FICHE = ['superadmin','tresorier'];
-// Rôles autorisés à scorer en direct (SuperAdmin, Président, Compétitions, Juridique)
-const CAN_LIVE_SCORE = ['superadmin','admin','competitions','juridique'];
-// Rôles autorisés à modifier le score après la fin d'un match
-const CAN_EDIT_SCORE = ['superadmin','admin','competitions'];
+const CAN_CREATE_FICHE      = ['superadmin','tresorier'];
+const CAN_LIVE_SCORE        = ['superadmin','admin','competitions','juridique'];
+const CAN_EDIT_SCORE        = ['superadmin','admin','competitions'];
+const CAN_ADD_DEPENSE       = ['superadmin','admin','tresorier'];
+const CAN_ADD_LICENCE       = ['superadmin','tresorier'];
+const CAN_APPROVE_DEPENSE   = ['superadmin','tresorier'];
+const CAN_VALIDATE_PRESIDENT= ['superadmin','admin'];
 
 // ============================================================
 //  SYSTÈME DE PERMISSIONS (rôle + overrides individuels)
 // ============================================================
 const PERM_DEFAULTS = {
-  see_players_litiges: r => CAN_SEE_PLAYERS_LITIGES.includes(r),
-  create_fiche:        r => CAN_CREATE_FICHE.includes(r),
+  // Joueurs & Licences
   add_player:          r => CAN_ADD_PLAYER.includes(r),
-  add_litige:          r => r === 'juridique',
-  manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
-  declare_saison:      r => ['superadmin','admin'].includes(r),
+  see_players_litiges: r => CAN_SEE_PLAYERS_LITIGES.includes(r),
+  add_licence:         r => CAN_ADD_LICENCE.includes(r),
+  // Compétition & Matchs
   live_score:          r => CAN_LIVE_SCORE.includes(r),
   edit_score:          r => CAN_EDIT_SCORE.includes(r),
+  // Litiges & Juridique
+  add_litige:          r => ['superadmin','juridique'].includes(r),
+  // Finances
+  create_fiche:        r => CAN_CREATE_FICHE.includes(r),
+  add_depense:         r => CAN_ADD_DEPENSE.includes(r),
+  approve_depense:     r => CAN_APPROVE_DEPENSE.includes(r),
+  validate_president:  r => CAN_VALIDATE_PRESIDENT.includes(r),
+  // Administration
+  manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
+  declare_saison:      r => ['superadmin','admin'].includes(r),
+  view_audit:          r => r === 'superadmin',
 };
+
 const PERM_LABELS = {
-  see_players_litiges: 'Joueurs & Litiges',
-  create_fiche:        'Fiche Journée',
-  add_player:          'Ajouter Joueur',
-  add_litige:          'Déclarer Litige',
-  manage_accounts:     'Gérer Comptes',
-  declare_saison:      'Déclarer Saison',
+  add_player:          'Ajouter joueur',
+  see_players_litiges: 'Voir joueurs/litiges',
+  add_licence:         'Licences',
+  live_score:          'Score live',
+  edit_score:          'Modifier score',
+  add_litige:          'Décl. litige',
+  create_fiche:        'Fiche journée',
+  add_depense:         'Opérations financières',
+  approve_depense:     'Valider dépense (Tréso.)',
+  validate_president:  'Valider dépense (Prés.)',
+  manage_accounts:     'Gérer comptes',
+  declare_saison:      'Déclarer saison',
+  view_audit:          'Voir historique',
 };
+
+// Groupes pour l'affichage du panel
+const PERM_GROUPS = [
+  { label:'👤 Joueurs & Licences', perms:['add_player','see_players_litiges','add_licence'] },
+  { label:'⚽ Compétition',        perms:['live_score','edit_score'] },
+  { label:'⚖️ Litiges',            perms:['add_litige'] },
+  { label:'💰 Finances',           perms:['create_fiche','add_depense','approve_depense','validate_president'] },
+  { label:'⚙️ Administration',     perms:['manage_accounts','declare_saison','view_audit'] },
+];
 
 function hasPermission(perm) {
   if (!currentUser) return false;
@@ -2527,61 +2550,83 @@ function renderPermissionsPanel() {
   const body = document.getElementById('permissions-body');
   if (!body) return;
   const users = getUsers();
-  const perms = Object.keys(PERM_LABELS);
 
-  // En-tête
-  const thPerms = perms.map(p => `<th style="font-size:10px;text-align:center;min-width:80px">${PERM_LABELS[p]}</th>`).join('');
+  // Liste ordonnée des permissions (dans l'ordre des groupes)
+  const allPerms = PERM_GROUPS.flatMap(g => g.perms);
+
+  const roleCls = { superadmin:'purple', admin:'amber', tresorier:'amber',
+                    secretaire:'blue', competitions:'green', juridique:'red',
+                    finances:'amber', audit:'gray', communication:'blue' };
+
+  // ── En-tête ligne 1 : groupes ──────────────────────────────
+  const thGroups = PERM_GROUPS.map(g =>
+    `<th colspan="${g.perms.length}" style="text-align:center;font-size:11px;background:var(--gray-l);border-bottom:1px solid var(--border);padding:5px 4px;white-space:nowrap">${g.label}</th>`
+  ).join('');
+
+  // ── En-tête ligne 2 : noms des permissions ─────────────────
+  const thPerms = allPerms.map(p =>
+    `<th style="font-size:10px;text-align:center;min-width:72px;padding:4px 3px;color:var(--muted);font-weight:600">${PERM_LABELS[p]}</th>`
+  ).join('');
+
   let html = `<div class="table-wrap"><table>
-    <thead><tr><th>Membre</th><th>Rôle</th>${thPerms}</tr></thead><tbody>`;
+    <thead>
+      <tr>
+        <th rowspan="2" style="vertical-align:middle;min-width:140px">Membre</th>
+        <th rowspan="2" style="vertical-align:middle">Rôle</th>
+        ${thGroups}
+      </tr>
+      <tr>${thPerms}</tr>
+    </thead>
+    <tbody>`;
 
   const allMembers = [
     ...BUREAU_MEMBERS,
     ...Object.entries(DEFAULT_USERS)
-      .filter(([u, d]) => d.role !== 'visiteur' && u !== 'test.admin')
-      .map(([username, d]) => ({ username, ...d }))
+      .filter(([u,d]) => d.role !== 'visiteur' && u !== 'test.admin')
+      .map(([username,d]) => ({ username, ...d }))
   ].filter(m => users[m.username]);
 
   allMembers.forEach(m => {
-    const userData   = users[m.username] || {};
-    const overrides  = userData.permissions || {};
-    const isSelf     = m.username === currentUser?.username;
-    const roleCls    = { superadmin:'purple', admin:'amber', tresorier:'amber',
-                         secretaire:'blue', competitions:'green', juridique:'red',
-                         finances:'amber', audit:'gray', communication:'blue' };
-    const roleBadge  = `<span class="badge ${roleCls[userData.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[userData.role]?.label || userData.role}</span>`;
+    const ud        = users[m.username] || {};
+    const overrides = ud.permissions || {};
+    const isSelf    = m.username === currentUser?.username;
+    const roleBadge = `<span class="badge ${roleCls[ud.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[ud.role]?.label||ud.role}</span>`;
 
-    const cells = perms.map(p => {
-      if (isSelf || userData.role === 'superadmin') {
-        return `<td style="text-align:center"><span style="font-size:18px">✅</span></td>`;
-      }
-      const roleGrant = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](userData.role) : false;
-      const hasOverride = p in overrides;
-      const effective   = hasOverride ? overrides[p] : roleGrant;
-      const overrideMark = hasOverride ? `<span style="font-size:9px;color:var(--amber);font-weight:700" title="Override actif">★</span>` : '';
+    const cells = allPerms.map(p => {
+      if (isSelf || ud.role === 'superadmin')
+        return `<td style="text-align:center;font-size:16px">✅</td>`;
 
+      const roleGrant    = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](ud.role) : false;
+      const hasOverride  = p in overrides;
+      const effective    = hasOverride ? overrides[p] : roleGrant;
+      const star         = hasOverride
+        ? `<span style="font-size:9px;color:var(--amber);font-weight:700;display:block;line-height:1" title="Override individuel actif">★</span>`
+        : '';
       if (effective) {
-        return `<td style="text-align:center">
-          ${overrideMark}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)">✅</span>
+        return `<td style="text-align:center;padding:3px">
+          ${star}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)">✅</span>
         </td>`;
       } else {
-        return `<td style="text-align:center">
-          ${overrideMark}<span style="font-size:16px;cursor:pointer;opacity:0.35" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)">🔒</span>
+        return `<td style="text-align:center;padding:3px">
+          ${star}<span style="font-size:16px;cursor:pointer;opacity:0.3" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)">🔒</span>
         </td>`;
       }
     }).join('');
 
     html += `<tr>
-      <td><strong style="font-size:13px">${userData.name || m.name}</strong></td>
-      <td>${roleBadge}</td>
+      <td style="white-space:nowrap"><strong style="font-size:12px">${ud.name||m.name}</strong></td>
+      <td style="white-space:nowrap">${roleBadge}</td>
       ${cells}
     </tr>`;
   });
 
-  html += '</tbody></table></div>';
-  html += `<p style="font-size:11px;color:var(--muted);padding:8px 16px 12px">
-    ✅ = accès accordé &nbsp;·&nbsp; 🔒 = accès refusé &nbsp;·&nbsp;
-    <span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)
-  </p>`;
+  html += `</tbody></table></div>
+  <div style="font-size:11px;color:var(--muted);padding:8px 14px 10px;display:flex;gap:16px;flex-wrap:wrap">
+    <span>✅ = accès accordé</span>
+    <span>🔒 = accès refusé</span>
+    <span><span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)</span>
+    <span style="margin-left:auto">Cliquer sur ✅ ou 🔒 pour modifier</span>
+  </div>`;
   body.innerHTML = html;
 }
 
@@ -4218,11 +4263,10 @@ function renderDepensesList() {
   const div    = document.getElementById('depenses-list');
   if (!div) return;
   const fmt  = n => (n||0).toLocaleString('fr-FR');
-  const role = currentUser?.role;
   const me   = currentUser?.username;
-  const canValidTresor    = ['superadmin','tresorier'].includes(role);
-  const canValidPresident = ['superadmin','admin'].includes(role);
-  const canReject         = ['superadmin','admin'].includes(role);
+  const canValidTresor    = hasPermission('approve_depense');
+  const canValidPresident = hasPermission('validate_president');
+  const canReject         = hasPermission('validate_president');
 
   // Compteur badge "En attente"
   const pendingCount = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente').length;
