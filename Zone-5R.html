@@ -877,13 +877,15 @@
           <div style="font-size:14px;font-weight:700">💸 Dépenses hors journée</div>
           <div style="font-size:12px;color:var(--muted)">Achats, rémunérations, cotisations, dons aux ASC…</div>
         </div>
-        <button class="btn danger member-action" onclick="openModal('modal-tx')">+ Opération</button>
+        <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
       </div>
       <!-- Filtres -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
         <button id="df-all"        class="btn primary" onclick="setDepFilter('all')">Toutes</button>
         <button id="df-en_attente" class="btn"         onclick="setDepFilter('en_attente')">⏳ En attente</button>
         <button id="df-validee"    class="btn"         onclick="setDepFilter('validee')">✅ Validées</button>
+        <button id="df-decaissee"  class="btn"         onclick="setDepFilter('decaissee')">💰 Décaissées</button>
+        <button id="df-recue"      class="btn"         onclick="setDepFilter('recue')">🤝 Reçues</button>
         <button id="df-rejetee"    class="btn"         onclick="setDepFilter('rejetee')">❌ Rejetées</button>
         <button id="df-mine"       class="btn"         onclick="setDepFilter('mine')">📋 Mes demandes</button>
       </div>
@@ -1006,7 +1008,8 @@
             <div class="role-pos">Djiby Diouf DIATTA</div>
             <div class="role-perms">
               <span class="badge amber">Accès total</span>
-              <span class="badge blue">Validation</span>
+              <span class="badge green">Valider dépenses</span>
+              <span class="badge red">Rejeter dépenses</span>
             </div>
           </div>
           <div class="role-card">
@@ -1014,8 +1017,8 @@
             <div class="role-pos">Boubacar CAMARA</div>
             <div class="role-perms">
               <span class="badge blue">Résultats</span>
-              <span class="badge blue">Licences</span>
               <span class="badge blue">Calendrier</span>
+              <span class="badge amber">Demander dépense</span>
             </div>
           </div>
           <div class="role-card" style="border-color:var(--amber)">
@@ -1024,6 +1027,8 @@
             <div class="role-perms">
               <span class="badge amber">Finances</span>
               <span class="badge amber">Rapports</span>
+              <span class="badge blue">Décaissement</span>
+              <span class="badge amber">Demander dépense</span>
             </div>
           </div>
           <div class="role-card">
@@ -1032,7 +1037,7 @@
             <div class="role-perms">
               <span class="badge green">Scores</span>
               <span class="badge green">Cartons</span>
-              <span class="badge green">Poules</span>
+              <span class="badge amber">Demander dépense</span>
             </div>
           </div>
           <div class="role-card" style="border-color:var(--red)">
@@ -1041,6 +1046,7 @@
             <div class="role-perms">
               <span class="badge red">Réclamations</span>
               <span class="badge red">Sanctions</span>
+              <span class="badge amber">Demander dépense</span>
             </div>
           </div>
           <div class="role-card" style="border-color:var(--gray)">
@@ -1455,42 +1461,75 @@
   </div>
 </div>
 
-<!-- Modal: Opération financière -->
+<!-- Modal: Demande de dépense -->
 <div id="modal-tx" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">💰 Nouvelle opération</span>
+      <span class="modal-title">💸 Demande de dépense</span>
       <button class="close-btn" onclick="closeModal('modal-tx')">✕</button>
     </div>
-    <div class="form-group">
+    <div id="modal-tx-recette-row" class="form-group" style="display:none">
       <label>Type</label>
-      <select><option value="recette">Recette</option><option value="depense">Dépense</option></select>
+      <select id="tx-type"><option value="depense" selected>Dépense</option><option value="recette">Recette diverse</option></select>
     </div>
     <div class="form-group">
       <label>Catégorie</label>
-      <select><option>Billetterie</option><option>Licences</option><option>Amendes</option><option>Subvention / Don</option><option>Engagement</option><option>Matériel</option><option>Location terrain</option><option>Transport</option><option>Arbitres</option><option>Divers</option></select>
+      <select id="tx-categorie"><option>Matériel sportif</option><option>Transport</option><option>Arbitres</option><option>Location terrain</option><option>Cotisations ASC</option><option>Communication / Presse</option><option>Social / Soutien</option><option>Alimentation / Restauration</option><option>Frais administratifs</option><option>Subvention / Don</option><option>Autre</option></select>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label>Montant (FCFA)</label>
-        <input type="number" placeholder="0">
+        <input type="number" id="tx-montant" placeholder="0">
       </div>
       <div class="form-group">
-        <label>Date</label>
-        <input type="date">
+        <label>Date souhaitée</label>
+        <input type="date" id="tx-date">
       </div>
     </div>
     <div class="form-group">
-      <label>Description</label>
-      <input type="text" placeholder="Ex: Billetterie journée du 15/09">
+      <label>Description / Justification</label>
+      <input type="text" id="tx-desc" placeholder="Ex: Achat de 2 filets pour entraînements">
     </div>
     <div class="form-group">
-      <label>Justificatif (photo)</label>
-      <input type="file" accept="image/*,application/pdf">
+      <label>Justificatif (photo/PDF)</label>
+      <input type="file" id="tx-file" accept="image/*,application/pdf">
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-tx')">Annuler</button>
-      <button class="btn primary" onclick="saveOperation()">Enregistrer</button>
+      <button class="btn primary" onclick="saveOperation()">Soumettre la demande</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Détail dépense -->
+<div id="modal-dep-detail" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="dep-detail-title">💸 Détail de la dépense</span>
+      <button class="close-btn" onclick="closeModal('modal-dep-detail')">✕</button>
+    </div>
+    <div id="dep-detail-body" style="font-size:13px"></div>
+    <div id="dep-detail-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="btn" onclick="closeModal('modal-dep-detail')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Raison de rejet -->
+<div id="modal-reject-dep" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">❌ Rejeter la dépense</span>
+      <button class="close-btn" onclick="closeModal('modal-reject-dep')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Raison du rejet <span style="color:var(--red)">*</span></label>
+      <textarea id="reject-dep-reason" rows="3" style="width:100%;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px" placeholder="Expliquez pourquoi cette dépense est rejetée…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modal-reject-dep')">Annuler</button>
+      <button class="btn danger" onclick="confirmRejectDepense()">Confirmer le rejet</button>
     </div>
   </div>
 </div>
@@ -2207,10 +2246,9 @@ async function doLogin() {
   if (users[username] && users[username].password === password) {
     currentUser = { username, ...users[username] };
     localStorage.setItem('zone5r_session', JSON.stringify(currentUser));
-    errorEl.classList.remove('show');
-    updateUI();
+    localStorage.setItem('zone5r_login_toast', currentUser.name.split(' ')[0]);
     logAction('LOGIN', { detail: 'Connexion depuis ' + (navigator.platform || 'inconnu') });
-    showToast('Bienvenue, ' + currentUser.name.split(' ')[0] + ' !');
+    window.location.reload();
   } else {
     errorEl.classList.add('show');
     document.getElementById('login-password').value = '';
@@ -2219,11 +2257,8 @@ async function doLogin() {
 
 function doLogout() {
   logAction('LOGOUT', { detail: '' });
-  currentUser = null;
   localStorage.removeItem('zone5r_session');
-  updateUI();
-  showSection('dashboard');
-  showToast('Déconnexion réussie.');
+  window.location.reload();
 }
 
 function toggleAuth() {
@@ -2354,6 +2389,7 @@ function updateUI() {
     // Onglet Bilan → recalcul à l'ouverture
     renderBilan();
     updateCaisse();
+    renderDepensesList();
     renderSuspensions();
     renderLitiges();
     renderSeasonBar();
@@ -2461,10 +2497,10 @@ const CAN_SEE_PLAYERS_LITIGES = ['superadmin','admin','tresorier','competitions'
 const CAN_CREATE_FICHE      = ['superadmin','tresorier'];
 const CAN_LIVE_SCORE        = ['superadmin','admin','competitions','juridique'];
 const CAN_EDIT_SCORE        = ['superadmin','admin','competitions'];
-const CAN_ADD_DEPENSE       = ['superadmin','admin','tresorier'];
+const CAN_ADD_DEPENSE       = ['superadmin','admin','tresorier','secretaire','finances','competitions','juridique'];
 const CAN_ADD_LICENCE       = ['superadmin','tresorier'];
-const CAN_APPROVE_DEPENSE   = ['superadmin','tresorier'];
 const CAN_VALIDATE_PRESIDENT= ['superadmin','admin'];
+const CAN_DECAISSER_DEPENSE = ['superadmin','tresorier'];
 
 // ============================================================
 //  SYSTÈME DE PERMISSIONS (rôle + overrides individuels)
@@ -2482,8 +2518,8 @@ const PERM_DEFAULTS = {
   // Finances
   create_fiche:        r => CAN_CREATE_FICHE.includes(r),
   add_depense:         r => CAN_ADD_DEPENSE.includes(r),
-  approve_depense:     r => CAN_APPROVE_DEPENSE.includes(r),
   validate_president:  r => CAN_VALIDATE_PRESIDENT.includes(r),
+  decaisser_depense:   r => CAN_DECAISSER_DEPENSE.includes(r),
   // Administration
   manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
   declare_saison:      r => ['superadmin','admin'].includes(r),
@@ -2498,9 +2534,9 @@ const PERM_LABELS = {
   edit_score:          'Modifier score',
   add_litige:          'Décl. litige',
   create_fiche:        'Fiche journée',
-  add_depense:         'Opérations financières',
-  approve_depense:     'Valider dépense (Tréso.)',
-  validate_president:  'Valider dépense (Prés.)',
+  add_depense:         'Demander dépense',
+  validate_president:  'Valider/Rejeter dépense',
+  decaisser_depense:   'Décaisser dépense',
   manage_accounts:     'Gérer comptes',
   declare_saison:      'Déclarer saison',
   view_audit:          'Voir historique',
@@ -2511,7 +2547,7 @@ const PERM_GROUPS = [
   { label:'👤 Joueurs & Licences', perms:['add_player','see_players_litiges','add_licence'] },
   { label:'⚽ Compétition',        perms:['live_score','edit_score'] },
   { label:'⚖️ Litiges',            perms:['add_litige'] },
-  { label:'💰 Finances',           perms:['create_fiche','add_depense','approve_depense','validate_president'] },
+  { label:'💰 Finances',           perms:['create_fiche','add_depense','validate_president','decaisser_depense'] },
   { label:'⚙️ Administration',     perms:['manage_accounts','declare_saison','view_audit'] },
 ];
 
@@ -2652,9 +2688,11 @@ const ACTION_LABELS = {
   EDIT_LITIGE:      'Litige modifié',
   LEVER_SUSPENSION: 'Suspension levée',
   ADD_LICENCE:      'Vente licence enregistrée',
-  ADD_DEPENSE:      'Dépense enregistrée',
-  APPROVE_DEPENSE:  'Dépense validée',
-  REJECT_DEPENSE:   'Dépense rejetée',
+  ADD_DEPENSE:                 'Demande de dépense soumise',
+  APPROVE_DEPENSE:             'Dépense validée (Président)',
+  REJECT_DEPENSE:              'Dépense rejetée',
+  DECAISSER_DEPENSE:           'Décaissement effectué',
+  CONFIRMER_RECEPTION_DEPENSE: 'Réception confirmée',
   CHANGE_PASSWORD:  'Mot de passe modifié',
   CREATE_ACCOUNT:   'Compte créé',
   DELETE_ACCOUNT:   'Compte supprimé',
@@ -4238,7 +4276,8 @@ function _rawDepenses() { try { return JSON.parse(localStorage.getItem('zone5r_d
 function getDepensesDiverses() {
   const all = _rawDepenses();
   const sid = getSelectedSaison()?.id;
-  return sid ? all.filter(d => (d.saisonId || 'S_legacy') === sid) : all;
+  // Si pas de saisonId sur la dépense → on l'affiche toujours (évite les pertes silencieuses)
+  return sid ? all.filter(d => !d.saisonId || d.saisonId === sid) : all;
 }
 function saveDepensesDiverses(d) { localStorage.setItem('zone5r_depenses', JSON.stringify(d)); fireSync('depenses', d); }
 
@@ -4246,7 +4285,7 @@ let _depFilter = 'all';
 
 function setDepFilter(f) {
   _depFilter = f;
-  ['all','en_attente','validee','rejetee','mine'].forEach(id => {
+  ['all','en_attente','validee','decaissee','recue','rejetee','mine'].forEach(id => {
     const el = document.getElementById('df-' + id);
     if (el) el.className = 'btn' + (id === f ? ' primary' : '');
   });
@@ -4258,15 +4297,115 @@ function toggleDepHistory(id) {
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
+function openDepenseDetail(id) {
+  const dep = _rawDepenses();
+  const d   = dep.find(x => x.id === id);
+  if (!d) return;
+
+  const fmt  = n => (n||0).toLocaleString('fr-FR');
+  const me   = currentUser?.username;
+  const isD  = d.type === 'depense';
+  const statut = d.statut || (isD ? 'en_attente' : 'ok');
+
+  const BADGES = {
+    en_attente: `<span class="badge amber">⏳ En attente de validation</span>`,
+    validee:    `<span class="badge green">✅ Validée — En attente de décaissement</span>`,
+    decaissee:  `<span class="badge blue">💰 Décaissée — En attente de confirmation</span>`,
+    recue:      `<span class="badge green">🤝 Reçue et clôturée</span>`,
+    rejetee:    `<span class="badge red">❌ Rejetée</span>`,
+  };
+
+  const HIST_ICONS  = { creation:'📝', approbation_president:'✅', rejet:'❌', decaissement:'💰', reception:'🤝' };
+  const HIST_LABELS = {
+    creation:              'Demande créée',
+    approbation_president: 'Validée par le Président',
+    rejet:                 'Rejetée',
+    decaissement:          'Décaissement effectué',
+    reception:             'Réception confirmée par le demandeur',
+  };
+
+  const hist = d.history || [];
+  const timelineRows = hist.map((h, i) => {
+    const dt    = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const isLast = i === hist.length - 1;
+    const lineColor = h.action === 'rejet' ? 'var(--red)' : h.action === 'creation' ? 'var(--muted)' : 'var(--green-d)';
+    return `
+    <div style="display:flex;gap:12px;padding-bottom:${isLast?'0':'12px'};position:relative">
+      ${!isLast ? `<div style="position:absolute;left:14px;top:28px;bottom:0;width:2px;background:var(--border)"></div>` : ''}
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--gray-l);border:2px solid ${lineColor};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${HIST_ICONS[h.action]||'•'}</div>
+      <div style="flex:1;padding-top:3px">
+        <div style="font-size:13px;font-weight:600;color:${lineColor}">${HIST_LABELS[h.action]||h.action}</div>
+        <div style="font-size:12px;color:var(--text);margin-top:1px">par <strong>${h.name||h.by||'?'}</strong></div>
+        ${h.raison ? `<div style="font-size:12px;color:var(--red);margin-top:3px;padding:6px 8px;background:var(--red-l);border-radius:4px">Raison : <em>${h.raison}</em></div>` : ''}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${dt}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const body = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--gray-l);border-radius:6px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">Catégorie</div>
+        <div style="font-size:13px;font-weight:600">${d.categorie||'—'}</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:6px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">Montant</div>
+        <div style="font-size:16px;font-weight:700;color:var(--red)">${fmt(d.montant)} FCFA</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:6px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">Demandé par</div>
+        <div style="font-size:13px;font-weight:600">${d.declaredBy||'—'}</div>
+      </div>
+      <div style="background:var(--gray-l);border-radius:6px;padding:10px">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">Date souhaitée</div>
+        <div style="font-size:13px;font-weight:600">${d.date||'—'}</div>
+      </div>
+    </div>
+    ${isD ? `<div style="margin-bottom:14px">${BADGES[statut]||''}</div>` : ''}
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:10px;letter-spacing:0.5px">Historique des actions</div>
+    ${hist.length
+      ? `<div style="padding:12px;background:var(--gray-l);border-radius:8px">${timelineRows}</div>`
+      : `<div style="color:var(--muted);font-size:12px;font-style:italic">Aucune action enregistrée.</div>`
+    }`;
+
+  document.getElementById('dep-detail-title').textContent = (d.description || d.categorie) + ' — ' + fmt(d.montant) + ' FCFA';
+  document.getElementById('dep-detail-body').innerHTML = body;
+
+  // Boutons d'action dans le modal
+  const actDiv = document.getElementById('dep-detail-actions');
+  actDiv.innerHTML = '';
+  const canValidatePresident = hasPermission('validate_president');
+  const canDecaisser         = hasPermission('decaisser_depense');
+  if (isD) {
+    if (statut === 'en_attente' && canValidatePresident) {
+      actDiv.innerHTML += `<button class="btn primary" onclick="approveDepense('${d.id}');closeModal('modal-dep-detail')">✓ Valider</button>`;
+      actDiv.innerHTML += `<button class="btn danger"  onclick="closeModal('modal-dep-detail');rejectDepense('${d.id}')">✗ Rejeter</button>`;
+    }
+    if (statut === 'validee' && canDecaisser) {
+      actDiv.innerHTML += `<button class="btn primary" style="background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}');closeModal('modal-dep-detail')">💰 Décaisser</button>`;
+    }
+    if (statut === 'decaissee' && d.createdBy === me) {
+      actDiv.innerHTML += `<button class="btn primary" style="background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}');closeModal('modal-dep-detail')">🤝 Confirmer réception</button>`;
+    }
+  }
+
+  openModal('modal-dep-detail');
+}
+
 function renderDepensesList() {
   const allDep = getDepensesDiverses();
   const div    = document.getElementById('depenses-list');
   if (!div) return;
   const fmt  = n => (n||0).toLocaleString('fr-FR');
   const me   = currentUser?.username;
-  const canValidTresor    = hasPermission('approve_depense');
-  const canValidPresident = hasPermission('validate_president');
-  const canReject         = hasPermission('validate_president');
+  const canValidatePresident = hasPermission('validate_president');
+  const canDecaisser         = hasPermission('decaisser_depense');
+
+  // Synchroniser l'apparence des boutons de filtre avec l'état réel de _depFilter
+  ['all','en_attente','validee','decaissee','recue','rejetee','mine'].forEach(id => {
+    const el = document.getElementById('df-' + id);
+    if (el) el.className = 'btn' + (id === _depFilter ? ' primary' : '');
+  });
 
   // Compteur badge "En attente"
   const pendingCount = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente').length;
@@ -4275,10 +4414,19 @@ function renderDepensesList() {
     ? `⏳ En attente <span style="background:var(--amber);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${pendingCount}</span>`
     : '⏳ En attente';
 
+  // Compteur badge "Décaissées à confirmer"
+  const decaisseePendingCount = allDep.filter(d => d.type === 'depense' && d.statut === 'decaissee' && d.createdBy === me).length;
+  const btnD = document.getElementById('df-decaissee');
+  if (btnD) btnD.innerHTML = decaisseePendingCount
+    ? `💰 Décaissées <span style="background:var(--blue);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${decaisseePendingCount}</span>`
+    : '💰 Décaissées';
+
   // Appliquer le filtre
   let dep = allDep;
   if      (_depFilter === 'en_attente') dep = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente');
-  else if (_depFilter === 'validee')    dep = allDep.filter(d => d.statut === 'validee' || !d.statut);
+  else if (_depFilter === 'validee')    dep = allDep.filter(d => d.statut === 'validee');
+  else if (_depFilter === 'decaissee')  dep = allDep.filter(d => d.statut === 'decaissee');
+  else if (_depFilter === 'recue')      dep = allDep.filter(d => d.statut === 'recue');
   else if (_depFilter === 'rejetee')    dep = allDep.filter(d => d.statut === 'rejetee');
   else if (_depFilter === 'mine')       dep = allDep.filter(d => d.createdBy === me);
 
@@ -4288,65 +4436,72 @@ function renderDepensesList() {
   }
 
   div.innerHTML = dep.map(d => {
-    const isD   = d.type === 'depense';
-    const statut = d.statut || (isD ? 'validee' : 'ok');
+    const isD    = d.type === 'depense';
+    const statut = d.statut || (isD ? 'en_attente' : 'ok');
 
-    // Ligne "Validé par" ou état partiel
-    let validePar = '';
+    // Ligne d'état
+    let etatLine = '';
     if (isD) {
       if (statut === 'validee') {
-        const t = d.approvals?.tresorier?.name || '?';
         const p = d.approvals?.president?.name || '?';
-        validePar = `<div style="font-size:11px;color:var(--muted);margin-top:3px">
-          Validé par <strong>${t}</strong> (Trésorier) &amp; <strong>${p}</strong> (Président)
-        </div>`;
-      } else if (statut === 'en_attente') {
-        const tPart = d.approvals?.tresorier
-          ? `<span style="color:var(--green);font-weight:600">✓ ${d.approvals.tresorier.name} (Tréso.)</span>`
-          : `<span style="color:var(--amber)">⏳ Trésorier</span>`;
-        const pPart = d.approvals?.president
-          ? `<span style="color:var(--green);font-weight:600">✓ ${d.approvals.president.name} (Prés.)</span>`
-          : `<span style="color:var(--amber)">⏳ Président</span>`;
-        validePar = `<div style="font-size:11px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">${tPart} · ${pPart}</div>`;
+        etatLine = `<div style="font-size:11px;color:var(--green-d);margin-top:3px">✅ Validée par <strong>${p}</strong> (Président) · En attente de décaissement</div>`;
+      } else if (statut === 'decaissee') {
+        const dec = d.decaissement;
+        etatLine = `<div style="font-size:11px;color:var(--blue);margin-top:3px">💰 Décaissée par <strong>${dec?.name||'?'}</strong> · En attente de confirmation</div>`;
+      } else if (statut === 'recue') {
+        const dec = d.decaissement;
+        const rec = d.reception;
+        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px">🤝 Décaissé par <strong>${dec?.name||'?'}</strong> · Reçu confirmé par <strong>${rec?.name||'?'}</strong></div>`;
       } else if (statut === 'rejetee') {
-        const by = d.history?.slice().reverse().find(h => h.action === 'rejet');
-        validePar = `<div style="font-size:11px;color:var(--red);margin-top:3px">❌ Rejetée par <strong>${by?.name || '?'}</strong></div>`;
+        const by   = d.history?.slice().reverse().find(h => h.action === 'rejet');
+        const raison = by?.raison ? ` — <em>"${by.raison}"</em>` : '';
+        etatLine = `<div style="font-size:11px;color:var(--red);margin-top:3px">❌ Rejetée par <strong>${by?.name||'?'}</strong>${raison}</div>`;
       }
     }
 
-    // Boutons d'action
+    // Boutons d'action selon statut et rôle
     let actionBtns = '';
-    if (isD && statut === 'en_attente') {
-      if (canValidTresor && !d.approvals?.tresorier)
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','tresorier')">✓ Valider (Tréso.)</button>`;
-      if (canValidPresident && !d.approvals?.president)
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}','president')">✓ Valider (Prés.)</button>`;
-      if (canReject)
-        actionBtns += `<button class="btn danger" style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')">✗ Rejeter</button>`;
+    if (isD) {
+      if (statut === 'en_attente' && canValidatePresident) {
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}')">✓ Valider</button>`;
+        actionBtns += `<button class="btn danger"  style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')">✗ Rejeter</button>`;
+      }
+      if (statut === 'validee' && canDecaisser) {
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}')">💰 Décaisser</button>`;
+      }
+      if (statut === 'decaissee' && d.createdBy === me) {
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}')">🤝 Confirmer réception</button>`;
+      }
     }
 
     // Historique timeline
     const hist = d.history || [];
-    const HIST_ICONS  = { creation:'📝', approbation_tresorier:'✅', approbation_president:'✅', rejet:'❌' };
-    const HIST_LABELS = { creation:'Demande créée', approbation_tresorier:'Validation Trésorier', approbation_president:'Validation Président', rejet:'Dépense rejetée' };
+    const HIST_ICONS  = { creation:'📝', approbation_president:'✅', rejet:'❌', decaissement:'💰', reception:'🤝' };
+    const HIST_LABELS = { creation:'Demande créée', approbation_president:'Validée (Président)', rejet:'Rejetée', decaissement:'Décaissement effectué', reception:'Réception confirmée' };
     const histRows = hist.map(h => {
-      const dt = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-      return `<div style="display:flex;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px">
-        <span style="flex-shrink:0">${HIST_ICONS[h.action]||'•'}</span>
-        <span style="flex:1"><strong>${HIST_LABELS[h.action]||h.action}</strong> — ${h.name||h.by||'?'}</span>
-        <span style="color:var(--muted);white-space:nowrap">${dt}</span>
+      const dt    = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const extra = h.raison ? `<div style="font-style:italic;color:var(--red);font-size:10px;margin-top:1px">Raison : ${h.raison}</div>` : '';
+      return `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:11px">
+        <div style="display:flex;gap:8px;align-items:baseline">
+          <span style="flex-shrink:0">${HIST_ICONS[h.action]||'•'}</span>
+          <span style="flex:1"><strong>${HIST_LABELS[h.action]||h.action}</strong> — ${h.name||h.by||'?'}</span>
+          <span style="color:var(--muted);white-space:nowrap">${dt}</span>
+        </div>${extra}
       </div>`;
     }).join('');
 
     // Badge statut
-    const statusBadge = isD
-      ? (statut === 'validee'  ? `<span class="badge green" style="font-size:10px">✅ Validée</span>`
-       : statut === 'rejetee' ? `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`
-       :                        `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`)
-      : '';
+    const BADGES = {
+      en_attente: `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`,
+      validee:    `<span class="badge green" style="font-size:10px">✅ Validée</span>`,
+      decaissee:  `<span class="badge blue"  style="font-size:10px">💰 Décaissée</span>`,
+      recue:      `<span class="badge green" style="font-size:10px">🤝 Reçue</span>`,
+      rejetee:    `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`,
+    };
+    const statusBadge = isD ? (BADGES[statut] || '') : '';
 
     return `
-    <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0">
+    <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0;cursor:pointer" onclick="openDepenseDetail('${d.id}')">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'💸':'💰'}</div>
         <div style="flex:1;min-width:0">
@@ -4354,82 +4509,137 @@ function renderDepensesList() {
           <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             ${d.categorie} · ${d.date||''} · <em>${d.declaredBy||''}</em> ${statusBadge}
           </div>
-          ${validePar}
-          ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${actionBtns}</div>` : ''}
+          ${etatLine}
+          ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px" onclick="event.stopPropagation()">${actionBtns}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;align-self:flex-start">
           <div class="tx-amount ${isD?'depense':'recette'}" style="margin:0">${isD?'–':'+'} ${fmt(d.montant)}</div>
-          ${hist.length ? `<button class="btn" style="font-size:10px;padding:2px 7px;margin-top:4px" onclick="toggleDepHistory('${d.id}')">📋 Historique (${hist.length})</button>` : ''}
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">📋 ${hist.length} étape${hist.length>1?'s':''}</div>
         </div>
       </div>
-      ${hist.length ? `<div id="dep-hist-${d.id}" style="display:none;margin-top:8px;padding:8px;background:var(--gray-l);border-radius:6px;margin-left:38px">${histRows}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function approveDepense(id, role) {
+function approveDepense(id) {
   const dep = _rawDepenses();
   const d   = dep.find(x => x.id === id);
   if (!d) return;
-  if (!d.approvals) d.approvals = { tresorier: null, president: null };
+  if (!d.approvals) d.approvals = {};
   if (!d.history)   d.history   = [];
-  d.approvals[role] = { by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() };
-  d.history.push({ action: 'approbation_' + role, by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() });
-  if (d.approvals.tresorier && d.approvals.president) d.statut = 'validee';
+  const now = new Date().toISOString();
+  d.approvals.president = { by: currentUser?.username, name: currentUser?.name, at: now };
+  d.statut = 'validee';
+  d.history.push({ action: 'approbation_president', by: currentUser?.username, name: currentUser?.name, at: now });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
-  const lbl = role === 'tresorier' ? 'Trésorier' : 'Président';
-  showToast('✅ Validation ' + lbl + ' enregistrée.');
-  logAction('APPROVE_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA · ' + lbl });
+  showToast('✅ Dépense validée.');
+  logAction('APPROVE_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
+let _rejectDepenseId = null;
 function rejectDepense(id) {
+  _rejectDepenseId = id;
+  const el = document.getElementById('reject-dep-reason');
+  if (el) el.value = '';
+  openModal('modal-reject-dep');
+}
+
+function confirmRejectDepense() {
+  const raison = document.getElementById('reject-dep-reason')?.value.trim();
+  if (!raison) { showToast('⚠️ Veuillez saisir la raison du rejet.'); return; }
+  const dep = _rawDepenses();
+  const d   = dep.find(x => x.id === _rejectDepenseId);
+  if (!d) return;
+  if (!d.history) d.history = [];
+  d.statut = 'rejetee';
+  d.history.push({ action: 'rejet', by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString(), raison });
+  saveDepensesDiverses(dep);
+  closeModal('modal-reject-dep');
+  renderDepensesList(); updateCaisse(); renderBilan();
+  showToast('❌ Dépense rejetée.');
+  logAction('REJECT_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA · Raison: ' + raison });
+}
+
+function decaisserDepense(id) {
   const dep = _rawDepenses();
   const d   = dep.find(x => x.id === id);
   if (!d) return;
   if (!d.history) d.history = [];
-  d.statut = 'rejetee';
-  d.history.push({ action: 'rejet', by: currentUser?.username, name: currentUser?.name, at: new Date().toISOString() });
+  const now = new Date().toISOString();
+  d.statut = 'decaissee';
+  d.decaissement = { by: currentUser?.username, name: currentUser?.name, at: now };
+  d.history.push({ action: 'decaissement', by: currentUser?.username, name: currentUser?.name, at: now });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
-  showToast('❌ Dépense rejetée.');
-  logAction('REJECT_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
+  showToast('💰 Décaissement enregistré. Le demandeur doit confirmer la réception.');
+  logAction('DECAISSER_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
-// Surcharger la sauvegarde de l'opération existante
-function saveOperation() {
-  const type  = document.querySelector('#modal-tx select').value;
-  const cat   = document.querySelectorAll('#modal-tx select')[1].value;
-  const montant = parseFloat(document.querySelectorAll('#modal-tx input[type="number"]')[0].value)||0;
-  const date  = document.querySelectorAll('#modal-tx input[type="date"]')[0].value;
-  const desc  = document.querySelectorAll('#modal-tx input[type="text"]')[0].value.trim();
-  if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
+function confirmerReceptionDepense(id) {
   const dep = _rawDepenses();
-  // Pré-valider selon le rôle du créateur
-  let statut = 'validee', approvals = null;
-  if (type === 'depense') {
-    approvals = { tresorier: null, president: null };
-    if (['superadmin','tresorier'].includes(currentUser?.role))
-      approvals.tresorier = { by: currentUser.username, name: currentUser.name, at: new Date().toISOString() };
-    if (['superadmin','admin'].includes(currentUser?.role))
-      approvals.president = { by: currentUser.username, name: currentUser.name, at: new Date().toISOString() };
-    statut = (approvals.tresorier && approvals.president) ? 'validee' : 'en_attente';
-  }
+  const d   = dep.find(x => x.id === id);
+  if (!d || d.createdBy !== currentUser?.username) return;
+  if (!d.history) d.history = [];
   const now = new Date().toISOString();
-  const history = [{ action:'creation', by:currentUser?.username, name:currentUser?.name, at:now,
+  d.statut = 'recue';
+  d.reception = { by: currentUser?.username, name: currentUser?.name, at: now };
+  d.history.push({ action: 'reception', by: currentUser?.username, name: currentUser?.name, at: now });
+  saveDepensesDiverses(dep);
+  renderDepensesList(); updateCaisse(); renderBilan();
+  showToast('🤝 Réception confirmée. Dépense clôturée.');
+  logAction('CONFIRMER_RECEPTION_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
+}
+
+function openDepenseModal() {
+  // Réinitialiser le formulaire
+  ['tx-montant','tx-desc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const dateEl = document.getElementById('tx-date');
+  if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+  const typeEl = document.getElementById('tx-type');
+  if (typeEl) typeEl.value = 'depense';
+  // Ligne "Recette" visible uniquement pour tresorier/admin
+  const recRow = document.getElementById('modal-tx-recette-row');
+  if (recRow) recRow.style.display = ['superadmin','admin','tresorier'].includes(currentUser?.role) ? '' : 'none';
+  openModal('modal-tx');
+}
+
+function saveOperation() {
+  const typeEl   = document.getElementById('tx-type');
+  const type     = typeEl ? typeEl.value : 'depense';
+  const cat      = document.getElementById('tx-categorie')?.value || '';
+  const montant  = parseFloat(document.getElementById('tx-montant')?.value) || 0;
+  const date     = document.getElementById('tx-date')?.value || '';
+  const desc     = document.getElementById('tx-desc')?.value.trim() || '';
+
+  if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
+  if (!desc)    { showToast('⚠️ Veuillez décrire la dépense.'); return; }
+
+  // Recettes réservées aux tresorier/admin
+  if (type === 'recette' && !['superadmin','admin','tresorier'].includes(currentUser?.role)) {
+    showToast('⚠️ Seuls le Trésorier et le Président peuvent enregistrer une recette.'); return;
+  }
+
+  const dep = _rawDepenses();
+  const now = new Date().toISOString();
+
+  // Les dépenses partent toujours en attente de validation
+  const statut   = type === 'depense' ? 'en_attente' : 'validee';
+  const approvals = type === 'depense' ? { president: null } : null;
+  const history  = [{ action:'creation', by:currentUser?.username, name:currentUser?.name, at:now,
     detail:`${cat} · ${montant.toLocaleString('fr-FR')} FCFA${desc?' · '+desc:''}` }];
-  if (type === 'depense' && approvals?.tresorier)
-    history.push({ action:'approbation_tresorier', by:approvals.tresorier.by, name:approvals.tresorier.name, at:now });
-  if (type === 'depense' && approvals?.president)
-    history.push({ action:'approbation_president', by:approvals.president.by, name:approvals.president.name, at:now });
+
   dep.push({ id:'D'+Date.now(), saisonId:getSelectedSaison()?.id, type, categorie:cat, montant, date,
     description:desc, declaredBy:currentUser?.name, createdBy:currentUser?.username, statut, approvals, history });
   saveDepensesDiverses(dep);
-  logAction('ADD_DEPENSE', { detail: (desc || cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
+  logAction('ADD_DEPENSE', { detail: (desc||cat) + ' · ' + montant.toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-tx');
   renderDepensesList();
   updateCaisse();
-  showToast('✅ Opération enregistrée · ' + montant.toLocaleString('fr-FR') + ' FCFA');
+  const msg = type === 'depense'
+    ? '✅ Demande soumise · En attente de validation par le Président.'
+    : '✅ Recette enregistrée · ' + montant.toLocaleString('fr-FR') + ' FCFA';
+  showToast(msg);
 }
 
 // ============================================================
@@ -4450,7 +4660,7 @@ function computeBilan() {
   const depFinale    = finale ? (finale.totalDepenses||0) : 0;
   const recLicences  = licences.reduce((s,l) => s+(l.total||0), 0);
   const recAmendes   = litiges.reduce((s,l) => s+(l.amende||0), 0);
-  const depDiversTotal = depDiverses.filter(d=>d.type==='depense' && (d.statut==='validee'||!d.statut)).reduce((s,d) => s+(d.montant||0), 0);
+  const depDiversTotal = depDiverses.filter(d=>d.type==='depense' && (['validee','decaissee','recue'].includes(d.statut)||!d.statut)).reduce((s,d) => s+(d.montant||0), 0);
   const recDiversTotal = depDiverses.filter(d=>d.type==='recette').reduce((s,d) => s+(d.montant||0), 0);
 
   const totalRecettes = soldeDep + recJournees + recFinale + recLicences + recAmendes + recDiversTotal;
@@ -5218,6 +5428,13 @@ function _bootApp() {
   updateCaisse();
   updateUI();
   _appReady = true;
+
+  // Toast de bienvenue après rechargement au login
+  const loginPrenom = localStorage.getItem('zone5r_login_toast');
+  if (loginPrenom) {
+    localStorage.removeItem('zone5r_login_toast');
+    showToast('Bienvenue, ' + loginPrenom + ' !');
+  }
 }
 
 initFirebase()
