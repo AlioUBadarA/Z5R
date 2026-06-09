@@ -312,6 +312,7 @@
     <p id="header-subtitle">Le Renouveau des Navetanes · Bignona</p>
   </div>
   <span class="role-badge visitor" id="user-role-badge">Visiteur</span>
+  <span id="sync-indicator" title="État de la synchronisation Firebase" style="display:none;font-size:11px;padding:3px 9px;border-radius:12px;background:rgba(255,255,255,0.12);color:#fff;white-space:nowrap"></span>
   <button class="header-auth-btn" id="header-auth-btn" onclick="toggleAuth()">🔐 Connexion</button>
 </header>
 
@@ -877,10 +878,7 @@
           <div style="font-size:14px;font-weight:700">💸 Dépenses hors journée</div>
           <div style="font-size:12px;color:var(--muted)">Achats, rémunérations, cotisations, dons aux ASC…</div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button id="btn-force-sync" class="btn" style="display:none;font-size:11px;padding:5px 10px" onclick="forceSyncAllToFirebase()">☁️ Sync Firebase</button>
-          <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
-        </div>
+        <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
       </div>
       <!-- Filtres -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
@@ -1090,6 +1088,22 @@
 
   <!-- SUB : Gestion (Saison, Stades, Équipes) -->
   <div id="adm-gestion" class="subsection">
+    <!-- SUPERADMIN : Synchronisation Firebase -->
+    <div id="sync-panel" class="card mb" style="display:none">
+      <div class="card-header">
+        <span class="card-title">☁️ Synchronisation Firebase</span>
+        <span id="sync-panel-status" style="font-size:12px;color:var(--muted)">✅ Synchronisé</span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
+          Sync automatique toutes les <strong>10 secondes</strong>. Si un appareil ne voit pas les dernières données, utilisez le bouton ci-dessous pour forcer la synchronisation complète.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn primary" onclick="forceSyncAllToFirebase()">☁️ Forcer la synchronisation complète</button>
+          <span id="sync-pending-count" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
     <!-- ADMIN/SUPERADMIN : Gestion de la saison -->
     <div id="saison-panel" class="card mb" style="display:none">
     <div class="card-header">
@@ -2044,19 +2058,58 @@ const _db  = firebase.firestore();
 const _COL = 'zone5r';
 let   _appReady = false;
 
-// Écriture Firestore asynchrone (fire-and-forget)
+// File de retry pour les écritures Firestore échouées
+const _pendingSync = new Map(); // key → data
+
+function _updateSyncIndicator() {
+  const n = _pendingSync.size;
+  const ind = document.getElementById('sync-indicator');
+  const pct = document.getElementById('sync-pending-count');
+  const ps  = document.getElementById('sync-panel-status');
+  if (ind) {
+    ind.style.display = currentUser ? '' : 'none';
+    ind.textContent   = n > 0 ? '⚠️ Sync en attente…' : '☁️ Synchronisé';
+    ind.style.background = n > 0 ? 'rgba(192,57,43,0.55)' : 'rgba(255,255,255,0.12)';
+  }
+  if (pct) pct.textContent = n > 0 ? n + ' modification(s) en attente' : '';
+  if (ps)  ps.textContent  = n > 0 ? '⚠️ ' + n + ' en attente' : '✅ Synchronisé';
+}
+
+// Écriture Firestore — met en file de retry si échec
 async function fireSync(key, data) {
-  try { await _db.collection(_COL).doc(key).set({ data }); }
-  catch(e) {
-    console.warn('[FS] sync', key, e.code, e.message);
+  try {
+    await _db.collection(_COL).doc(key).set({ data });
+    _pendingSync.delete(key);
+    _updateSyncIndicator();
+  } catch(e) {
+    console.warn('[FS] sync queued', key, e.code, e.message);
+    _pendingSync.set(key, data);
     _fsError = true;
+    _updateSyncIndicator();
   }
 }
 
-// Re-pousse tout le localStorage vers Firestore (superadmin seulement)
+// Retry automatique toutes les 10 secondes
+setInterval(async () => {
+  if (_pendingSync.size === 0) return;
+  for (const [key, data] of Array.from(_pendingSync.entries())) {
+    try {
+      await _db.collection(_COL).doc(key).set({ data });
+      _pendingSync.delete(key);
+    } catch(e) { /* toujours en échec, réessai au prochain tick */ }
+  }
+  if (_pendingSync.size === 0) {
+    _fsError = false;
+    const banner = document.getElementById('fs-error-banner');
+    if (banner) banner.remove();
+  }
+  _updateSyncIndicator();
+}, 10000);
+
+// Force-sync : re-pousse tout le localStorage vers Firestore
 async function forceSyncAllToFirebase() {
-  const btn = document.getElementById('btn-force-sync');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sync…'; }
+  const btns = document.querySelectorAll('[onclick*="forceSyncAllToFirebase"]');
+  btns.forEach(b => { b.disabled = true; b.textContent = '⏳ Sync en cours…'; });
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
                  'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
   let ok = 0, fail = 0;
@@ -2065,13 +2118,14 @@ async function forceSyncAllToFirebase() {
     if (!raw) continue;
     try {
       await _db.collection(_COL).doc(key).set({ data: JSON.parse(raw) });
+      _pendingSync.delete(key);
       ok++;
     } catch(e) {
       console.error('[FS] forcesync', key, e.code, e.message);
       fail++;
     }
   }
-  if (btn) { btn.disabled = false; btn.textContent = '☁️ Sync Firebase'; }
+  btns.forEach(b => { b.disabled = false; b.textContent = '☁️ Forcer la synchronisation complète'; });
   if (fail === 0) {
     _fsError = false;
     const banner = document.getElementById('fs-error-banner');
@@ -2080,6 +2134,7 @@ async function forceSyncAllToFirebase() {
   } else {
     showToast('⚠️ ' + fail + ' erreur(s) — Vérifiez les règles Firestore.');
   }
+  _updateSyncIndicator();
 }
 
 // Lecture Firestore → localStorage
@@ -2101,88 +2156,97 @@ async function initFirebase() {
                  'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
   await Promise.all(keys.map(k => fireLoad(k)));
 
-  // Listeners temps réel — synchronisent les autres onglets/navigateurs
+  // Listeners temps réel — localStorage mis à jour immédiatement, rendu après _appReady
   _db.collection(_COL).doc('players').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_players', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     initTeamTabs(); renderLicencesTable();
   });
   _db.collection(_COL).doc('saison').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_saison', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
     updateUI();
   });
   _db.collection(_COL).doc('saisons').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_saisons', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderSeasonBar();
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
   });
   _db.collection(_COL).doc('finales').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_finales', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderFinaleDisplay(); updateCaisse(); renderBilan();
   });
   _db.collection(_COL).doc('suspensions').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_suspensions', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderSuspensions();
   });
   _db.collection(_COL).doc('litiges').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_litiges', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderLitiges();
   });
   _db.collection(_COL).doc('teams').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_teams', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderEquipesPanel();
     refreshSaisonEquipesSelect();
   });
   _db.collection(_COL).doc('fiches').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_fiches', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderFichesList();
   });
   _db.collection(_COL).doc('licences').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_licences', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderLicencesTable();
   });
   _db.collection(_COL).doc('depenses').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_depenses', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderDepensesList(); updateCaisse(); renderBilan();
   });
   _db.collection(_COL).doc('finale').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem('zone5r_finale', JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderFinaleDisplay(); updateCaisse(); renderBilan();
   });
   _db.collection(_COL).doc('users').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_USERS)), snap.data().data);
     localStorage.setItem('zone5r_users', JSON.stringify(merged));
-    // Rafraîchir la liste des membres si l'admin est connecté
+    if (!_appReady) return;
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderMembersTable();
   });
   _db.collection(_COL).doc('auditlog').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
-    // Trier par date DESC, garder 1000 entrées max
+    if (!snap.exists) return;
     const raw = snap.data().data || [];
     const sorted = raw.slice().sort((a,b) => (b.ts||'').localeCompare(a.ts||'')).slice(0, 1000);
     localStorage.setItem('zone5r_auditlog', JSON.stringify(sorted));
+    if (!_appReady) return;
     if (currentUser?.role === 'superadmin') renderAuditPanel();
   });
-
-  // Matches — sync temps réel (scores live, cartons, remplacements)
   _db.collection(_COL).doc('matches').onSnapshot(snap => {
-    if (!snap.exists || !_appReady) return;
+    if (!snap.exists) return;
     localStorage.setItem(MATCH_KEY, JSON.stringify(snap.data().data));
+    if (!_appReady) return;
     renderCompMatches();
     renderClassementSection();
-    // Si le modal live est ouvert, rafraîchir le score affiché
     if (_liveMid) {
       const m = getMatchesData().find(x => x.id === _liveMid);
       if (m) {
@@ -2419,9 +2483,10 @@ function updateUI() {
     if (isSuperAdmin){ _st('subnav-adm-autorisations'); } else { _sh('subnav-adm-autorisations'); }
     if (canAudit)    { _st('subnav-adm-historique');    } else { _sh('subnav-adm-historique');    }
 
-    // Bouton sync Firebase : superadmin seulement
-    const btnForceSync = document.getElementById('btn-force-sync');
-    if (btnForceSync) btnForceSync.style.display = isSuperAdmin ? '' : 'none';
+    // Panneau synchronisation Firebase : superadmin seulement
+    const syncPanel = document.getElementById('sync-panel');
+    if (syncPanel) syncPanel.style.display = isSuperAdmin ? 'block' : 'none';
+    _updateSyncIndicator();
 
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
