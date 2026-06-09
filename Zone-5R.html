@@ -877,7 +877,10 @@
           <div style="font-size:14px;font-weight:700">💸 Dépenses hors journée</div>
           <div style="font-size:12px;color:var(--muted)">Achats, rémunérations, cotisations, dons aux ASC…</div>
         </div>
-        <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button id="btn-force-sync" class="btn" style="display:none;font-size:11px;padding:5px 10px" onclick="forceSyncAllToFirebase()">☁️ Sync Firebase</button>
+          <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
+        </div>
       </div>
       <!-- Filtres -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
@@ -2044,7 +2047,39 @@ let   _appReady = false;
 // Écriture Firestore asynchrone (fire-and-forget)
 async function fireSync(key, data) {
   try { await _db.collection(_COL).doc(key).set({ data }); }
-  catch(e) { console.warn('[FS] sync', key, e.message); }
+  catch(e) {
+    console.warn('[FS] sync', key, e.code, e.message);
+    _fsError = true;
+  }
+}
+
+// Re-pousse tout le localStorage vers Firestore (superadmin seulement)
+async function forceSyncAllToFirebase() {
+  const btn = document.getElementById('btn-force-sync');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sync…'; }
+  const keys = ['users','players','saison','saisons','teams','fiches','stades',
+                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
+  let ok = 0, fail = 0;
+  for (const key of keys) {
+    const raw = localStorage.getItem('zone5r_' + key);
+    if (!raw) continue;
+    try {
+      await _db.collection(_COL).doc(key).set({ data: JSON.parse(raw) });
+      ok++;
+    } catch(e) {
+      console.error('[FS] forcesync', key, e.code, e.message);
+      fail++;
+    }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '☁️ Sync Firebase'; }
+  if (fail === 0) {
+    _fsError = false;
+    const banner = document.getElementById('fs-error-banner');
+    if (banner) banner.remove();
+    showToast('✅ ' + ok + ' collections synchronisées avec Firebase.');
+  } else {
+    showToast('⚠️ ' + fail + ' erreur(s) — Vérifiez les règles Firestore.');
+  }
 }
 
 // Lecture Firestore → localStorage
@@ -2383,6 +2418,10 @@ function updateUI() {
     if (isAdmin)     { _st('subnav-adm-gestion'); _st('subnav-adm-acces'); } else { _sh('subnav-adm-gestion'); _sh('subnav-adm-acces'); }
     if (isSuperAdmin){ _st('subnav-adm-autorisations'); } else { _sh('subnav-adm-autorisations'); }
     if (canAudit)    { _st('subnav-adm-historique');    } else { _sh('subnav-adm-historique');    }
+
+    // Bouton sync Firebase : superadmin seulement
+    const btnForceSync = document.getElementById('btn-force-sync');
+    if (btnForceSync) btnForceSync.style.display = isSuperAdmin ? '' : 'none';
 
     // Bouton Litige : réservé Commission Juridique
     const btnLitige = document.getElementById('btn-add-litige');
@@ -5443,8 +5482,9 @@ function _bootApp() {
   // Alerte si Firebase inaccessible (règles expirées, réseau, etc.)
   if (_fsError) {
     const banner = document.createElement('div');
+    banner.id = 'fs-error-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:10px 16px;font-size:13px;font-weight:600;text-align:center';
-    banner.innerHTML = '⚠️ Synchronisation Firebase impossible — les données affichées sont locales uniquement. Vérifiez les règles Firestore dans la console Firebase.';
+    banner.innerHTML = '⚠️ Synchronisation Firebase impossible — données locales uniquement. Superadmin : allez dans Dépenses et cliquez "☁️ Sync Firebase" après avoir corrigé les règles Firestore.';
     document.body.prepend(banner);
     console.error('[FS] FIREBASE INACCESSIBLE — vérifie les règles Firestore sur console.firebase.google.com → z5rb-a8286 → Firestore → Règles');
   }
