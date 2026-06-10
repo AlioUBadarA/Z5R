@@ -299,6 +299,7 @@
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -2060,6 +2061,7 @@ let   _appReady = false;
 
 // File de retry pour les écritures Firestore échouées
 const _pendingSync = new Map(); // key → data
+let   _lastSyncError = '';
 
 function _updateSyncIndicator() {
   const n = _pendingSync.size;
@@ -2068,11 +2070,19 @@ function _updateSyncIndicator() {
   const ps  = document.getElementById('sync-panel-status');
   if (ind) {
     ind.style.display = currentUser ? '' : 'none';
-    ind.textContent   = n > 0 ? '⚠️ Sync en attente…' : '☁️ Synchronisé';
-    ind.style.background = n > 0 ? 'rgba(192,57,43,0.55)' : 'rgba(255,255,255,0.12)';
+    if (n > 0) {
+      ind.textContent   = '⚠️ Sync en attente…';
+      ind.title         = _lastSyncError ? 'Erreur : ' + _lastSyncError : 'Synchronisation en attente';
+      ind.style.background = 'rgba(192,57,43,0.55)';
+    } else {
+      ind.textContent   = '☁️ Synchronisé';
+      ind.title         = 'Toutes les données sont synchronisées';
+      ind.style.background = 'rgba(255,255,255,0.12)';
+    }
   }
-  if (pct) pct.textContent = n > 0 ? n + ' modification(s) en attente' : '';
-  if (ps)  ps.textContent  = n > 0 ? '⚠️ ' + n + ' en attente' : '✅ Synchronisé';
+  const errTxt = _lastSyncError ? ' — Erreur : ' + _lastSyncError : '';
+  if (pct) pct.textContent = n > 0 ? n + ' modification(s) en attente' + errTxt : '';
+  if (ps)  ps.textContent  = n > 0 ? '⚠️ ' + n + ' en attente' + errTxt : '✅ Synchronisé';
 }
 
 // Écriture Firestore — met en file de retry si échec
@@ -2080,26 +2090,31 @@ async function fireSync(key, data) {
   try {
     await _db.collection(_COL).doc(key).set({ data });
     _pendingSync.delete(key);
+    if (_pendingSync.size === 0) _lastSyncError = '';
     _updateSyncIndicator();
   } catch(e) {
     console.warn('[FS] sync queued', key, e.code, e.message);
+    _lastSyncError = e.code || e.message || 'unknown';
     _pendingSync.set(key, data);
     _fsError = true;
     _updateSyncIndicator();
   }
 }
 
-// Retry automatique toutes les 10 secondes
+// Retry automatique chaque seconde
 setInterval(async () => {
   if (_pendingSync.size === 0) return;
   for (const [key, data] of Array.from(_pendingSync.entries())) {
     try {
       await _db.collection(_COL).doc(key).set({ data });
       _pendingSync.delete(key);
-    } catch(e) { /* toujours en échec, réessai au prochain tick */ }
+    } catch(e) {
+      _lastSyncError = e.code || e.message || 'unknown';
+    }
   }
   if (_pendingSync.size === 0) {
     _fsError = false;
+    _lastSyncError = '';
     const banner = document.getElementById('fs-error-banner');
     if (banner) banner.remove();
   }
@@ -2152,6 +2167,14 @@ async function fireLoad(key) {
 }
 
 async function initFirebase() {
+  // Authentification anonyme — garantit un token valide pour toutes les lectures/écritures
+  try {
+    await firebase.auth().signInAnonymously();
+    console.log('[AUTH] connexion anonyme OK');
+  } catch(e) {
+    console.warn('[AUTH] échec auth anonyme (vérifier Firebase Console → Authentication → Méthodes de connexion → Anonyme)', e.code, e.message);
+  }
+
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
                  'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
   await Promise.all(keys.map(k => fireLoad(k)));
