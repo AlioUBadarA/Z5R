@@ -4454,7 +4454,7 @@ function openDepenseDetail(id) {
     approbation_president: 'Validée par le Président',
     rejet:                 'Rejetée',
     decaissement:          'Décaissement effectué',
-    reception:             'Réception confirmée par le demandeur',
+    reception:             'Réception confirmée par',
   };
 
   const hist = d.history || [];
@@ -4467,8 +4467,8 @@ function openDepenseDetail(id) {
       ${!isLast ? `<div style="position:absolute;left:14px;top:28px;bottom:0;width:2px;background:var(--border)"></div>` : ''}
       <div style="width:28px;height:28px;border-radius:50%;background:var(--gray-l);border:2px solid ${lineColor};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${HIST_ICONS[h.action]||'•'}</div>
       <div style="flex:1;padding-top:3px">
-        <div style="font-size:13px;font-weight:600;color:${lineColor}">${HIST_LABELS[h.action]||h.action}</div>
-        <div style="font-size:12px;color:var(--text);margin-top:1px">par <strong>${h.name||h.by||'?'}</strong></div>
+        <div style="font-size:13px;font-weight:600;color:${lineColor}">${HIST_LABELS[h.action]||h.action}${h.action==='reception'?` <strong>${h.name||h.by||'?'}</strong>`:''}</div>
+        ${h.action!=='reception'?`<div style="font-size:12px;color:var(--text);margin-top:1px">par <strong>${h.name||h.by||'?'}</strong></div>`:''}
         ${h.raison ? `<div style="font-size:12px;color:var(--red);margin-top:3px;padding:6px 8px;background:var(--red-l);border-radius:4px">Raison : <em>${h.raison}</em></div>` : ''}
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${dt}</div>
       </div>
