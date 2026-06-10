@@ -3983,66 +3983,77 @@ function renderFichesList() {
     const validatedPoste = _users[f.validatedByUsername]?.poste || '';
 
     return `
-    <div class="card mb" style="overflow:visible;cursor:pointer" onclick="openFicheDetail('${f.id}')">
-      <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
-        Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
-      </div>
-      <div style="background:#ffff00;color:#000;padding:6px 16px;text-align:center;font-weight:700;font-size:13px">
-        ${f.journee}${f.terrain ? ' · ' + f.terrain : ''}
-      </div>
-      <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
-        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
-        <div style="padding:12px;border-right:1px solid var(--border)">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
-          ${[
-            ['Recette à la porte', f.recettes.porte],
-            ['Bénéfices chaises',  f.recettes.chaises],
-            ['Quote part ASC',     f.recettes.asce],
-          ].filter(([,v]) => v).map(([l,v]) => `
-            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
-          `).join('')}
-          ${(f.recettes.contributions||[]).map(c => `
-            <div class="flex-between" style="font-size:12px;padding:2px 0;padding-left:10px"><span style="color:var(--muted)">↳ ${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
-          `).join('')}
+    <div class="card mb" style="overflow:visible">
+      <!-- En-tête cliquable (accordéon) -->
+      <div style="cursor:pointer" onclick="toggleFicheDetails('${f.id}')">
+        <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
+          Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
         </div>
-        <div style="padding:12px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center">Dépenses</div>
-          ${[
-            ['Arbitres',           f.depenses.arbitres],
-            ['ASP',                f.depenses.asp],
-            ['Animateur',          f.depenses.animateur],
-            ['Croix Rouge',        f.depenses.croixRouge],
-            ['Location cordes',    f.depenses.cordes],
-            ['Location filets',    f.depenses.filets],
-            ['Chaises école foot', f.depenses.chaises],
-            ['Presse',             f.depenses.presse],
-            ['Social',             f.depenses.social],
-            ['Transport',          f.depenses.transport],
-            ['Collège René Coly',  f.depenses.college],
-          ].filter(([,v]) => v).map(([l,v]) => `
-            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
-          `).join('')}
+        <div style="background:#ffff00;color:#000;padding:6px 16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:13px">${f.journee}${f.terrain ? ' · ' + f.terrain : ''}</span>
+          <span style="display:flex;gap:12px;align-items:center;font-size:12px">
+            <span style="color:var(--green-d);font-weight:700">${fmt(f.totalRecettes)} ↑</span>
+            <span style="color:var(--red);font-weight:700">${fmt(f.totalDepenses)} ↓</span>
+            <span style="font-weight:700;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">= ${fmt(f.beneficeJour)}</span>
+            <span id="fiche-chevron-${f.id}" style="font-size:11px;color:var(--muted)">▼ Détail</span>
+          </span>
+        </div>
+        <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
+          Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
-        <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
-        <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
-      </div>
-      <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
-        <strong style="font-size:13px">Bénéfice du Jour</strong>
-        <strong style="font-size:18px;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">${fmt(f.beneficeJour)} FCFA</strong>
-      </div>
-      <div style="padding:10px 16px;background:var(--green-d);color:#fff;display:flex;justify-content:space-between;align-items:center">
-        <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
-        <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
+      <!-- Détail financier (masqué par défaut) -->
+      <div id="fiche-details-${f.id}" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
+          <div style="padding:12px;border-right:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
+            ${[
+              ['Recette à la porte', f.recettes.porte],
+              ['Bénéfices chaises',  f.recettes.chaises],
+              ['Quote part ASC',     f.recettes.asce],
+            ].filter(([,v]) => v).map(([l,v]) => `
+              <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+            `).join('')}
+            ${(f.recettes.contributions||[]).map(c => `
+              <div class="flex-between" style="font-size:12px;padding:2px 0;padding-left:10px"><span style="color:var(--muted)">↳ ${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
+            `).join('')}
+          </div>
+          <div style="padding:12px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center">Dépenses</div>
+            ${[
+              ['Arbitres',           f.depenses.arbitres],
+              ['ASP',                f.depenses.asp],
+              ['Animateur',          f.depenses.animateur],
+              ['Croix Rouge',        f.depenses.croixRouge],
+              ['Location cordes',    f.depenses.cordes],
+              ['Location filets',    f.depenses.filets],
+              ['Chaises école foot', f.depenses.chaises],
+              ['Presse',             f.depenses.presse],
+              ['Social',             f.depenses.social],
+              ['Transport',          f.depenses.transport],
+              ['Collège René Coly',  f.depenses.college],
+            ].filter(([,v]) => v).map(([l,v]) => `
+              <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+            `).join('')}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
+          <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
+          <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
+        </div>
+        <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
+          <strong style="font-size:13px">Bénéfice du Jour</strong>
+          <strong style="font-size:18px;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">${fmt(f.beneficeJour)} FCFA</strong>
+        </div>
+        <div style="padding:10px 16px;background:var(--green-d);color:#fff;display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
+          <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
+        </div>
       </div>
 
-      <!-- Pied de fiche : auteur + statut + actions -->
-      <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px" onclick="event.stopPropagation()">
+      <!-- Pied : auteur + statut + actions -->
+      <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
         <div style="font-size:11px;color:var(--muted);line-height:1.6">
           <div>📝 Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
           ${isValidated
@@ -4051,6 +4062,7 @@ function renderFichesList() {
           }
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheDetail('${f.id}')">📋 Historique</button>
           ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')">✅ Valider</button>` : ''}
           ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')">✏️ Modifier</button>` : ''}
         </div>
@@ -5166,6 +5178,16 @@ function removeContribRow(btn, asc) {
   _contribAdded = _contribAdded.filter(a=>a!==asc);
   btn.parentElement.remove();
   updateFicheTotaux();
+}
+
+// ── Accordéon fiche : afficher/masquer le détail financier ───────────────
+function toggleFicheDetails(id) {
+  const body    = document.getElementById('fiche-details-' + id);
+  const chevron = document.getElementById('fiche-chevron-' + id);
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display    = open ? '' : 'none';
+  if (chevron) chevron.textContent = open ? '▲ Masquer' : '▼ Détail';
 }
 
 // ── Valider une fiche (TGA / admin / superadmin) ──────────────────────────
