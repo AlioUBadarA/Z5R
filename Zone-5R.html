@@ -2087,15 +2087,17 @@ function _updateSyncIndicator() {
 
 // Écriture Firestore — met en file de retry si échec
 async function fireSync(key, data) {
+  // JSON round-trip pour supprimer les valeurs undefined rejetées par Firestore
+  const clean = JSON.parse(JSON.stringify(data));
   try {
-    await _db.collection(_COL).doc(key).set({ data });
+    await _db.collection(_COL).doc(key).set({ data: clean });
     _pendingSync.delete(key);
     if (_pendingSync.size === 0) _lastSyncError = '';
     _updateSyncIndicator();
   } catch(e) {
     console.warn('[FS] sync queued', key, e.code, e.message);
     _lastSyncError = e.code || e.message || 'unknown';
-    _pendingSync.set(key, data);
+    _pendingSync.set(key, clean);
     _fsError = true;
     _updateSyncIndicator();
   }
