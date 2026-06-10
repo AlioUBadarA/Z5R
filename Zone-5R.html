@@ -5860,6 +5860,8 @@ function _bootApp() {
   }
 }
 
+updateUI(); // session déjà en localStorage — affiche immédiatement la bonne vue sans attendre Firebase
+
 initFirebase()
   .then(_bootApp)
   .catch(err => {
