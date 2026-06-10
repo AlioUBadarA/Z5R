@@ -1984,7 +1984,9 @@
       </div>
       <div class="form-group" style="margin-bottom:0">
         <label>Terrain</label>
-        <input type="text" id="fj-terrain" placeholder="Ex : Terrain Collège René Coly">
+        <select id="fj-terrain">
+          <option value="">-- Choisir un terrain --</option>
+        </select>
       </div>
     </div>
     <div class="form-group">
@@ -5059,6 +5061,13 @@ const _origDeclarerSaison = declarerSaison;
 //  MISE À JOUR DU MODAL FICHE JOURNÉE — Quote parts par menu déroulant
 // ============================================================
 function openFicheModal() {
+  // Peupler le select terrain depuis les stades enregistrés
+  const terrainSel = document.getElementById('fj-terrain');
+  if (terrainSel) {
+    const stades = getStades();
+    terrainSel.innerHTML = '<option value="">-- Choisir un terrain --</option>' +
+      stades.map(s => `<option value="${s.nom}">${s.nom}${s.lieu ? ' · ' + s.lieu : ''}</option>`).join('');
+  }
   ['fj-journee','fj-terrain'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const dateEl=document.getElementById('fj-date');if(dateEl)dateEl.value='';
   ['fj-r-porte','fj-r-chaises','fj-r-asce',
