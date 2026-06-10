@@ -935,7 +935,7 @@
   <div id="jur-suspensions" class="subsection active">
     <div class="flex-between mb">
       <span style="font-size:13px;color:var(--muted)">Joueurs actuellement suspendus</span>
-      <button class="btn danger member-action" onclick="openModal('modal-carton')">+ Carton</button>
+      <button class="btn danger member-action" onclick="openCartonModal()">+ Carton</button>
     </div>
     <div class="alert danger" id="suspensions-alert">🟥 Chargement…</div>
     <div class="card">
@@ -1600,8 +1600,8 @@
       <span class="modal-title">🃏 Enregistrer un carton</span>
       <button class="close-btn" onclick="closeModal('modal-carton')">✕</button>
     </div>
-    <div class="form-group"><label>Rencontre</label><select><option>Walidane vs Chicago (Poule A)</option><option>Baraka vs Deggo (Poule B)</option></select></div>
-    <div class="form-group"><label>Joueur</label><input type="text" placeholder="Rechercher joueur par nom ou n° licence..."></div>
+    <div class="form-group"><label>Rencontre</label><select id="carton-match-sel" onchange="onCartonMatchChange()"><option value="">— Sélectionner une rencontre —</option></select></div>
+    <div class="form-group"><label>Joueur</label><select id="carton-joueur-sel"><option value="">— Choisir d'abord une rencontre —</option></select></div>
     <div class="form-row">
       <div class="form-group"><label>Type de carton</label>
         <select id="card-type" onchange="updateSuspension()">
@@ -1614,7 +1614,7 @@
     <div class="form-group"><label>Motif</label><textarea placeholder="Décrire l'incident..."></textarea></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-carton')">Annuler</button>
-      <button class="btn danger" onclick="alert('Carton enregistré. Suspension automatique appliquée.');closeModal('modal-carton')">Confirmer</button>
+      <button class="btn danger" onclick="saveCarton()">Confirmer</button>
     </div>
   </div>
 </div>
@@ -2609,6 +2609,93 @@ function updateSuspension() {
     document.getElementById('card-type').value === 'rouge' ? 3 : 1;
 }
 
+function openCartonModal() {
+  const sel = document.getElementById('carton-match-sel');
+  if (sel) {
+    const matches = getMatchesData();
+    sel.innerHTML = '<option value="">— Sélectionner une rencontre —</option>';
+    matches.forEach(m => {
+      const label = `${m.dom} vs ${m.ext} (Poule ${m.poule.toUpperCase()})`;
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+  }
+  const joueurSel = document.getElementById('carton-joueur-sel');
+  if (joueurSel) joueurSel.innerHTML = '<option value="">— Choisir d\'abord une rencontre —</option>';
+  const cardType = document.getElementById('card-type');
+  if (cardType) { cardType.value = 'jaune'; updateSuspension(); }
+  const motif = document.querySelector('#modal-carton textarea');
+  if (motif) motif.value = '';
+  openModal('modal-carton');
+}
+
+function onCartonMatchChange() {
+  const matchId = document.getElementById('carton-match-sel').value;
+  const joueurSel = document.getElementById('carton-joueur-sel');
+  if (!joueurSel) return;
+  if (!matchId) {
+    joueurSel.innerHTML = '<option value="">— Choisir d\'abord une rencontre —</option>';
+    return;
+  }
+  const match = getMatchesData().find(m => m.id === matchId);
+  if (!match) return;
+  const allPlayers = getPlayers();
+  const teams = [match.dom, match.ext];
+  joueurSel.innerHTML = '<option value="">— Sélectionner un joueur —</option>';
+  teams.forEach(team => {
+    const players = allPlayers[team];
+    if (!players || players.length === 0) return;
+    const grp = document.createElement('optgroup');
+    grp.label = team;
+    players.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.prenom} ${p.nom} · ${p.cat} · #${p.id}`;
+      grp.appendChild(opt);
+    });
+    joueurSel.appendChild(grp);
+  });
+}
+
+function saveCarton() {
+  const matchId = document.getElementById('carton-match-sel')?.value;
+  const joueurId = document.getElementById('carton-joueur-sel')?.value;
+  const cardType = document.getElementById('card-type')?.value;
+  const suspNb = parseInt(document.getElementById('suspension-nb')?.value || '1');
+  const motif = document.querySelector('#modal-carton textarea')?.value?.trim();
+  if (!matchId) { alert('Veuillez sélectionner une rencontre.'); return; }
+  if (!joueurId) { alert('Veuillez sélectionner un joueur.'); return; }
+  const match = getMatchesData().find(m => m.id === matchId);
+  const joueurOpt = document.getElementById('carton-joueur-sel');
+  const joueurLabel = joueurOpt?.options[joueurOpt.selectedIndex]?.text || joueurId;
+  const now = new Date().toISOString();
+  const me = currentUser?.username || '';
+  const entry = {
+    id: 'C' + Date.now(),
+    matchId, joueurId, joueurLabel,
+    equipe: [match?.dom, match?.ext].find(t => {
+      const pl = getPlayers()[t] || [];
+      return pl.some(p => p.id === joueurId);
+    }) || '',
+    type: cardType,
+    suspension: suspNb,
+    motif: motif || '',
+    recordedBy: me,
+    recordedByName: currentUser?.name || '',
+    recordedAt: now
+  };
+  const susp = JSON.parse(localStorage.getItem('zone5r_suspensions') || '[]');
+  susp.push(entry);
+  localStorage.setItem('zone5r_suspensions', JSON.stringify(susp));
+  fireSync('suspensions', susp);
+  logAction('RECORD_CARTON', { detail: `${cardType.toUpperCase()} · ${joueurLabel} · match ${matchId}` });
+  closeModal('modal-carton');
+  renderSuspensions();
+  alert(`Carton enregistré pour ${joueurLabel}. Suspension : ${suspNb} match(s).`);
+}
+
 // ============================================================
 //  FILTRE JOUEURS
 // ============================================================
@@ -2837,6 +2924,7 @@ const ACTION_LABELS = {
   GRANT_PERMISSION: 'Permission accordée',
   REVOKE_PERMISSION:'Permission retirée',
   DECLARE_SAISON:   'Saison déclarée',
+  RECORD_CARTON:    'Carton enregistré',
 };
 
 function logAction(action, details = {}) {
