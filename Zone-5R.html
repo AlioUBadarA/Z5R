@@ -2000,8 +2000,11 @@
         <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--green-d);border-bottom:2px solid var(--green);padding-bottom:4px;margin-bottom:10px">Recettes</div>
         <div class="form-group"><label>Recette à la porte</label><input type="number" id="fj-r-porte" value="0" min="0"></div>
         <div class="form-group"><label>Bénéfices chaises</label><input type="number" id="fj-r-chaises" value="0" min="0"></div>
-        <div class="form-group"><label>Quote part ASCE</label><input type="number" id="fj-r-asce" value="0" min="0"></div>
-        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Contributions équipes</div>
+        <div class="form-group">
+          <label>Quote part ASC <span style="font-size:10px;font-weight:400;color:var(--muted)">· calculé auto</span></label>
+          <div id="fj-r-asce-display" style="padding:8px 10px;background:var(--gray-l);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--green-d);border:1px solid var(--border)">0</div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Contributions ASC</div>
         <div id="fj-contributions"><!-- Généré par JS selon les équipes de la saison --></div>
       </div>
       <!-- DÉPENSES -->
@@ -3883,8 +3886,12 @@ function openFicheModal() {
 
 function updateFicheTotaux() {
   const v = id => parseFloat(document.getElementById(id)?.value || 0) || 0;
-  const totalR = v('fj-r-porte') + v('fj-r-chaises') + v('fj-r-asce') +
-    Array.from(document.querySelectorAll('.fj-contrib')).reduce((s,el) => s + (parseFloat(el.value)||0), 0);
+  // Quote part ASC = cumul automatique des contributions
+  const ascTotal = Array.from(document.querySelectorAll('.fj-contrib')).reduce((s,el) => s + (parseFloat(el.value)||0), 0);
+  const ascDisp = document.getElementById('fj-r-asce-display');
+  if (ascDisp) ascDisp.textContent = ascTotal.toLocaleString('fr-FR');
+
+  const totalR = v('fj-r-porte') + v('fj-r-chaises') + ascTotal;
   const totalD = v('fj-d-arbitres') + v('fj-d-asp') + v('fj-d-animateur') +
     v('fj-d-croixrouge') + v('fj-d-cordes') + v('fj-d-filets') +
     v('fj-d-chaises') + v('fj-d-presse') + v('fj-d-social') +
@@ -3911,24 +3918,29 @@ function saveFicheJournee() {
   const contributions = Array.from(document.querySelectorAll('.fj-contrib')).map(el => ({
     equipe: el.dataset.equipe, montant: parseFloat(el.value)||0
   })).filter(c => c.montant > 0);
+  const ascTotal = contributions.reduce((s,c) => s + c.montant, 0);
 
-  const totalR = v('fj-r-porte') + v('fj-r-chaises') + v('fj-r-asce') +
-    contributions.reduce((s,c) => s + c.montant, 0);
+  const totalR = v('fj-r-porte') + v('fj-r-chaises') + ascTotal;
   const totalD = v('fj-d-arbitres') + v('fj-d-asp') + v('fj-d-animateur') +
     v('fj-d-croixrouge') + v('fj-d-cordes') + v('fj-d-filets') +
     v('fj-d-chaises') + v('fj-d-presse') + v('fj-d-social') +
     v('fj-d-transport') + v('fj-d-college');
 
-  const fiches = getFiches(); // filtrées par saison → soldePrecedent correct
+  const fiches = getFiches();
   const soldePrecedent = fiches.length > 0 ? fiches[fiches.length-1].soldeToutCompte : 0;
   const sid = getSelectedSaison()?.id;
+  const now = new Date().toISOString();
+  const me = currentUser?.username || '';
 
   const fiche = {
     id: 'F' + Date.now(), saisonId: sid,
-    journee, terrain: document.getElementById('fj-terrain').value.trim(),
-    date, declaredBy: currentUser?.name,
+    journee, terrain: document.getElementById('fj-terrain').value,
+    date,
+    statut: 'en_attente',
+    declaredBy: currentUser?.name, declaredByUsername: me, declaredAt: now,
+    history: [{ action: 'creation', by: me, name: currentUser?.name || '?', poste: currentUser?.poste || '', at: now }],
     recettes: {
-      porte: v('fj-r-porte'), chaises: v('fj-r-chaises'), asce: v('fj-r-asce'), contributions
+      porte: v('fj-r-porte'), chaises: v('fj-r-chaises'), asce: ascTotal, contributions
     },
     depenses: {
       arbitres: v('fj-d-arbitres'), asp: v('fj-d-asp'), animateur: v('fj-d-animateur'),
@@ -3958,32 +3970,42 @@ function renderFichesList() {
     return;
   }
   const fmt = n => (n||0).toLocaleString('fr-FR');
-  container.innerHTML = [...fiches].reverse().map(f => `
-    <div class="card mb" style="overflow:visible">
-      <!-- En-tête style document -->
+  const role = currentUser?.role || '';
+  const canValidate = ['superadmin','admin','tresorier'].includes(role);
+  const canEdit     = ['superadmin','admin'].includes(role);
+  const _users = getUsers();
+
+  container.innerHTML = [...fiches].reverse().map(f => {
+    const declaredDt = f.declaredAt ? new Date(f.declaredAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const declaredPoste = _users[f.declaredByUsername]?.poste || '';
+    const isValidated = f.statut === 'validee';
+    const validatedDt = f.validatedAt ? new Date(f.validatedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const validatedPoste = _users[f.validatedByUsername]?.poste || '';
+
+    return `
+    <div class="card mb" style="overflow:visible;cursor:pointer" onclick="openFicheDetail('${f.id}')">
       <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
         Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
       </div>
       <div style="background:#ffff00;color:#000;padding:6px 16px;text-align:center;font-weight:700;font-size:13px">
-        ${f.journee}${f.terrain ? ' · Terrain ' + f.terrain : ''}
+        ${f.journee}${f.terrain ? ' · ' + f.terrain : ''}
       </div>
       <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
-        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : ''}
+        Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
       </div>
 
-      <!-- Corps : 2 colonnes -->
       <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
         <div style="padding:12px;border-right:1px solid var(--border)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
           ${[
             ['Recette à la porte', f.recettes.porte],
             ['Bénéfices chaises',  f.recettes.chaises],
-            ['Quote part ASCE',    f.recettes.asce],
+            ['Quote part ASC',     f.recettes.asce],
           ].filter(([,v]) => v).map(([l,v]) => `
             <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
           `).join('')}
           ${(f.recettes.contributions||[]).map(c => `
-            <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
+            <div class="flex-between" style="font-size:12px;padding:2px 0;padding-left:10px"><span style="color:var(--muted)">↳ ${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
           `).join('')}
         </div>
         <div style="padding:12px">
@@ -4006,7 +4028,6 @@ function renderFichesList() {
         </div>
       </div>
 
-      <!-- Totaux -->
       <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
         <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
         <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
@@ -4019,8 +4040,23 @@ function renderFichesList() {
         <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
         <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
       </div>
-    </div>
-  `).join('');
+
+      <!-- Pied de fiche : auteur + statut + actions -->
+      <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px" onclick="event.stopPropagation()">
+        <div style="font-size:11px;color:var(--muted);line-height:1.6">
+          <div>📝 Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
+          ${isValidated
+            ? `<div style="color:var(--green-d)">✅ Validée par <strong>${f.validatedBy||'?'}</strong>${validatedPoste?' · <em>'+validatedPoste+'</em>':''} · ${validatedDt}</div>`
+            : `<div style="color:var(--amber-d)">⏳ En attente de validation TGA</div>`
+          }
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')">✅ Valider</button>` : ''}
+          ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')">✏️ Modifier</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -5061,7 +5097,8 @@ const _origDeclarerSaison = declarerSaison;
 //  MISE À JOUR DU MODAL FICHE JOURNÉE — Quote parts par menu déroulant
 // ============================================================
 function openFicheModal() {
-  // Peupler le select terrain depuis les stades enregistrés
+  _contribAdded = [];
+  // Terrain select
   const terrainSel = document.getElementById('fj-terrain');
   if (terrainSel) {
     const stades = getStades();
@@ -5069,15 +5106,15 @@ function openFicheModal() {
       stades.map(s => `<option value="${s.nom}">${s.nom}${s.lieu ? ' · ' + s.lieu : ''}</option>`).join('');
   }
   ['fj-journee','fj-terrain'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  const dateEl=document.getElementById('fj-date');if(dateEl)dateEl.value='';
-  ['fj-r-porte','fj-r-chaises','fj-r-asce',
+  document.getElementById('fj-date').value='';
+  ['fj-r-porte','fj-r-chaises',
    'fj-d-arbitres','fj-d-asp','fj-d-animateur','fj-d-croixrouge',
    'fj-d-cordes','fj-d-filets','fj-d-chaises','fj-d-presse',
    'fj-d-social','fj-d-transport','fj-d-college'].forEach(id=>{
     const e=document.getElementById(id);if(e)e.value=0;
   });
 
-  // Quote parts dynamiques — menu déroulant pour ajouter des ASC
+  // Contributions ASC — menu déroulant
   const saison = getSaison();
   const equipes = saison ? saison.equipes : ALL_TEAMS;
   const contribDiv = document.getElementById('fj-contributions');
@@ -5096,6 +5133,11 @@ function openFicheModal() {
   updateFicheTotaux();
   document.getElementById('fj-error').classList.remove('show');
   openModal('modal-fiche-journee');
+  // Attacher les listeners calcul auto sur toutes les dépenses
+  document.querySelectorAll('#modal-fiche-journee input[type="number"]').forEach(el => {
+    el.removeEventListener('input', updateFicheTotaux);
+    el.addEventListener('input', updateFicheTotaux);
+  });
 }
 
 let _contribAdded = [];
@@ -5124,6 +5166,122 @@ function removeContribRow(btn, asc) {
   _contribAdded = _contribAdded.filter(a=>a!==asc);
   btn.parentElement.remove();
   updateFicheTotaux();
+}
+
+// ── Valider une fiche (TGA / admin / superadmin) ──────────────────────────
+function validateFiche(id) {
+  const allFiches = _rawFiches();
+  const f = allFiches.find(x => x.id === id);
+  if (!f) return;
+  if (f.statut === 'validee') { showToast('Cette fiche est déjà validée.'); return; }
+  const now = new Date().toISOString();
+  const me  = currentUser?.username || '';
+  f.statut            = 'validee';
+  f.validatedBy       = currentUser?.name;
+  f.validatedByUsername = me;
+  f.validatedAt       = now;
+  f.history           = f.history || [];
+  f.history.push({ action: 'validation', by: me, name: currentUser?.name || '?', poste: currentUser?.poste || '', at: now });
+  saveFiches(allFiches);
+  renderFichesList(); updateCaisse();
+  showToast('✅ Fiche validée par ' + currentUser?.name);
+  logAction('VALIDATE_FICHE', { detail: f.journee });
+}
+
+// ── Détail historique d'une fiche ─────────────────────────────────────────
+function openFicheDetail(id) {
+  const f = _rawFiches().find(x => x.id === id);
+  if (!f) return;
+  const ICONS  = { creation:'📝', validation:'✅', modification:'✏️' };
+  const LABELS = { creation:'Fiche remplie par', validation:'Validée par', modification:'Modifiée par' };
+  const hist   = f.history || [{ action:'creation', by: f.declaredByUsername||'', name: f.declaredBy||'?', poste:'', at: f.declaredAt||'' }];
+  const rows   = hist.map((h, i) => {
+    const dt      = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const isLast  = i === hist.length - 1;
+    const color   = h.action === 'modification' ? 'var(--amber-d)' : h.action === 'creation' ? 'var(--muted)' : 'var(--green-d)';
+    return `
+    <div style="display:flex;gap:12px;padding-bottom:${isLast?'0':'14px'};position:relative">
+      ${!isLast ? `<div style="position:absolute;left:14px;top:28px;bottom:0;width:2px;background:var(--border)"></div>` : ''}
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--gray-l);border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${ICONS[h.action]||'•'}</div>
+      <div style="flex:1;padding-top:3px">
+        <div style="font-size:13px;font-weight:600;color:${color}">${LABELS[h.action]||h.action} <strong>${h.name||'?'}</strong>${h.poste?` <span style="font-weight:400;font-style:italic"> · ${h.poste}</span>`:''}
+        </div>
+        ${h.raison ? `<div style="font-size:12px;color:var(--amber-d);margin-top:3px;padding:6px 8px;background:var(--amber-l);border-radius:4px">Raison : <em>${h.raison}</em></div>` : ''}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${dt}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('fiche-detail-title').textContent = '📋 ' + f.journee + (f.terrain ? ' · ' + f.terrain : '');
+  document.getElementById('fiche-detail-body').innerHTML = `<div style="padding:4px 0 14px">${rows}</div>`;
+  openModal('modal-fiche-detail');
+}
+
+// ── Ouvrir modal modification fiche (admin/superadmin) ────────────────────
+let _editFicheId = null;
+function openFicheEditModal(id) {
+  const f = _rawFiches().find(x => x.id === id);
+  if (!f) return;
+  _editFicheId = id;
+  document.getElementById('fiche-edit-reason').value = '';
+  document.getElementById('fiche-edit-error').classList.remove('show');
+  const fmt = n => (n||0);
+  document.getElementById('fiche-edit-fields').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Recette à la porte</label><input type="number" id="fe-r-porte" value="${fmt(f.recettes.porte)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Bénéfices chaises</label><input type="number" id="fe-r-chaises" value="${fmt(f.recettes.chaises)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Arbitres</label><input type="number" id="fe-d-arbitres" value="${fmt(f.depenses.arbitres)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">ASP</label><input type="number" id="fe-d-asp" value="${fmt(f.depenses.asp)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Animateur</label><input type="number" id="fe-d-animateur" value="${fmt(f.depenses.animateur)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Croix Rouge</label><input type="number" id="fe-d-croixrouge" value="${fmt(f.depenses.croixRouge)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Presse</label><input type="number" id="fe-d-presse" value="${fmt(f.depenses.presse)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Social</label><input type="number" id="fe-d-social" value="${fmt(f.depenses.social)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Transport</label><input type="number" id="fe-d-transport" value="${fmt(f.depenses.transport)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Collège René Coly</label><input type="number" id="fe-d-college" value="${fmt(f.depenses.college)}" min="0" class="fe-input"></div>
+    </div>`;
+  openModal('modal-fiche-edit');
+}
+
+function saveFicheEdit() {
+  const reason = document.getElementById('fiche-edit-reason').value.trim();
+  if (!reason) { document.getElementById('fiche-edit-error').classList.add('show'); return; }
+  document.getElementById('fiche-edit-error').classList.remove('show');
+  const allFiches = _rawFiches();
+  const f = allFiches.find(x => x.id === _editFicheId);
+  if (!f) return;
+  const v = id => parseFloat(document.getElementById(id)?.value || 0) || 0;
+  f.recettes.porte    = v('fe-r-porte');
+  f.recettes.chaises  = v('fe-r-chaises');
+  f.depenses.arbitres = v('fe-d-arbitres');
+  f.depenses.asp      = v('fe-d-asp');
+  f.depenses.animateur= v('fe-d-animateur');
+  f.depenses.croixRouge= v('fe-d-croixrouge');
+  f.depenses.presse   = v('fe-d-presse');
+  f.depenses.social   = v('fe-d-social');
+  f.depenses.transport= v('fe-d-transport');
+  f.depenses.college  = v('fe-d-college');
+  // Recalcul totaux
+  const newR = f.recettes.porte + f.recettes.chaises + (f.recettes.asce||0);
+  const newD = f.depenses.arbitres + f.depenses.asp + f.depenses.animateur +
+    f.depenses.croixRouge + (f.depenses.cordes||0) + (f.depenses.filets||0) +
+    f.depenses.chaises + f.depenses.presse + f.depenses.social +
+    f.depenses.transport + f.depenses.college;
+  f.totalRecettes = newR; f.totalDepenses = newD;
+  f.beneficeJour  = newR - newD;
+  // Recalcul soldes sur toutes les fiches de la saison
+  const now = new Date().toISOString();
+  const me  = currentUser?.username || '';
+  f.history = f.history || [];
+  f.history.push({ action: 'modification', by: me, name: currentUser?.name || '?', poste: currentUser?.poste || '', at: now, raison: reason });
+  // Recalcul soldeToutCompte pour toutes les fiches (ordre chrono)
+  const sorted = allFiches.filter(x => (!x.saisonId && !f.saisonId) || x.saisonId === f.saisonId)
+    .sort((a,b) => a.id.localeCompare(b.id));
+  let solde = 0;
+  sorted.forEach(x => { x.soldeToutCompte = solde + x.beneficeJour; solde = x.soldeToutCompte; });
+  saveFiches(allFiches);
+  closeModal('modal-fiche-edit');
+  renderFichesList(); updateCaisse();
+  showToast('✅ Fiche modifiée — raison enregistrée.');
+  logAction('EDIT_FICHE', { detail: f.journee + ' · ' + reason });
 }
 
 // ============================================================
@@ -5599,6 +5757,43 @@ initFirebase()
     _bootApp();
   });
 </script>
+
+<!-- Modal: Détail fiche journée -->
+<div id="modal-fiche-detail" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="fiche-detail-title">📋 Historique de la fiche</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-detail')">✕</button>
+    </div>
+    <div id="fiche-detail-body" style="max-height:60vh;overflow-y:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn" onclick="closeModal('modal-fiche-detail')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Modification fiche (admin/superadmin) -->
+<div id="modal-fiche-edit" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Modifier la fiche</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-edit')">✕</button>
+    </div>
+    <div style="background:var(--amber-l);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--amber-d)">
+      ⚠️ Cette fiche a déjà été validée. La raison de modification est obligatoire.
+    </div>
+    <div class="form-group">
+      <label>Raison de la modification <span style="color:var(--red)">*</span></label>
+      <textarea id="fiche-edit-reason" rows="3" placeholder="Ex : Correction du montant arbitres, erreur de saisie…" style="width:100%;resize:vertical"></textarea>
+    </div>
+    <div id="fiche-edit-fields"></div>
+    <div class="error-msg" id="fiche-edit-error" style="margin-top:8px">La raison est obligatoire.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" onclick="closeModal('modal-fiche-edit')">Annuler</button>
+      <button class="btn primary" onclick="saveFicheEdit()">✅ Enregistrer la modification</button>
+    </div>
+  </div>
+</div>
 
 <!-- Signature développeur -->
 <div style="text-align:center;padding:28px 16px 20px;margin-top:16px">
