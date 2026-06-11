@@ -240,15 +240,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
-// ── Redirect if already logged in
-(function() {
-  try {
-    const s = localStorage.getItem('zone5r_session');
-    if (s && JSON.parse(s)) window.location.replace('Zone-5R.html');
-  } catch(e) {}
-})();
+const _AUTH_SUFFIX = '@zone5r.app';
 
-// ── Firebase config (même projet que Zone-5R)
 firebase.initializeApp({
   apiKey:            'AIzaSyAf4rYCVwRISriNK57kq6PxUCLAffxbRYo',
   authDomain:        'z5rb-a8286.firebaseapp.com',
@@ -260,55 +253,14 @@ firebase.initializeApp({
 const _db  = firebase.firestore();
 const _COL = 'zone5r';
 
-// ── Données par défaut (identiques à Zone-5R.html)
-const DEFAULT_USERS = {
-  'aliou.sagna':   { password: 'Zone5R!2025', role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
-  'test.admin':    { password: 'TestAdmin25', role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
-  'test.visiteur': { password: 'TestVisit25', role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
-};
-const BUREAU_MEMBERS = [
-  { username: 'djiby.diatta',    defaultPwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
-  { username: 'boubacar.camara', defaultPwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
-  { username: 'papis.sagna',     defaultPwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
-  { username: 'habib.sane',      defaultPwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',    poste: 'Trésorier Général'          },
-  { username: 'agnile.dieng',    defaultPwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint'          },
-  { username: 'ibrahima.dieme',  defaultPwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',           poste: 'Pdt Commission Finances'    },
-  { username: 'sidiky.doumbia',  defaultPwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports'      },
-  { username: 'fode.goudiaby',   defaultPwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',           poste: 'Commission Juridique'       },
-  { username: 'cheikh.diatta',   defaultPwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
-  { username: 'aicha.mbaye',     defaultPwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
-  { username: 'idrissa.diallo',  defaultPwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
-  { username: 'nouha.coly',      defaultPwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',               poste: 'Secrétaire Administratif'   },
-];
+// Redirect already-authenticated users immediately
+firebase.auth().onAuthStateChanged(fbUser => {
+  if (fbUser && !fbUser.isAnonymous) {
+    window.location.replace('Zone-5R.html');
+  }
+});
 
-function getLocalUsers() {
-  try {
-    const stored = localStorage.getItem('zone5r_users');
-    const base   = JSON.parse(JSON.stringify(DEFAULT_USERS));
-    BUREAU_MEMBERS.forEach(m => {
-      if (!base[m.username]) base[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
-    });
-    if (!stored) return base;
-    return Object.assign(base, JSON.parse(stored));
-  } catch(e) { return {}; }
-}
-
-async function loadUsersFromFirestore() {
-  try {
-    const snap = await _db.collection(_COL).doc('users').get();
-    if (snap.exists) {
-      const base = JSON.parse(JSON.stringify(DEFAULT_USERS));
-      BUREAU_MEMBERS.forEach(m => {
-        if (!base[m.username]) base[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
-      });
-      const merged = Object.assign(base, snap.data().data);
-      localStorage.setItem('zone5r_users', JSON.stringify(merged));
-      return merged;
-    }
-  } catch(e) {}
-  return null;
-}
-
+// ── UI helpers ────────────────────────────────────────────────
 function setLoading(on) {
   const btn  = document.getElementById('btn-login');
   const spin = document.getElementById('spinner');
@@ -321,9 +273,8 @@ function setLoading(on) {
 }
 
 function showError(msg) {
-  const el = document.getElementById('login-error');
   document.getElementById('error-text').textContent = msg || 'Identifiant ou mot de passe incorrect.';
-  el.classList.add('show');
+  document.getElementById('login-error').classList.add('show');
 }
 
 function hideError() {
@@ -334,11 +285,11 @@ function togglePwd() {
   const input = document.getElementById('login-password');
   const icon  = document.getElementById('pwd-icon');
   const show  = input.type === 'password';
-  input.type      = show ? 'text' : 'password';
-  icon.className  = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  input.type     = show ? 'text' : 'password';
+  icon.className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
 }
 
-// Protection brute-force — max 10 tentatives par session, délai croissant
+// ── Brute-force protection ────────────────────────────────────
 let _loginAttempts = 0;
 let _loginLocked   = false;
 
@@ -362,9 +313,61 @@ function _lockLogin(seconds) {
   }, 1000);
 }
 
+// ── Session helpers ───────────────────────────────────────────
+function _saveSession(username, profile) {
+  const user = { username, ...profile };
+  delete user.password;
+  localStorage.setItem('zone5r_session', JSON.stringify(user));
+  localStorage.setItem('zone5r_login_toast', user.name.split(' ')[0]);
+  try {
+    const log = JSON.parse(localStorage.getItem('zone5r_auditlog') || '[]');
+    log.unshift({ id: 'A' + Date.now(), ts: new Date().toISOString(),
+      username: user.username, name: user.name, role: user.role,
+      action: 'LOGIN', detail: 'Connexion depuis ' + (navigator.platform || 'inconnu') });
+    localStorage.setItem('zone5r_auditlog', JSON.stringify(log.slice(0, 1000)));
+  } catch(e) {}
+}
+
+// ── Firestore migration fallback ──────────────────────────────
+// Returns profile if username/password match a Firestore record that
+// still has a temporary password field (set by admin during reset).
+async function _tryFirestoreFallback(username, password) {
+  try {
+    const snap = await _db.collection(_COL).doc('users').get();
+    if (!snap.exists) return null;
+    const profiles = snap.data().data || {};
+    const profile  = profiles[username];
+    if (!profile || profile.password !== password) return null;
+    return profile;
+  } catch(e) { return null; }
+}
+
+// Auto-create Firebase Auth account and clear temp password from Firestore
+async function _migrateToFirebase(username, password) {
+  try {
+    await firebase.auth().createUserWithEmailAndPassword(username + _AUTH_SUFFIX, password);
+  } catch(e) {
+    if (e.code !== 'auth/email-already-in-use') return false;
+  }
+  // Remove the temp password from Firestore now that Firebase Auth is ready
+  try {
+    const snap = await _db.collection(_COL).doc('users').get();
+    if (snap.exists) {
+      const data = snap.data().data || {};
+      if (data[username]?.password) {
+        delete data[username].password;
+        await _db.collection(_COL).doc('users').update({ data });
+      }
+    }
+  } catch(e) {}
+  return true;
+}
+
+// ── Main login ────────────────────────────────────────────────
 async function doLogin() {
   if (_loginLocked) return;
   hideError();
+
   const username = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
 
@@ -373,46 +376,59 @@ async function doLogin() {
     return;
   }
 
-  let users = getLocalUsers();
+  setLoading(true);
 
-  // Identifiants incorrects localement → essai Firestore
-  if (!users[username] || users[username].password !== password) {
-    setLoading(true);
-    try { await firebase.auth().signInAnonymously(); } catch(e) {}
-    const fsUsers = await loadUsersFromFirestore();
-    if (fsUsers) users = fsUsers;
-    setLoading(false);
-  }
-
-  if (users[username] && users[username].password === password) {
+  // 1. Try Firebase Auth (primary, fast path)
+  try {
+    await firebase.auth().signInWithEmailAndPassword(username + _AUTH_SUFFIX, password);
+    // onAuthStateChanged will redirect — get profile from localStorage/Firestore
+    const stored = localStorage.getItem('zone5r_users');
+    const profiles = stored ? JSON.parse(stored) : {};
+    const profile = profiles[username] || { role: 'visiteur', name: username, poste: '' };
+    _saveSession(username, profile);
     _loginAttempts = 0;
-    const user = { username, ...users[username] };
-    localStorage.setItem('zone5r_session',   JSON.stringify(user));
-    localStorage.setItem('zone5r_login_toast', user.name.split(' ')[0]);
-    try {
-      const log = JSON.parse(localStorage.getItem('zone5r_auditlog') || '[]');
-      log.unshift({ id: 'A' + Date.now(), ts: new Date().toISOString(),
-        username: user.username, name: user.name, role: user.role,
-        action: 'LOGIN', detail: 'Connexion depuis ' + (navigator.platform || 'inconnu') });
-      localStorage.setItem('zone5r_auditlog', JSON.stringify(log.slice(0, 1000)));
-    } catch(e) {}
     window.location.replace('Zone-5R.html');
-  } else {
-    _loginAttempts++;
-    document.getElementById('login-password').value = '';
-    if (_loginAttempts >= 10) {
-      showError('Trop de tentatives. Veuillez contacter l\'administrateur.');
-      _lockLogin(60);
-    } else {
-      const delay = Math.min(_loginAttempts * 3, 15);
-      showError('Identifiant ou mot de passe incorrect.' + (_loginAttempts >= 3 ? ` (${_loginAttempts} tentatives)` : ''));
-      if (_loginAttempts >= 3) _lockLogin(delay);
+    return;
+  } catch(fbErr) {
+    const isCredentialError = ['auth/wrong-password', 'auth/user-not-found',
+      'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(fbErr.code);
+    if (!isCredentialError) {
+      setLoading(false);
+      showError('Erreur de connexion. Veuillez réessayer.');
+      return;
     }
   }
-}
 
-// Init Firebase auth silencieusement
-firebase.auth().signInAnonymously().catch(() => {});
+  // 2. Firestore migration fallback (for accounts not yet in Firebase Auth)
+  const profile = await _tryFirestoreFallback(username, password);
+  if (profile) {
+    const migrated = await _migrateToFirebase(username, password);
+    if (migrated) {
+      try {
+        await firebase.auth().signInWithEmailAndPassword(username + _AUTH_SUFFIX, password);
+      } catch(e) {}
+    }
+    _saveSession(username, profile);
+    _loginAttempts = 0;
+    setLoading(false);
+    window.location.replace('Zone-5R.html');
+    return;
+  }
+
+  // 3. Invalid credentials
+  setLoading(false);
+  document.getElementById('login-password').value = '';
+  _loginAttempts++;
+  if (_loginAttempts >= 10) {
+    showError('Trop de tentatives. Veuillez contacter l\'administrateur.');
+    _lockLogin(60);
+  } else {
+    const delay = Math.min(_loginAttempts * 3, 15);
+    showError('Identifiant ou mot de passe incorrect.' +
+      (_loginAttempts >= 3 ? ` (${_loginAttempts} tentatives)` : ''));
+    if (_loginAttempts >= 3) _lockLogin(delay);
+  }
+}
 </script>
 </body>
 </html>

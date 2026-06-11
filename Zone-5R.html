@@ -1662,15 +1662,7 @@
       Compte : <strong id="pwd-target-name"></strong>
     </div>
     <input type="hidden" id="pwd-target-username">
-    <div class="form-group">
-      <label>Mot de passe actuel</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="password" id="current-pwd-display" readonly
-               style="flex:1;background:var(--gray-l);cursor:default;color:var(--muted)">
-        <button type="button" class="btn" style="font-size:13px;padding:6px 12px;flex-shrink:0"
-                onclick="togglePwdVisibility('current-pwd-display', this)"><i class="fa-solid fa-eye"></i></button>
-      </div>
-    </div>
+    <input type="hidden" id="current-pwd-display">
     <div class="form-group">
       <label>Nouveau mot de passe</label>
       <div style="display:flex;gap:8px;align-items:center">
@@ -2053,6 +2045,36 @@ const _db  = firebase.firestore();
 const _COL = 'zone5r';
 let   _appReady = false;
 
+// ── Firebase Auth helpers ─────────────────────────────────────
+const _AUTH_SUFFIX = '@zone5r.app';
+const _FB_API_KEY  = 'AIzaSyAf4rYCVwRISriNK57kq6PxUCLAffxbRYo';
+
+// Crée un compte Firebase Auth via REST sans toucher la session courante
+async function _createFbAccount(username, password) {
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${_FB_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: username + _AUTH_SUFFIX, password, returnSecureToken: false }) }
+    );
+    const d = await r.json();
+    return !d.error || d.error.message === 'EMAIL_EXISTS';
+  } catch(e) { return false; }
+}
+
+// Supprime un compte Firebase Auth via REST (libère l'email pour re-migration)
+async function _deleteFbAccount(username) {
+  // Nécessite l'idToken de l'utilisateur cible — impossible depuis le client
+  // On stocke le mot de passe dans Firestore pour forcer la re-migration à la prochaine connexion
+  // (la suppression directe n'est faisable que via Admin SDK côté serveur)
+}
+
+// Génère un mot de passe temporaire aléatoire (12 caractères, lisible)
+function _genTempPwd() {
+  const c = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  return Array.from({ length: 12 }, () => c[Math.floor(Math.random() * c.length)]).join('');
+}
+
 // File de retry pour les écritures Firestore échouées
 const _pendingSync = new Map(); // key → data
 let   _lastSyncError = '';
@@ -2247,8 +2269,11 @@ async function initFirebase() {
   });
   _db.collection(_COL).doc('users').onSnapshot(snap => {
     if (!snap.exists) return;
-    const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_USERS)), snap.data().data);
-    localStorage.setItem('zone5r_users', JSON.stringify(merged));
+    // Stocker les profils depuis Firestore — aucun mot de passe ne doit figurer ici
+    const profiles = snap.data().data || {};
+    // Purger les champs password qui auraient pu être écrits par l'ancienne version
+    Object.values(profiles).forEach(u => { delete u.password; });
+    localStorage.setItem('zone5r_users', JSON.stringify(profiles));
     if (!_appReady) return;
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderMembersTable();
   });
@@ -2281,27 +2306,28 @@ async function initFirebase() {
 // ============================================================
 //  DONNÉES UTILISATEURS (stockées dans localStorage)
 // ============================================================
-// Comptes permanents (toujours présents, non supprimables)
+// Comptes permanents — profils uniquement, aucun mot de passe dans le code
 const DEFAULT_USERS = {
-  'aliou.sagna':   { password: 'Zone5R!2025', role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
-  'test.admin':    { password: 'TestAdmin25', role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
-  'test.visiteur': { password: 'TestVisit25', role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
+  'aliou.sagna':   { role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'test.admin':    { role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
+  'test.visiteur': { role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
 };
 
-// Membres du bureau — définition de référence (comptes créés à la demande)
+// Membres du bureau — profils uniquement, aucun mot de passe dans le code
+// Les comptes Firebase Auth sont créés via _createFbAccount() avec un MDP temporaire généré
 const BUREAU_MEMBERS = [
-  { username: 'djiby.diatta',    defaultPwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
-  { username: 'boubacar.camara', defaultPwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
-  { username: 'papis.sagna',     defaultPwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
-  { username: 'habib.sane',      defaultPwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',    poste: 'Trésorier Général'          },
-  { username: 'agnile.dieng',    defaultPwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint'          },
-  { username: 'ibrahima.dieme',  defaultPwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',           poste: 'Pdt Commission Finances'    },
-  { username: 'sidiky.doumbia',  defaultPwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports'      },
-  { username: 'fode.goudiaby',   defaultPwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',           poste: 'Commission Juridique'       },
-  { username: 'cheikh.diatta',   defaultPwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
-  { username: 'aicha.mbaye',     defaultPwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
-  { username: 'idrissa.diallo',  defaultPwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
-  { username: 'nouha.coly',      defaultPwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',               poste: 'Secrétaire Administratif'   },
+  { username: 'djiby.diatta',    role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
+  { username: 'boubacar.camara', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
+  { username: 'papis.sagna',     role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
+  { username: 'habib.sane',      role: 'tresorier',     name: 'El Habib Pierre SANÉ',    poste: 'Trésorier Général'          },
+  { username: 'agnile.dieng',    role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint'          },
+  { username: 'ibrahima.dieme',  role: 'finances',      name: 'Ibrahima DIEME',           poste: 'Pdt Commission Finances'    },
+  { username: 'sidiky.doumbia',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports'      },
+  { username: 'fode.goudiaby',   role: 'juridique',     name: 'Fodé GOUDIABY',           poste: 'Commission Juridique'       },
+  { username: 'cheikh.diatta',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
+  { username: 'aicha.mbaye',     role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
+  { username: 'idrissa.diallo',  role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
+  { username: 'nouha.coly',      role: 'secretaire',    name: 'Nouha COLY',               poste: 'Secrétaire Administratif'   },
 ];
 
 const ROLE_CONFIG = {
@@ -2353,6 +2379,7 @@ function doLogout() {
   logAction('LOGOUT', { detail: '' });
   localStorage.removeItem('zone5r_session');
   sessionStorage.removeItem('z5r_visitor');
+  firebase.auth().signOut().catch(() => {});
   window.location.replace('login.html');
 }
 
@@ -3299,38 +3326,34 @@ function createBureauAccount(index) {
   const m = BUREAU_MEMBERS[index];
   const users = getUsers();
   if (users[m.username]) { showToast('Ce compte existe déjà.'); return; }
-  users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+  const tmpPwd = _genTempPwd();
+  users[m.username] = { role: m.role, name: m.name, poste: m.poste };
   saveUsers(users);
-  renderMembersTable();
-  showToast('' + m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP : ' + m.defaultPwd);
+  _createFbAccount(m.username, tmpPwd).then(() => {
+    renderMembersTable();
+    showToast(m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP provisoire : ' + tmpPwd);
+  });
 }
 
 function createAllBureauAccounts() {
   const users = getUsers();
-  let created = 0;
-  BUREAU_MEMBERS.forEach(m => {
-    if (!users[m.username]) {
-      users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
-      created++;
-    }
-  });
-  if (created === 0) { showToast('Tous les comptes bureau sont déjà actifs.'); return; }
+  const toCreate = BUREAU_MEMBERS.filter(m => !users[m.username]);
+  if (toCreate.length === 0) { showToast('Tous les comptes bureau sont déjà actifs.'); return; }
+  toCreate.forEach(m => { users[m.username] = { role: m.role, name: m.name, poste: m.poste }; });
   saveUsers(users);
-  renderMembersTable();
-  showToast('' + created + ' compte(s) activé(s) et synchronisés sur Firebase.');
+  Promise.all(toCreate.map(m => _createFbAccount(m.username, _genTempPwd()))).then(() => {
+    renderMembersTable();
+    showToast(toCreate.length + ' compte(s) activé(s) sur Firebase.');
+  });
 }
 
 function openChangePasswordModal(username, name) {
-  const users = getUsers();
-  document.getElementById('pwd-target-username').value        = username;
-  document.getElementById('pwd-target-name').textContent      = name;
-  document.getElementById('current-pwd-display').value        = users[username]?.password || '';
-  document.getElementById('current-pwd-display').type         = 'password';
-  document.getElementById('new-pwd').value                    = '';
-  document.getElementById('new-pwd').type                     = 'password';
-  document.getElementById('confirm-pwd').value                = '';
+  document.getElementById('pwd-target-username').value = username;
+  document.getElementById('pwd-target-name').textContent = name;
+  document.getElementById('new-pwd').value = '';
+  document.getElementById('new-pwd').type  = 'password';
+  document.getElementById('confirm-pwd').value = '';
   document.getElementById('pwd-error').classList.remove('show');
-  // Remettre les icônes des boutons toggle
   document.querySelectorAll('#modal-change-pwd .btn[onclick*="togglePwdVisibility"]')
     .forEach(b => b.innerHTML = '<i class="fa-solid fa-eye"></i>');
   openModal('modal-change-pwd');
@@ -3365,13 +3388,24 @@ function saveNewPassword() {
   }
 
   const users = getUsers();
-  if (users[username]) {
+  if (!users[username]) return;
+
+  const isSelf = currentUser && currentUser.username === username;
+
+  if (isSelf && firebase.auth().currentUser) {
+    firebase.auth().currentUser.updatePassword(newPwd).catch(() => {});
+  }
+
+  // For admin changing another user: store new pwd temporarily so lazy migration
+  // picks it up on their next login, then remove it from Firestore on success.
+  if (!isSelf) {
     users[username].password = newPwd;
     saveUsers(users);
-    logAction('CHANGE_PASSWORD', { detail: 'Compte : ' + username + ' (' + users[username].name + ')' });
-    closeModal('modal-change-pwd');
-    showToast('Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
   }
+
+  logAction('CHANGE_PASSWORD', { detail: 'Compte : ' + username + ' (' + users[username].name + ')' });
+  closeModal('modal-change-pwd');
+  showToast('Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
 }
 
 function openCreateAccountModal() {
@@ -3406,12 +3440,17 @@ function createAccount() {
   }
   errEl.classList.remove('show');
 
-  users[username] = { password: pwd, role, name, poste };
+  users[username] = { role, name, poste };
   saveUsers(users);
+
+  _createFbAccount(username, pwd).then(ok => {
+    if (!ok) showToast('Compte ' + username + ' créé (Firebase Auth à synchroniser).');
+    else showToast('Compte ' + username + ' créé avec succès.');
+  });
+
   logAction('CREATE_ACCOUNT', { detail: username + ' · ' + name + ' · ' + role });
   closeModal('modal-create-account');
   renderMembersTable();
-  showToast('Compte ' + username + ' créé avec succès.');
 }
 
 // ============================================================
@@ -5767,14 +5806,22 @@ function _liveRenderEvents(match) {
 // ============================================================
 function _bootApp() {
   migrateSaisonLegacy();
-  // Initialiser tous les comptes (DEFAULT_USERS + bureau) s'ils n'existent pas encore
+  // Assurer que les profils bureau sont présents (sans mot de passe — géré par Firebase Auth)
   const users = getUsers();
+  let dirty = false;
   BUREAU_MEMBERS.forEach(m => {
     if (!users[m.username]) {
-      users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+      users[m.username] = { role: m.role, name: m.name, poste: m.poste };
+      dirty = true;
     }
+    // Purger les mots de passe résiduels de l'ancienne version
+    if (users[m.username]?.password) { delete users[m.username].password; dirty = true; }
   });
-  saveUsers(users);
+  Object.values(DEFAULT_USERS).forEach((d, i) => {
+    const u = Object.keys(DEFAULT_USERS)[i];
+    if (users[u]?.password) { delete users[u].password; dirty = true; }
+  });
+  if (dirty) saveUsers(users);
   getPlayers();
   getStades();
   initMatchesData();
@@ -5809,6 +5856,16 @@ function _bootApp() {
 }
 
 updateUI(); // session déjà en localStorage — affiche immédiatement la bonne vue sans attendre Firebase
+
+// ── Vérification Firebase Auth — invalide une session localStorage périmée
+firebase.auth().onAuthStateChanged(fbUser => {
+  // Si Firebase Auth dit "non connecté" mais qu'il y a une session membre en localStorage → nettoyer
+  if (!fbUser && currentUser && currentUser.role !== 'visiteur') {
+    currentUser = null;
+    localStorage.removeItem('zone5r_session');
+    if (_appReady) updateUI();
+  }
+});
 
 initFirebase()
   .then(_bootApp)
