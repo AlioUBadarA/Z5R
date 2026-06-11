@@ -295,11 +295,16 @@
     .score-box { width: 30px; height: 30px; font-size: 15px; }
     .visitor-hero { padding: 18px; }
   }
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:3px}
+  .dot-y{background:#f59e0b} .dot-r{background:#ef4444} .dot-g{background:#22c55e}
+  .rank-medal{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;color:#fff}
+  .rank-medal.gold{background:#f59e0b} .rank-medal.silver{background:#9ca3af} .rank-medal.bronze{background:#b45309}
 </style>
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
@@ -314,25 +319,25 @@
   </div>
   <span class="role-badge visitor" id="user-role-badge">Visiteur</span>
   <span id="sync-indicator" title="État de la synchronisation Firebase" style="display:none;font-size:11px;padding:3px 9px;border-radius:12px;background:rgba(255,255,255,0.12);color:#fff;white-space:nowrap"></span>
-  <button class="header-auth-btn" id="header-auth-btn" onclick="toggleAuth()">🔐 Connexion</button>
+  <button class="header-auth-btn" id="header-auth-btn" onclick="toggleAuth()"><i class="fa-solid fa-lock"></i> Connexion</button>
 </header>
 
 <!-- ==============================
      NAVIGATION
      ============================== -->
 <nav id="main-nav">
-  <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">🏠 Accueil</div>
-  <div class="nav-item" data-section="competition" onclick="showSection('competition')">⚽ Compétition</div>
-  <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')">💰 Trésorerie</div>
-  <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')">⚖️ Juridique</div>
-  <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')">🏛️ Administration</div>
+  <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> Accueil</div>
+  <div class="nav-item" data-section="competition" onclick="showSection('competition')"><i class="fa-solid fa-futbol"></i> Compétition</div>
+  <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')"><i class="fa-solid fa-coins"></i> Trésorerie</div>
+  <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')"><i class="fa-solid fa-scale-balanced"></i> Juridique</div>
+  <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')"><i class="fa-solid fa-building-columns"></i> Administration</div>
 </nav>
 
 <!-- Barre sélecteur de saison -->
 <div id="season-bar" style="display:none;background:var(--card);border-bottom:1px solid var(--border);
   padding:7px 16px;align-items:center;gap:10px;flex-wrap:wrap;
   position:sticky;top:112px;z-index:98">
-  <span style="font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap">📅 Saison :</span>
+  <span style="font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap"><i class="fa-solid fa-calendar"></i> Saison :</span>
   <div id="season-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
 </div>
 
@@ -345,12 +350,12 @@
   <div id="visitor-view">
 
     <div class="visitor-hero">
-      <h2>Navetanes Bignona 2025 ⚽</h2>
+      <h2>Navetanes Bignona 2025</h2>
       <p>Zone 5R ODGAM · Saison en cours · Phase de poules · Suivez toute l'actualité en temps réel</p>
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Rechercher une équipe, un match, une date..."
                oninput="searchMatches(this.value)" onkeydown="if(event.key==='Enter') searchMatches(this.value)">
-        <button onclick="searchMatches(document.getElementById('search-input').value)">🔍</button>
+        <button onclick="searchMatches(document.getElementById('search-input').value)"><i class="fa-solid fa-magnifying-glass"></i></button>
       </div>
     </div>
 
@@ -358,7 +363,7 @@
     <div id="search-results" class="card mb" style="display:none">
       <div class="card-header">
         <span class="card-title" id="search-results-title">Résultats</span>
-        <button class="btn" onclick="clearSearch()">✕ Effacer</button>
+        <button class="btn" onclick="clearSearch()"><i class="fa-solid fa-xmark"></i> Effacer</button>
       </div>
       <div id="search-results-body" class="gap" style="padding:12px;gap:6px"></div>
     </div>
@@ -373,7 +378,7 @@
     <div class="card mb">
       <div class="card-header">
         <span class="card-title">Matchs · À venir & Récents</span>
-        <button class="btn" onclick="showSection('competition')">Voir tout ⚽</button>
+        <button class="btn" onclick="showSection('competition')">Voir tout</button>
       </div>
       <div class="gap" style="padding:8px;gap:6px">
         <div class="match-card">
@@ -423,15 +428,15 @@
     <div class="card mb">
       <div class="card-header">
         <span class="card-title">Classement · Poule A</span>
-        <button class="btn" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">Voir tout 🏆</button>
+        <button class="btn" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">Voir tout</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>Pts</th></tr></thead>
           <tbody>
-            <tr class="rank-1"><td>🥇</td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td><strong>7</strong></td></tr>
-            <tr class="rank-2"><td>🥈</td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td><strong>5</strong></td></tr>
-            <tr class="rank-3"><td>🥉</td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td><strong>3</strong></td></tr>
+            <tr class="rank-1"><td><span class="rank-medal gold">1</span></td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td><strong>7</strong></td></tr>
+            <tr class="rank-2"><td><span class="rank-medal silver">2</span></td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td><strong>5</strong></td></tr>
+            <tr class="rank-3"><td><span class="rank-medal bronze">3</span></td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td><strong>3</strong></td></tr>
             <tr><td>4</td><td>ASC Kafesse</td><td>3</td><td>0</td><td>1</td><td>2</td><td><strong>1</strong></td></tr>
             <tr><td>5</td><td>ASC Chicago</td><td>2</td><td>0</td><td>0</td><td>2</td><td><strong>0</strong></td></tr>
           </tbody>
@@ -469,12 +474,12 @@
     <!-- Fiches de recettes publiées -->
     <div class="card mb">
       <div class="card-header">
-        <span class="card-title">📄 Fiches de recettes publiées</span>
+        <span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span>
         <span class="badge green">Officielles</span>
       </div>
       <div>
         <div class="fiche-card">
-          <div class="fiche-icon">📋</div>
+          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Billetterie · Journée du 29/08</div>
             <div class="fiche-meta">Saison 2024 · Publié le 01/09/2024</div>
@@ -482,7 +487,7 @@
           <div class="fiche-amount">55 600 FCFA</div>
         </div>
         <div class="fiche-card">
-          <div class="fiche-icon">📋</div>
+          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Billetterie · Journée du 15/09</div>
             <div class="fiche-meta">Saison 2024 · Publié le 18/09/2024</div>
@@ -490,7 +495,7 @@
           <div class="fiche-amount">91 350 FCFA</div>
         </div>
         <div class="fiche-card">
-          <div class="fiche-icon">📋</div>
+          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Billetterie · Journée du 06/10</div>
             <div class="fiche-meta">Saison 2024 · Publié le 10/10/2024</div>
@@ -498,7 +503,7 @@
           <div class="fiche-amount">84 300 FCFA</div>
         </div>
         <div class="fiche-card">
-          <div class="fiche-icon">🏆</div>
+          <div class="fiche-icon"><i class="fa-solid fa-trophy"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Billetterie · Finale 28/12</div>
             <div class="fiche-meta">Saison 2024 · Publié le 02/01/2025</div>
@@ -506,7 +511,7 @@
           <div class="fiche-amount">495 250 FCFA</div>
         </div>
         <div class="fiche-card">
-          <div class="fiche-icon">🏛️</div>
+          <div class="fiche-icon"><i class="fa-solid fa-building-columns"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Subvention Mairie de Bignona</div>
             <div class="fiche-meta">Saison 2024 · Publié le 15/08/2024</div>
@@ -514,7 +519,7 @@
           <div class="fiche-amount">150 000 FCFA</div>
         </div>
         <div class="fiche-card">
-          <div class="fiche-icon">📊</div>
+          <div class="fiche-icon"><i class="fa-solid fa-chart-bar"></i></div>
           <div class="fiche-info">
             <div class="fiche-title">Bilan total recettes 2024</div>
             <div class="fiche-meta">Rapport annuel certifié · Publié le 15/01/2025</div>
@@ -527,7 +532,7 @@
     <!-- CONNEXION — espace membres -->
     <div id="login-section" class="mb">
       <div class="login-card">
-        <h3>🔐 Espace membres</h3>
+        <h3><i class="fa-solid fa-lock"></i> Espace membres</h3>
         <p class="login-sub">Connectez-vous pour accéder aux fonctions réservées au bureau Zone 5R.</p>
         <div class="error-msg" id="login-error">Identifiant ou mot de passe incorrect.</div>
         <div class="form-group">
@@ -564,7 +569,7 @@
       <div class="stat red"><div class="stat-label">Cartons rouges</div><div class="stat-value">3</div><div class="stat-sub">suspensions actives</div></div>
     </div>
 
-    <div class="alert warning">⚠️ <strong>2 réclamations</strong> en attente de traitement par la Commission Juridique</div>
+    <div class="alert warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>2 réclamations</strong> en attente de traitement par la Commission Juridique</div>
 
     <div class="card mb">
       <div class="card-header">
@@ -643,34 +648,34 @@
      ============================ -->
 <div id="competition" class="section">
   <div class="mb" style="padding-bottom:4px">
-    <h2 style="font-size:18px;font-weight:700">⚽ Compétition</h2>
+    <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-futbol"></i> Compétition</h2>
     <p style="font-size:12px;color:var(--muted);margin-top:2px">Navetanes 2025 · Zone 5R ODGAM Bignona</p>
   </div>
 
   <!-- Sélecteur Cadets / Seniors -->
   <div style="display:flex;gap:8px;margin-bottom:14px">
     <button id="btn-comp-seniors" class="comp-btn comp-active" onclick="switchCompetition('seniors')">
-      <span style="font-size:15px;font-weight:700">⚽ Seniors</span>
+      <span style="font-size:15px;font-weight:700"><i class="fa-solid fa-futbol"></i> Seniors</span>
       <span style="font-size:11px;opacity:.85">15h – 19h</span>
     </button>
     <button id="btn-comp-cadets" class="comp-btn" onclick="switchCompetition('cadets')">
-      <span style="font-size:15px;font-weight:700">🌟 Cadets</span>
+      <span style="font-size:15px;font-weight:700"><i class="fa-solid fa-star"></i> Cadets</span>
       <span style="font-size:11px;opacity:.85">8h – 13h</span>
     </button>
   </div>
 
   <!-- SUBNAV Compétition -->
   <div class="subnav">
-    <div class="subnav-item active" id="subnav-comp-planning" onclick="showSubSection('competition','comp-planning',this)">📅 Planning & Matchs</div>
-    <div class="subnav-item" id="subnav-comp-classement" onclick="showSubSection('competition','comp-classement',this);renderClassementSection()">🏆 Classements</div>
-    <div class="subnav-item" id="subnav-comp-joueurs" onclick="showSubSection('competition','comp-joueurs',this)" style="display:none">👥 Joueurs & Licences</div>
-    <div class="subnav-item" id="subnav-comp-stats" onclick="showSubSection('competition','comp-stats',this)" style="display:none">📊 Vue d'ensemble</div>
+    <div class="subnav-item active" id="subnav-comp-planning" onclick="showSubSection('competition','comp-planning',this)"><i class="fa-solid fa-calendar"></i> Planning & Matchs</div>
+    <div class="subnav-item" id="subnav-comp-classement" onclick="showSubSection('competition','comp-classement',this);renderClassementSection()"><i class="fa-solid fa-trophy"></i> Classements</div>
+    <div class="subnav-item" id="subnav-comp-joueurs" onclick="showSubSection('competition','comp-joueurs',this)" style="display:none"><i class="fa-solid fa-users"></i> Joueurs & Licences</div>
+    <div class="subnav-item" id="subnav-comp-stats" onclick="showSubSection('competition','comp-stats',this)" style="display:none"><i class="fa-solid fa-chart-bar"></i> Vue d'ensemble</div>
   </div>
 
   <!-- SUB : Planning & Matchs -->
   <div id="comp-planning" class="subsection active">
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px">
-    <button class="btn primary member-action" id="btn-live-new" onclick="openLiveMatchNew()" style="display:none">🔴 Nouveau match live</button>
+    <button class="btn primary member-action" id="btn-live-new" onclick="openLiveMatchNew()" style="display:none"><i class="fa-solid fa-circle-dot"></i> Nouveau match live</button>
     <button class="btn member-action" onclick="openModal('modal-poule')">+ Créer poule</button>
   </div>
 
@@ -752,7 +757,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="card" style="cursor:pointer" onclick="showSection('competition');showSubSection('competition','comp-planning',document.getElementById('subnav-comp-planning'))">
         <div style="padding:20px;text-align:center">
-          <div style="font-size:32px;margin-bottom:8px">⚽</div>
+          <div style="font-size:32px;margin-bottom:8px"><i class="fa-solid fa-futbol"></i></div>
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">Planning & Matchs</div>
           <div style="font-size:12px;color:var(--muted)">Calendrier, résultats, scores</div>
           <div style="margin-top:12px"><span class="badge green">Voir →</span></div>
@@ -760,7 +765,7 @@
       </div>
       <div class="card" style="cursor:pointer" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">
         <div style="padding:20px;text-align:center">
-          <div style="font-size:32px;margin-bottom:8px">🏆</div>
+          <div style="font-size:32px;margin-bottom:8px"><i class="fa-solid fa-trophy"></i></div>
           <div style="font-weight:700;font-size:14px;margin-bottom:4px">Classements</div>
           <div style="font-size:12px;color:var(--muted)">Poules, points, buts</div>
           <div style="margin-top:12px"><span class="badge amber">Voir →</span></div>
@@ -806,16 +811,16 @@
   </div>
 
   <div class="mb" style="padding-bottom:2px">
-    <h2 style="font-size:18px;font-weight:700">💰 Trésorerie</h2>
+    <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-coins"></i> Trésorerie</h2>
     <p style="font-size:12px;color:var(--muted);margin-top:2px">Fiches journées · Licences · Dépenses · Bilan financier</p>
   </div>
 
   <div class="tabs" style="flex-wrap:wrap;gap:2px">
-    <div class="tab active" onclick="switchTab(this,'tx-journees','tx-tabs')">📋 Journées</div>
-    <div class="tab" onclick="switchTab(this,'tx-finale','tx-tabs')">🏆 Finale</div>
-    <div class="tab" onclick="switchTab(this,'tx-licences','tx-tabs')">🎟️ Licences/Bordereaux</div>
-    <div class="tab" onclick="switchTab(this,'tx-depenses','tx-tabs')">💸 Dépenses diverses</div>
-    <div class="tab" onclick="switchTab(this,'tx-rapport','tx-tabs');renderBilan()">📊 Bilan</div>
+    <div class="tab active" onclick="switchTab(this,'tx-journees','tx-tabs')"><i class="fa-solid fa-clipboard-list"></i> Journées</div>
+    <div class="tab" onclick="switchTab(this,'tx-finale','tx-tabs')"><i class="fa-solid fa-trophy"></i> Finale</div>
+    <div class="tab" onclick="switchTab(this,'tx-licences','tx-tabs')"><i class="fa-solid fa-ticket"></i> Licences/Bordereaux</div>
+    <div class="tab" onclick="switchTab(this,'tx-depenses','tx-tabs')"><i class="fa-solid fa-money-bill-wave"></i> Dépenses diverses</div>
+    <div class="tab" onclick="switchTab(this,'tx-rapport','tx-tabs');renderBilan()"><i class="fa-solid fa-chart-bar"></i> Bilan</div>
   </div>
 
   <div id="tx-tabs">
@@ -835,7 +840,7 @@
     <div id="tx-finale" style="display:none">
       <div class="flex-between mb">
         <div>
-          <div style="font-size:14px;font-weight:700">🏆 Gestion de la Finale</div>
+          <div style="font-size:14px;font-weight:700"><i class="fa-solid fa-trophy"></i> Gestion de la Finale</div>
           <div style="font-size:12px;color:var(--muted)">Recettes, dépenses, dons & soutiens · inclus dans le bilan général</div>
         </div>
         <button class="btn primary member-action" onclick="openFinaleModal()">+ Déclarer finale</button>
@@ -849,7 +854,7 @@
     <div id="tx-licences" style="display:none">
       <div class="flex-between mb">
         <div>
-          <div style="font-size:14px;font-weight:700">🎟️ Licences & Bordereaux</div>
+          <div style="font-size:14px;font-weight:700"><i class="fa-solid fa-ticket"></i> Licences & Bordereaux</div>
           <div style="font-size:12px;color:var(--muted)">Ventes par ASC · recettes intégrées au bilan</div>
         </div>
         <button class="btn primary member-action" onclick="initLicenceModal();openModal('modal-licence')">+ Enregistrer vente</button>
@@ -876,7 +881,7 @@
     <div id="tx-depenses" style="display:none">
       <div class="flex-between mb">
         <div>
-          <div style="font-size:14px;font-weight:700">💸 Dépenses hors journée</div>
+          <div style="font-size:14px;font-weight:700"><i class="fa-solid fa-money-bill-wave"></i> Dépenses hors journée</div>
           <div style="font-size:12px;color:var(--muted)">Achats, rémunérations, cotisations, dons aux ASC…</div>
         </div>
         <button class="btn danger member-action" onclick="openDepenseModal()">+ Demander dépense</button>
@@ -885,11 +890,11 @@
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
         <button id="df-all"        class="btn primary" onclick="setDepFilter('all')">Toutes</button>
         <button id="df-en_attente" class="btn"         onclick="setDepFilter('en_attente')">⏳ En attente</button>
-        <button id="df-validee"    class="btn"         onclick="setDepFilter('validee')">✅ Validées</button>
-        <button id="df-decaissee"  class="btn"         onclick="setDepFilter('decaissee')">💰 Décaissées</button>
-        <button id="df-recue"      class="btn"         onclick="setDepFilter('recue')">🤝 Reçues</button>
-        <button id="df-rejetee"    class="btn"         onclick="setDepFilter('rejetee')">❌ Rejetées</button>
-        <button id="df-mine"       class="btn"         onclick="setDepFilter('mine')">📋 Mes demandes</button>
+        <button id="df-validee"    class="btn"         onclick="setDepFilter('validee')"><i class="fa-solid fa-check"></i> Validées</button>
+        <button id="df-decaissee"  class="btn"         onclick="setDepFilter('decaissee')"><i class="fa-solid fa-coins"></i> Décaissées</button>
+        <button id="df-recue"      class="btn"         onclick="setDepFilter('recue')"><i class="fa-solid fa-handshake"></i> Reçues</button>
+        <button id="df-rejetee"    class="btn"         onclick="setDepFilter('rejetee')"><i class="fa-solid fa-xmark"></i> Rejetées</button>
+        <button id="df-mine"       class="btn"         onclick="setDepFilter('mine')"><i class="fa-solid fa-clipboard-list"></i> Mes demandes</button>
       </div>
       <div id="depenses-list">
         <div class="card" style="padding:32px;text-align:center;color:var(--muted)">Aucune dépense diverse enregistrée</div>
@@ -900,10 +905,10 @@
     <div id="tx-rapport" style="display:none">
       <div class="card mb">
         <div class="card-header">
-          <span class="card-title">📊 Bilan Général de la Saison</span>
+          <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Bilan Général de la Saison</span>
           <div style="display:flex;gap:6px">
-            <button class="btn" onclick="printBilan()">🖨️ Imprimer</button>
-            <button class="btn primary" onclick="openModal('modal-send-bilan')">📤 Envoyer aux ASC</button>
+            <button class="btn" onclick="printBilan()"><i class="fa-solid fa-print"></i> Imprimer</button>
+            <button class="btn primary" onclick="openModal('modal-send-bilan')"><i class="fa-solid fa-file-export"></i> Envoyer aux ASC</button>
           </div>
         </div>
         <div id="bilan-content" style="padding:16px">
@@ -921,14 +926,14 @@
      ============================ -->
 <div id="cartons" class="section">
   <div class="mb" style="padding-bottom:2px">
-    <h2 style="font-size:18px;font-weight:700">⚖️ Juridique</h2>
+    <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-scale-balanced"></i> Juridique</h2>
     <p style="font-size:12px;color:var(--muted);margin-top:2px">Discipline · Suspensions · Litiges & Réclamations</p>
   </div>
 
   <!-- SUBNAV Juridique -->
   <div class="subnav">
-    <div class="subnav-item active" onclick="showSubSection('cartons','jur-suspensions',this)">🟨 Suspensions</div>
-    <div class="subnav-item" id="subnav-jur-litiges" onclick="showSubSection('cartons','jur-litiges',this)">⚖️ Litiges & Réclamations</div>
+    <div class="subnav-item active" onclick="showSubSection('cartons','jur-suspensions',this)"><span class="dot dot-y"></span> Suspensions</div>
+    <div class="subnav-item" id="subnav-jur-litiges" onclick="showSubSection('cartons','jur-litiges',this)"><i class="fa-solid fa-scale-balanced"></i> Litiges & Réclamations</div>
   </div>
 
   <!-- SUB : Suspensions -->
@@ -937,7 +942,7 @@
       <span style="font-size:13px;color:var(--muted)">Joueurs actuellement suspendus</span>
       <button class="btn danger member-action" onclick="openCartonModal()">+ Carton</button>
     </div>
-    <div class="alert danger" id="suspensions-alert">🟥 Chargement…</div>
+    <div class="alert danger" id="suspensions-alert"><span class="dot dot-r"></span> Chargement…</div>
     <div class="card">
       <div class="card-header"><span class="card-title">Suspensions actives</span><span class="badge red" id="suspensions-count">0</span></div>
       <div class="table-wrap">
@@ -953,11 +958,11 @@
   <div id="jur-litiges" class="subsection">
     <div class="flex-between mb">
       <span style="font-size:13px;color:var(--muted)">Réclamations & délibérations officielles</span>
-      <button class="btn" id="btn-add-litige" style="display:none" onclick="initLitigeModal();openModal('modal-litige')">⚖️ + Litige</button>
+      <button class="btn" id="btn-add-litige" style="display:none" onclick="initLitigeModal();openModal('modal-litige')"><i class="fa-solid fa-scale-balanced"></i> + Litige</button>
     </div>
     <div class="card" id="litiges-card">
       <div class="card-header">
-        <span class="card-title">⚖️ Litiges & Réclamations</span>
+        <span class="card-title"><i class="fa-solid fa-scale-balanced"></i> Litiges & Réclamations</span>
         <span class="badge amber" id="litiges-count-badge">0 en cours</span>
       </div>
       <div class="alert info" style="margin:12px 16px;margin-bottom:0;font-size:12px">
@@ -978,17 +983,17 @@
      ============================ -->
 <div id="bureau" class="section">
   <div class="mb" style="padding-bottom:2px">
-    <h2 style="font-size:18px;font-weight:700">🏛️ Administration</h2>
+    <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-building-columns"></i> Administration</h2>
     <p style="font-size:12px;color:var(--muted);margin-top:2px">Bureau Zone 5R · ODGAM Bignona · Siège : Collège René COLY</p>
   </div>
 
   <!-- SUBNAV Administration -->
   <div class="subnav">
-    <div class="subnav-item active" id="subnav-adm-bureau" onclick="showSubSection('bureau','adm-bureau',this)">🏛️ Bureau & Membres</div>
-    <div class="subnav-item" id="subnav-adm-gestion" onclick="showSubSection('bureau','adm-gestion',this)" style="display:none">⚙️ Gestion</div>
-    <div class="subnav-item" id="subnav-adm-acces" onclick="showSubSection('bureau','adm-acces',this)" style="display:none">🔑 Accès membres</div>
-    <div class="subnav-item" id="subnav-adm-autorisations" onclick="showSubSection('bureau','adm-autorisations',this)" style="display:none">🔐 Autorisations</div>
-    <div class="subnav-item" id="subnav-adm-historique" onclick="showSubSection('bureau','adm-historique',this)" style="display:none">📋 Historique</div>
+    <div class="subnav-item active" id="subnav-adm-bureau" onclick="showSubSection('bureau','adm-bureau',this)"><i class="fa-solid fa-building-columns"></i> Bureau & Membres</div>
+    <div class="subnav-item" id="subnav-adm-gestion" onclick="showSubSection('bureau','adm-gestion',this)" style="display:none"><i class="fa-solid fa-gear"></i> Gestion</div>
+    <div class="subnav-item" id="subnav-adm-acces" onclick="showSubSection('bureau','adm-acces',this)" style="display:none"><i class="fa-solid fa-key"></i> Accès membres</div>
+    <div class="subnav-item" id="subnav-adm-autorisations" onclick="showSubSection('bureau','adm-autorisations',this)" style="display:none"><i class="fa-solid fa-lock"></i> Autorisations</div>
+    <div class="subnav-item" id="subnav-adm-historique" onclick="showSubSection('bureau','adm-historique',this)" style="display:none"><i class="fa-solid fa-clipboard-list"></i> Historique</div>
   </div>
 
   <!-- SUB : Bureau & Membres -->
@@ -1092,15 +1097,15 @@
     <!-- SUPERADMIN : Synchronisation Firebase -->
     <div id="sync-panel" class="card mb" style="display:none">
       <div class="card-header">
-        <span class="card-title">☁️ Synchronisation Firebase</span>
-        <span id="sync-panel-status" style="font-size:12px;color:var(--muted)">✅ Synchronisé</span>
+        <span class="card-title"><i class="fa-solid fa-cloud"></i> Synchronisation Firebase</span>
+        <span id="sync-panel-status" style="font-size:12px;color:var(--muted)"><i class="fa-solid fa-check"></i> Synchronisé</span>
       </div>
       <div class="card-body">
         <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
           Sync automatique toutes les <strong>secondes</strong>. Si un appareil ne voit pas les dernières données, utilisez le bouton ci-dessous pour forcer la synchronisation complète.
         </p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn primary" onclick="forceSyncAllToFirebase()">☁️ Forcer la synchronisation complète</button>
+          <button class="btn primary" onclick="forceSyncAllToFirebase()"><i class="fa-solid fa-cloud-arrow-up"></i> Forcer la synchronisation complète</button>
           <span id="sync-pending-count" style="font-size:12px;color:var(--muted)"></span>
         </div>
       </div>
@@ -1108,13 +1113,13 @@
     <!-- ADMIN/SUPERADMIN : Gestion de la saison -->
     <div id="saison-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">🗓️ Gestion de la saison</span>
+      <span class="card-title"><i class="fa-solid fa-calendar"></i> Gestion de la saison</span>
       <span class="badge amber" id="saison-statut-badge"></span>
     </div>
     <div class="card-body">
       <div id="saison-active-view" style="display:none">
         <div class="alert success" style="margin-bottom:16px">
-          ✅ <strong>Saison <span id="saison-nom-display"></span></strong> ·
+          <i class="fa-solid fa-check"></i> <strong>Saison <span id="saison-nom-display"></span></strong> ·
           Démarrage : <span id="saison-date-display"></span> ·
           <span id="saison-equipes-display"></span> équipes engagées
         </div>
@@ -1122,9 +1127,9 @@
         <!-- STEPPER -->
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
 
-          <!-- Étape 1 : Saison créée ✅ -->
+          <!-- Étape 1 : Saison créée -->
           <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--radius-sm);border-left:3px solid var(--green)">
-            <span style="font-size:20px">✅</span>
+            <span style="font-size:20px"><i class="fa-solid fa-check"></i></span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:600;color:var(--green-d)">Étape 1 · Saison déclarée</div>
               <div style="font-size:11px;color:var(--muted)">Saison créée avec les équipes participantes</div>
@@ -1133,41 +1138,41 @@
 
           <!-- Étape 2 : Tirage au sort -->
           <div id="step-tirage" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray)">
-            <span style="font-size:20px" id="step-tirage-icon">🎲</span>
+            <span style="font-size:20px" id="step-tirage-icon"><i class="fa-solid fa-dice"></i></span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:600" id="step-tirage-title">Étape 2 · Tirage au sort</div>
               <div style="font-size:11px;color:var(--muted)" id="step-tirage-desc">Répartir les équipes dans les poules</div>
             </div>
-            <button class="btn" id="btn-tirage" onclick="openTirageModal();openModal('modal-tirage')" style="font-size:12px">🎲 Procéder</button>
+            <button class="btn" id="btn-tirage" onclick="openTirageModal();openModal('modal-tirage')" style="font-size:12px"><i class="fa-solid fa-dice"></i> Procéder</button>
           </div>
 
           <!-- Étape 3 : Programmer les matchs -->
           <div id="step-matchs" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
-            <span style="font-size:20px" id="step-matchs-icon">📅</span>
+            <span style="font-size:20px" id="step-matchs-icon"><i class="fa-solid fa-calendar"></i></span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:600" id="step-matchs-title">Étape 3 · Programmer les matchs</div>
               <div style="font-size:11px;color:var(--muted)" id="step-matchs-desc">Générer le calendrier de la phase de poules</div>
             </div>
-            <button class="btn" id="btn-matchs" onclick="programmerMatchs()" style="font-size:12px" disabled>📅 Générer</button>
+            <button class="btn" id="btn-matchs" onclick="programmerMatchs()" style="font-size:12px" disabled><i class="fa-solid fa-calendar"></i> Générer</button>
           </div>
 
           <!-- Étape 4 : Déclarer ouverte -->
           <div id="step-ouverture" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
-            <span style="font-size:20px" id="step-ouverture-icon">🚀</span>
+            <span style="font-size:20px" id="step-ouverture-icon"><i class="fa-solid fa-rocket"></i></span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:600" id="step-ouverture-title">Étape 4 · Déclarer la compétition ouverte</div>
               <div style="font-size:11px;color:var(--muted)" id="step-ouverture-desc">Fixer la date officielle d'ouverture</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center">
               <input type="date" id="ouverture-date-input" style="width:140px;font-size:12px;padding:6px 8px" min="">
-              <button class="btn primary" id="btn-ouverture" onclick="declarerOuverte()" style="font-size:12px" disabled>🚀 Ouvrir</button>
+              <button class="btn primary" id="btn-ouverture" onclick="declarerOuverte()" style="font-size:12px" disabled><i class="fa-solid fa-rocket"></i> Ouvrir</button>
             </div>
           </div>
         </div>
 
         <div class="flex-between">
           <div style="font-size:11px;color:var(--muted)">Déclarée par <strong id="saison-declared-by"></strong></div>
-          <button class="btn danger" onclick="cloturerSaison()">🔒 Clôturer la saison</button>
+          <button class="btn danger" onclick="cloturerSaison()"><i class="fa-solid fa-lock"></i> Clôturer la saison</button>
         </div>
       </div>
       <div id="saison-form-view">
@@ -1182,7 +1187,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>💰 Solde de départ (report saison précédente · FCFA)</label>
+          <label><i class="fa-solid fa-coins"></i> Solde de départ (report saison précédente · FCFA)</label>
           <input type="number" id="saison-solde-depart" placeholder="Ex : 368065" min="0" value="0">
           <p style="font-size:11px;color:var(--muted);margin-top:3px">Ce montant est ajouté au bilan comme point de départ de la caisse</p>
         </div>
@@ -1194,7 +1199,7 @@
           <p style="font-size:11px;color:var(--muted);margin-top:4px">Maintenir Ctrl (PC) ou ⌘ (Mac) pour sélectionner plusieurs équipes</p>
         </div>
         <div style="display:flex;justify-content:flex-end">
-          <button class="btn primary" onclick="declarerSaison()">🚀 Déclarer la saison</button>
+          <button class="btn primary" onclick="declarerSaison()"><i class="fa-solid fa-rocket"></i> Déclarer la saison</button>
         </div>
       </div>
     </div>
@@ -1203,7 +1208,7 @@
   <!-- ADMIN/SUPERADMIN : Stades -->
   <div id="stades-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">🏟️ Stades & Terrains</span>
+      <span class="card-title"><i class="fa-solid fa-building"></i> Stades & Terrains</span>
       <button class="btn primary" style="font-size:12px" onclick="openModal('modal-add-stade')">+ Ajouter terrain</button>
     </div>
     <div id="stades-body">
@@ -1214,7 +1219,7 @@
   <!-- ADMIN/SUPERADMIN : Équipes & Représentants -->
   <div id="equipes-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">🏟️ Équipes & Représentants</span>
+      <span class="card-title"><i class="fa-solid fa-building"></i> Équipes & Représentants</span>
       <button class="btn primary" style="font-size:12px" onclick="openAddTeamModal()">+ Ajouter association</button>
     </div>
     <div id="equipes-reps-body">
@@ -1228,9 +1233,9 @@
   <!-- SUPERADMIN/ADMIN : Gestion des accès -->
   <div id="admin-access-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">🔑 Gestion des accès membres</span>
+      <span class="card-title"><i class="fa-solid fa-key"></i> Gestion des accès membres</span>
       <div style="display:flex;gap:8px">
-        <button class="btn" style="font-size:12px" onclick="createAllBureauAccounts()">🚀 Activer tous</button>
+        <button class="btn" style="font-size:12px" onclick="createAllBureauAccounts()"><i class="fa-solid fa-rocket"></i> Activer tous</button>
         <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
       </div>
     </div>
@@ -1250,8 +1255,8 @@
   <!-- SUPERADMIN : Gestion des autorisations -->
   <div id="permissions-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">🔐 Gestion des autorisations</span>
-      <span style="font-size:11px;color:var(--muted)">Cliquer sur ✅ / 🔒 pour modifier · <span style="color:var(--amber);font-weight:700">★</span> = override individuel</span>
+      <span class="card-title"><i class="fa-solid fa-lock"></i> Gestion des autorisations</span>
+      <span style="font-size:11px;color:var(--muted)">Cliquer sur les icônes pour modifier · <span style="color:var(--amber);font-weight:700">★</span> = override individuel</span>
     </div>
     <div id="permissions-body"><!-- Rempli par JS --></div>
   </div>
@@ -1262,12 +1267,12 @@
   <!-- SUPERADMIN : Historique des actions -->
   <div id="audit-panel" class="card mb" style="display:none">
     <div class="card-header">
-      <span class="card-title">📋 Historique des actions · 30 jours</span>
+      <span class="card-title"><i class="fa-solid fa-clipboard-list"></i> Historique des actions · 30 jours</span>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="date" id="audit-filter-date" style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg)"
           oninput="renderAuditPanel()" title="Filtrer par jour">
-        <button class="btn" style="font-size:12px" onclick="document.getElementById('audit-filter-date').value='';renderAuditPanel()">✕ Tout</button>
-        <button class="btn primary" style="font-size:12px" onclick="renderAuditPanel()">🔄 Actualiser</button>
+        <button class="btn" style="font-size:12px" onclick="document.getElementById('audit-filter-date').value='';renderAuditPanel()"><i class="fa-solid fa-xmark"></i> Effacer le filtreut</button>
+        <button class="btn primary" style="font-size:12px" onclick="renderAuditPanel()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
       </div>
     </div>
     <div id="audit-stats" style="display:flex;gap:12px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)"></div>
@@ -1285,8 +1290,8 @@
 <div id="modal-create-account" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <span class="modal-title">👤 Nouveau compte membre</span>
-      <button class="close-btn" onclick="closeModal('modal-create-account')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-user-plus"></i> Nouveau compte membre</span>
+      <button class="close-btn" onclick="closeModal('modal-create-account')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group">
       <label>Nom complet *</label>
@@ -1321,7 +1326,7 @@
     <div class="error-msg" id="create-error">Veuillez remplir tous les champs obligatoires.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-create-account')">Annuler</button>
-      <button class="btn primary" onclick="createAccount()">✅ Créer le compte</button>
+      <button class="btn primary" onclick="createAccount()"><i class="fa-solid fa-check"></i> Créer le compte</button>
     </div>
   </div>
 </div>
@@ -1331,8 +1336,8 @@
 <div id="modal-live-match" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:440px;width:100%">
     <div class="modal-header">
-      <span class="modal-title" id="live-modal-title">⚽ Match en direct</span>
-      <button class="close-btn" onclick="closeLiveMatch()">✕</button>
+      <span class="modal-title" id="live-modal-title"><i class="fa-solid fa-futbol"></i> Match en direct</span>
+      <button class="close-btn" onclick="closeLiveMatch()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="padding:16px;overflow-y:auto;max-height:90vh">
 
@@ -1370,7 +1375,7 @@
         <button class="btn primary" id="btn-ls-start"  onclick="liveSetStatus('live')"     style="display:none">▶ Coup d'envoi</button>
         <button class="btn"         id="btn-ls-half"   onclick="liveSetStatus('mi-temps')" style="display:none">⏸ Mi-temps</button>
         <button class="btn primary" id="btn-ls-resume" onclick="liveSetStatus('live-2')"   style="display:none">▶ Reprendre (2ᵉ mi-temps)</button>
-        <button class="btn"         id="btn-ls-end"    onclick="liveSetStatus('termine')"  style="display:none">🏁 Fin du match</button>
+        <button class="btn"         id="btn-ls-end"    onclick="liveSetStatus('termine')"  style="display:none"><i class="fa-solid fa-flag-checkered"></i> Fin du match</button>
       </div>
 
       <!-- Temps additionnel -->
@@ -1401,9 +1406,9 @@
       <!-- Tabs actions : But / Carton / Remplacement -->
       <div id="live-action-panel" style="display:none;margin-bottom:14px">
         <div class="tabs" style="margin-bottom:10px">
-          <div class="tab active" onclick="switchTab(this,'live-tab-but','live-act-tabs')">⚽ But</div>
-          <div class="tab" onclick="switchTab(this,'live-tab-carton','live-act-tabs')">🟨 Carton</div>
-          <div class="tab" onclick="switchTab(this,'live-tab-sub','live-act-tabs')">🔄 Rempl.</div>
+          <div class="tab active" onclick="switchTab(this,'live-tab-but','live-act-tabs')"><i class="fa-solid fa-futbol"></i> But</div>
+          <div class="tab" onclick="switchTab(this,'live-tab-carton','live-act-tabs')"><span class="dot dot-y"></span> Carton</div>
+          <div class="tab" onclick="switchTab(this,'live-tab-sub','live-act-tabs')"><i class="fa-solid fa-arrows-rotate"></i> Rempl.</div>
         </div>
         <div id="live-act-tabs">
 
@@ -1420,7 +1425,7 @@
                 <option value="">— Buteur (optionnel) —</option>
               </select>
               <button class="btn primary" style="padding:7px 12px;font-size:13px;white-space:nowrap;flex-shrink:0"
-                onclick="liveGoalEvent()">⚽ +1 But</button>
+                onclick="liveGoalEvent()"><i class="fa-solid fa-futbol"></i> +1 But</button>
             </div>
           </div>
 
@@ -1437,9 +1442,9 @@
                 <option value="">— Joueur —</option>
               </select>
               <button class="btn" style="padding:7px 12px;background:#FCD34D;border:none;font-size:16px;flex-shrink:0"
-                title="Carton jaune" onclick="liveCard('jaune')">🟨</button>
+                title="Carton jaune" onclick="liveCard('jaune')"><span class="dot dot-y"></span></button>
               <button class="btn" style="padding:7px 12px;background:#EF4444;color:#fff;border:none;font-size:16px;flex-shrink:0"
-                title="Carton rouge" onclick="liveCard('rouge')">🟥</button>
+                title="Carton rouge" onclick="liveCard('rouge')"><span class="dot dot-r"></span></button>
             </div>
           </div>
 
@@ -1460,7 +1465,7 @@
                 <option value="">↪ Entrant</option>
               </select>
               <button class="btn primary" style="padding:7px 12px;font-size:13px;flex-shrink:0"
-                onclick="liveSub()">🔄 OK</button>
+                onclick="liveSub()"><i class="fa-solid fa-arrows-rotate"></i> OK</button>
             </div>
           </div>
 
@@ -1483,8 +1488,8 @@
 <div id="modal-tx" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">💸 Demande de dépense</span>
-      <button class="close-btn" onclick="closeModal('modal-tx')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-money-bill-wave"></i> Demande de dépense</span>
+      <button class="close-btn" onclick="closeModal('modal-tx')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="modal-tx-recette-row" class="form-group" style="display:none">
       <label>Type</label>
@@ -1523,8 +1528,8 @@
 <div id="modal-dep-detail" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <span class="modal-title" id="dep-detail-title">💸 Détail de la dépense</span>
-      <button class="close-btn" onclick="closeModal('modal-dep-detail')">✕</button>
+      <span class="modal-title" id="dep-detail-title"><i class="fa-solid fa-money-bill-wave"></i> Détail de la dépense</span>
+      <button class="close-btn" onclick="closeModal('modal-dep-detail')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="dep-detail-body" style="font-size:13px"></div>
     <div id="dep-detail-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"></div>
@@ -1538,8 +1543,8 @@
 <div id="modal-reject-dep" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <span class="modal-title">❌ Rejeter la dépense</span>
-      <button class="close-btn" onclick="closeModal('modal-reject-dep')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-circle-xmark"></i> Rejeter la dépense</span>
+      <button class="close-btn" onclick="closeModal('modal-reject-dep')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group">
       <label>Raison du rejet <span style="color:var(--red)">*</span></label>
@@ -1556,8 +1561,8 @@
 <div id="modal-joueur" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">👤 Nouveau joueur / Technicien</span>
-      <button class="close-btn" onclick="closeModal('modal-joueur')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-user-plus"></i> Nouveau joueur / Technicien</span>
+      <button class="close-btn" onclick="closeModal('modal-joueur')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group">
       <label>Équipe (ASC)</label>
@@ -1588,7 +1593,7 @@
     <div class="error-msg" id="modal-player-error">Veuillez renseigner le prénom, le nom et l'équipe.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-joueur')">Annuler</button>
-      <button class="btn primary" onclick="savePlayer()">✅ Valider & Licencier</button>
+      <button class="btn primary" onclick="savePlayer()"><i class="fa-solid fa-check"></i> Valider & Licencier</button>
     </div>
   </div>
 </div>
@@ -1597,16 +1602,16 @@
 <div id="modal-carton" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🃏 Enregistrer un carton</span>
-      <button class="close-btn" onclick="closeModal('modal-carton')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-address-card"></i> Enregistrer un carton</span>
+      <button class="close-btn" onclick="closeModal('modal-carton')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group"><label>Rencontre</label><select id="carton-match-sel" onchange="onCartonMatchChange()"><option value="">— Sélectionner une rencontre —</option></select></div>
     <div class="form-group"><label>Joueur</label><select id="carton-joueur-sel"><option value="">— Choisir d'abord une rencontre —</option></select></div>
     <div class="form-row">
       <div class="form-group"><label>Type de carton</label>
         <select id="card-type" onchange="updateSuspension()">
-          <option value="jaune">🟨 Carton jaune</option>
-          <option value="rouge">🟥 Carton rouge direct</option>
+          <option value="jaune">Carton jaune</option>
+          <option value="rouge">Carton rouge direct</option>
         </select>
       </div>
       <div class="form-group"><label>Suspension (matchs)</label><input type="number" id="suspension-nb" value="1" min="0"></div>
@@ -1623,8 +1628,8 @@
 <div id="modal-poule" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🏆 Créer une poule</span>
-      <button class="close-btn" onclick="closeModal('modal-poule')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-trophy"></i> Créer une poule</span>
+      <button class="close-btn" onclick="closeModal('modal-poule')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Nom de la poule</label><input type="text" placeholder="Ex: Poule E"></div>
@@ -1651,8 +1656,8 @@
 <div id="modal-reclamation" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">⚖️ Traitement réclamation</span>
-      <button class="close-btn" onclick="closeModal('modal-reclamation')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-scale-balanced"></i> Traitement réclamation</span>
+      <button class="close-btn" onclick="closeModal('modal-reclamation')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="alert warning" style="margin-bottom:12px">ASC Deggo conteste la régularité du joueur n°5R-044 (Baraka) lors de Baraka vs Deggo du 29/08</div>
     <div class="form-group"><label>Décision de la Commission Juridique</label>
@@ -1670,8 +1675,8 @@
 <div id="modal-change-pwd" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🔑 Changer le mot de passe</span>
-      <button class="close-btn" onclick="closeModal('modal-change-pwd')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-key"></i> Changer le mot de passe</span>
+      <button class="close-btn" onclick="closeModal('modal-change-pwd')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="alert info" style="margin-bottom:16px">
       Compte : <strong id="pwd-target-name"></strong>
@@ -1683,7 +1688,7 @@
         <input type="password" id="current-pwd-display" readonly
                style="flex:1;background:var(--gray-l);cursor:default;color:var(--muted)">
         <button type="button" class="btn" style="font-size:13px;padding:6px 12px;flex-shrink:0"
-                onclick="togglePwdVisibility('current-pwd-display', this)">👁️</button>
+                onclick="togglePwdVisibility('current-pwd-display', this)"><i class="fa-solid fa-eye"></i></button>
       </div>
     </div>
     <div class="form-group">
@@ -1691,7 +1696,7 @@
       <div style="display:flex;gap:8px;align-items:center">
         <input type="password" id="new-pwd" placeholder="Minimum 6 caractères" style="flex:1">
         <button type="button" class="btn" style="font-size:13px;padding:6px 12px;flex-shrink:0"
-                onclick="togglePwdVisibility('new-pwd', this)">👁️</button>
+                onclick="togglePwdVisibility('new-pwd', this)"><i class="fa-solid fa-eye"></i></button>
       </div>
     </div>
     <div class="form-group">
@@ -1702,7 +1707,7 @@
     <div class="error-msg" id="pwd-error">Les mots de passe ne correspondent pas.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-change-pwd')">Annuler</button>
-      <button class="btn purple" onclick="saveNewPassword()">✅ Confirmer</button>
+      <button class="btn purple" onclick="saveNewPassword()"><i class="fa-solid fa-check"></i> Confirmer</button>
     </div>
   </div>
 </div>
@@ -1711,8 +1716,8 @@
 <div id="modal-add-stade" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🏟️ Nouveau terrain</span>
-      <button class="close-btn" onclick="closeModal('modal-add-stade')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-building"></i> Nouveau terrain</span>
+      <button class="close-btn" onclick="closeModal('modal-add-stade')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group"><label>Nom du terrain</label><input type="text" id="stade-nom" placeholder="Ex : Stade René COLY"></div>
     <div class="form-group"><label>Quartier / Localité</label><input type="text" id="stade-lieu" placeholder="Ex : Bignona Centre"></div>
@@ -1721,7 +1726,7 @@
     <div class="error-msg" id="stade-error">Veuillez renseigner le nom du terrain.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-add-stade')">Annuler</button>
-      <button class="btn primary" onclick="saveStade()">✅ Enregistrer</button>
+      <button class="btn primary" onclick="saveStade()"><i class="fa-solid fa-check"></i> Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1730,8 +1735,8 @@
 <div id="modal-finale" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span class="modal-title">🏆 Bilan Financier · Finale</span>
-      <button class="close-btn" onclick="closeModal('modal-finale')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-trophy"></i> Bilan Financier · Finale</span>
+      <button class="close-btn" onclick="closeModal('modal-finale')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Date de la finale</label><input type="date" id="fin-date"></div>
@@ -1772,7 +1777,7 @@
     <div class="error-msg" id="fin-error">Veuillez renseigner la date et les équipes finalistes.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-finale')">Annuler</button>
-      <button class="btn primary" onclick="saveFinale()">✅ Enregistrer le bilan finale</button>
+      <button class="btn primary" onclick="saveFinale()"><i class="fa-solid fa-check"></i> Enregistrer le bilan finale</button>
     </div>
   </div>
 </div>
@@ -1781,8 +1786,8 @@
 <div id="modal-licence" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">🎟️ Vente Licences / Bordereaux</span>
-      <button class="close-btn" onclick="closeModal('modal-licence')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-ticket"></i> Vente Licences / Bordereaux</span>
+      <button class="close-btn" onclick="closeModal('modal-licence')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-group">
       <label>ASC</label>
@@ -1803,7 +1808,7 @@
     <div class="error-msg" id="lic-error">Veuillez sélectionner une ASC et renseigner au moins une quantité.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-licence')">Annuler</button>
-      <button class="btn primary" onclick="saveLicence()">✅ Enregistrer</button>
+      <button class="btn primary" onclick="saveLicence()"><i class="fa-solid fa-check"></i> Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1812,8 +1817,8 @@
 <div id="modal-litige" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">⚖️ Déclarer un litige</span>
-      <button class="close-btn" onclick="closeModal('modal-litige')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-scale-balanced"></i> Déclarer un litige</span>
+      <button class="close-btn" onclick="closeModal('modal-litige')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Match concerné</label><select id="lit-match"><option value="">-- Choisir --</option></select></div>
@@ -1847,7 +1852,7 @@
     <div class="error-msg" id="lit-error">Veuillez renseigner le match et le motif.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-litige')">Annuler</button>
-      <button class="btn primary" onclick="saveLitige()">✅ Enregistrer la décision</button>
+      <button class="btn primary" onclick="saveLitige()"><i class="fa-solid fa-check"></i> Enregistrer la décision</button>
     </div>
   </div>
 </div>
@@ -1856,8 +1861,8 @@
 <div id="modal-send-bilan" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title">📤 Envoyer le bilan</span>
-      <button class="close-btn" onclick="closeModal('modal-send-bilan')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-file-export"></i> Envoyer le bilan</span>
+      <button class="close-btn" onclick="closeModal('modal-send-bilan')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="alert info" style="margin-bottom:16px">Le bilan sera marqué comme envoyé. L'envoi réel nécessite une intégration backend (email/WhatsApp).</div>
     <div class="form-group">
@@ -1869,7 +1874,7 @@
     <div class="form-group"><label>Message d'accompagnement</label><textarea placeholder="Ex : Veuillez trouver ci-joint le bilan financier de la saison 2025…" style="min-height:80px"></textarea></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-send-bilan')">Annuler</button>
-      <button class="btn primary" onclick="sendBilan()">📤 Marquer comme envoyé</button>
+      <button class="btn primary" onclick="sendBilan()"><i class="fa-solid fa-file-export"></i> Marquer comme envoyé</button>
     </div>
   </div>
 </div>
@@ -1878,8 +1883,8 @@
 <div id="modal-add-team" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <span class="modal-title">🏟️ Nouvelle association (ASC)</span>
-      <button class="close-btn" onclick="closeModal('modal-add-team')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-building"></i> Nouvelle association (ASC)</span>
+      <button class="close-btn" onclick="closeModal('modal-add-team')"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
     <!-- Identité de l'ASC -->
@@ -1930,7 +1935,7 @@
     <div class="error-msg" id="team-error">Veuillez renseigner le nom de l'association et au moins un représentant.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-add-team')">Annuler</button>
-      <button class="btn primary" onclick="saveTeam()">✅ Enregistrer l'association</button>
+      <button class="btn primary" onclick="saveTeam()"><i class="fa-solid fa-check"></i> Enregistrer l'association</button>
     </div>
   </div>
 </div>
@@ -1939,8 +1944,8 @@
 <div id="modal-tirage" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <span class="modal-title">🎲 Tirage au sort · Poules</span>
-      <button class="close-btn" onclick="closeModal('modal-tirage')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-dice"></i> Tirage au sort · Poules</span>
+      <button class="close-btn" onclick="closeModal('modal-tirage')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="tirage-etape-1">
       <div class="form-group">
@@ -1956,15 +1961,15 @@
       <div class="alert info" id="tirage-equipes-info" style="margin-bottom:16px">Chargement des équipes…</div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn" onclick="closeModal('modal-tirage')">Annuler</button>
-        <button class="btn primary" onclick="doTirage()">🎲 Tirer au sort</button>
+        <button class="btn primary" onclick="doTirage()"><i class="fa-solid fa-dice"></i> Tirer au sort</button>
       </div>
     </div>
     <div id="tirage-etape-2" style="display:none">
-      <div class="alert success" style="margin-bottom:16px">🎲 Tirage effectué ! Vérifiez les poules ci-dessous.</div>
+      <div class="alert success" style="margin-bottom:16px"><i class="fa-solid fa-dice"></i> Tirage effectué ! Vérifiez les poules ci-dessous.</div>
       <div id="tirage-result"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button class="btn" onclick="doTirage()">🔄 Retirer</button>
-        <button class="btn primary" onclick="confirmTirage()">✅ Confirmer le tirage</button>
+        <button class="btn" onclick="doTirage()"><i class="fa-solid fa-arrows-rotate"></i> Retirer</button>
+        <button class="btn primary" onclick="confirmTirage()"><i class="fa-solid fa-check"></i> Confirmer le tirage</button>
       </div>
     </div>
   </div>
@@ -1974,8 +1979,8 @@
 <div id="modal-fiche-journee" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:640px">
     <div class="modal-header">
-      <span class="modal-title">📋 Bilan Financier · Journée</span>
-      <button class="close-btn" onclick="closeModal('modal-fiche-journee')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-clipboard-list"></i> Bilan Financier · Journée</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-journee')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="form-row" style="margin-bottom:14px">
       <div class="form-group" style="margin-bottom:0">
@@ -2043,7 +2048,7 @@
     <div class="error-msg" id="fj-error" style="margin-top:10px">Veuillez renseigner le libellé et la date.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn" onclick="closeModal('modal-fiche-journee')">Annuler</button>
-      <button class="btn primary" onclick="saveFicheJournee()">✅ Enregistrer la fiche</button>
+      <button class="btn primary" onclick="saveFicheJournee()"><i class="fa-solid fa-check"></i> Enregistrer la fiche</button>
     </div>
   </div>
 </div>
@@ -2076,18 +2081,18 @@ function _updateSyncIndicator() {
   if (ind) {
     ind.style.display = currentUser ? '' : 'none';
     if (n > 0) {
-      ind.textContent   = '⚠️ Sync en attente…';
+      ind.textContent   = 'Sync en attente…';
       ind.title         = _lastSyncError ? 'Erreur : ' + _lastSyncError : 'Synchronisation en attente';
       ind.style.background = 'rgba(192,57,43,0.55)';
     } else {
-      ind.textContent   = '☁️ Synchronisé';
+      ind.textContent   = 'Synchronisé';
       ind.title         = 'Toutes les données sont synchronisées';
       ind.style.background = 'rgba(255,255,255,0.12)';
     }
   }
   const errTxt = _lastSyncError ? ' — Erreur : ' + _lastSyncError : '';
   if (pct) pct.textContent = n > 0 ? n + ' modification(s) en attente' + errTxt : '';
-  if (ps)  ps.textContent  = n > 0 ? '⚠️ ' + n + ' en attente' + errTxt : '✅ Synchronisé';
+  if (ps)  ps.textContent  = n > 0 ? n + ' en attente' + errTxt : 'Synchronisé';
 }
 
 // Écriture Firestore — met en file de retry si échec
@@ -2147,14 +2152,14 @@ async function forceSyncAllToFirebase() {
       fail++;
     }
   }
-  btns.forEach(b => { b.disabled = false; b.textContent = '☁️ Forcer la synchronisation complète'; });
+  btns.forEach(b => { b.disabled = false; b.textContent = 'Forcer la synchronisation complète'; });
   if (fail === 0) {
     _fsError = false;
     const banner = document.getElementById('fs-error-banner');
     if (banner) banner.remove();
-    showToast('✅ ' + ok + ' collections synchronisées avec Firebase.');
+    showToast('' + ok + ' collections synchronisées avec Firebase.');
   } else {
-    showToast('⚠️ ' + fail + ' erreur(s) — Vérifiez les règles Firestore.');
+    showToast('' + fail + ' erreur(s) — Vérifiez les règles Firestore.');
   }
   _updateSyncIndicator();
 }
@@ -2427,7 +2432,7 @@ function updateUI() {
     badge.textContent = rc.label;
     badge.className   = 'role-badge ' + rc.cls;
     const firstName   = currentUser.name.split(' ')[0];
-    authBtn.textContent = '👋 ' + firstName + ' · Déco.';
+    authBtn.textContent = firstName + ' · Déco.';
     if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name + (currentUser.poste ? ' · ' + currentUser.poste : '');
 
     // FIX: display explicite pour surcharger le CSS .member-only { display:none }
@@ -2534,7 +2539,7 @@ function updateUI() {
   } else {
     badge.textContent = 'Visiteur';
     badge.className   = 'role-badge visitor';
-    authBtn.textContent = '🔐 Connexion';
+    authBtn.textContent = 'Connexion';
     if (subtitle) subtitle.textContent = 'Le Renouveau des Navetanes · Bignona';
 
     memberNavItems.forEach(n => n.style.display = 'none');
@@ -2769,11 +2774,11 @@ const PERM_LABELS = {
 
 // Groupes pour l'affichage du panel
 const PERM_GROUPS = [
-  { label:'👤 Joueurs & Licences', perms:['add_player','see_players_litiges','add_licence'] },
-  { label:'⚽ Compétition',        perms:['live_score','edit_score'] },
-  { label:'⚖️ Litiges',            perms:['add_litige'] },
-  { label:'💰 Finances',           perms:['create_fiche','add_depense','validate_president','decaisser_depense'] },
-  { label:'⚙️ Administration',     perms:['manage_accounts','declare_saison','view_audit'] },
+  { label:'<i class="fa-solid fa-users"></i> Joueurs &amp; Licences', perms:['add_player','see_players_litiges','add_licence'] },
+  { label:'<i class="fa-solid fa-futbol"></i> Compétition',        perms:['live_score','edit_score'] },
+  { label:'<i class="fa-solid fa-scale-balanced"></i> Litiges',            perms:['add_litige'] },
+  { label:'<i class="fa-solid fa-coins"></i> Finances',           perms:['create_fiche','add_depense','validate_president','decaisser_depense'] },
+  { label:'<i class="fa-solid fa-gear"></i> Administration',     perms:['manage_accounts','declare_saison','view_audit'] },
 ];
 
 function hasPermission(perm) {
@@ -2803,8 +2808,8 @@ function setPermission(username, perm, value) {
     permission: PERM_LABELS[perm] || perm
   });
   renderPermissionsPanel();
-  showToast(value ? '✅ Permission accordée à ' + users[username].name.split(' ')[0] + '.'
-                  : '🚫 Permission retirée à ' + users[username].name.split(' ')[0] + '.');
+  showToast(value ? 'Permission accordée à ' + users[username].name.split(' ')[0] + '.'
+                  : 'Permission retirée à ' + users[username].name.split(' ')[0] + '.');
 }
 
 function renderPermissionsPanel() {
@@ -2855,7 +2860,7 @@ function renderPermissionsPanel() {
 
     const cells = allPerms.map(p => {
       if (isSelf || ud.role === 'superadmin')
-        return `<td style="text-align:center;font-size:16px">✅</td>`;
+        return `<td style="text-align:center;font-size:16px"><i class="fa-solid fa-check"></i></td>`;
 
       const roleGrant    = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](ud.role) : false;
       const hasOverride  = p in overrides;
@@ -2865,11 +2870,11 @@ function renderPermissionsPanel() {
         : '';
       if (effective) {
         return `<td style="text-align:center;padding:3px">
-          ${star}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)">✅</span>
+          ${star}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)"><i class="fa-solid fa-check"></i></span>
         </td>`;
       } else {
         return `<td style="text-align:center;padding:3px">
-          ${star}<span style="font-size:16px;cursor:pointer;opacity:0.3" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)">🔒</span>
+          ${star}<span style="font-size:16px;cursor:pointer;opacity:0.3" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)"><i class="fa-solid fa-lock"></i></span>
         </td>`;
       }
     }).join('');
@@ -2883,10 +2888,10 @@ function renderPermissionsPanel() {
 
   html += `</tbody></table></div>
   <div style="font-size:11px;color:var(--muted);padding:8px 14px 10px;display:flex;gap:16px;flex-wrap:wrap">
-    <span>✅ = accès accordé</span>
-    <span>🔒 = accès refusé</span>
+    <span><i class="fa-solid fa-check"></i> = accès accordé</span>
+    <span><i class="fa-solid fa-lock"></i> = accès refusé</span>
     <span><span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)</span>
-    <span style="margin-left:auto">Cliquer sur ✅ ou 🔒 pour modifier</span>
+    <span style="margin-left:auto">Cliquer pour modifier</span>
   </div>`;
   body.innerHTML = html;
 }
@@ -2977,10 +2982,10 @@ function renderAuditPanel() {
   const todayCount   = logs30.filter(e => e.ts?.startsWith(today)).length;
   const activeUsers  = [...new Set(logs30.map(e => e.username))].length;
   if (stats) stats.innerHTML = `
-    <span>📅 <strong>${logs30.length}</strong> actions sur 30 jours</span>
-    <span>⚡ <strong>${todayCount}</strong> aujourd'hui</span>
-    <span>👥 <strong>${activeUsers}</strong> membres actifs</span>
-    ${filterDate ? `<span style="color:var(--amber)">🔍 Filtre : ${new Date(filterDate+'T12:00').toLocaleDateString('fr-FR')} · <strong>${logs.length}</strong> entrée(s)</span>` : ''}`;
+    <span><i class="fa-solid fa-calendar"></i> <strong>${logs30.length}</strong> actions sur 30 jours</span>
+    <span><i class="fa-solid fa-bolt"></i> <strong>${todayCount}</strong> aujourd'hui</span>
+    <span><i class="fa-solid fa-users"></i> <strong>${activeUsers}</strong> membres actifs</span>
+    ${filterDate ? `<span style="color:var(--amber)"><i class="fa-solid fa-magnifying-glass"></i> Filtre : ${new Date(filterDate+'T12:00').toLocaleDateString('fr-FR')} · <strong>${logs.length}</strong> entrée(s)</span>` : ''}`;
 
   if (!logs.length) {
     body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">'
@@ -3020,28 +3025,28 @@ function getPlayers() {
     if (!stored) {
       const init = {
         'ASC Walidane': [
-          { id:'5R-001', prenom:'Oumar',   nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'🟨 1' },
+          { id:'5R-001', prenom:'Oumar',   nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'J:1' },
           { id:'5R-006', prenom:'Mamadou', nom:'BADJI',     cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'–'   },
           { id:'5R-007', prenom:'Ismaël',  nom:'SAMBOU',    cat:'Senior', type:'Technicien', statut:'Actif',         cartons:'–'   },
         ],
         'ASC Baraka': [
-          { id:'5R-002', prenom:'Seydou',  nom:'COLY',      cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟥 1' },
+          { id:'5R-002', prenom:'Seydou',  nom:'COLY',      cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'R:1' },
           { id:'5R-008', prenom:'Ousmane', nom:'DIATTA',    cat:'Cadet',  type:'Joueur',     statut:'Actif',         cartons:'–'   },
         ],
         'ASC Chicago': [
           { id:'5R-003', prenom:'Mamadou', nom:'SANÉ',      cat:'Cadet',  type:'Joueur',     statut:'Actif',         cartons:'–'   },
         ],
         'ASC Yengoulène': [
-          { id:'5R-004', prenom:'Ibrahima',nom:'BADJI',     cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'🟨 2' },
+          { id:'5R-004', prenom:'Ibrahima',nom:'BADJI',     cat:'Senior', type:'Joueur',     statut:'Actif',         cartons:'J:2' },
         ],
         'ASC Nafacounda': [
-          { id:'5R-005', prenom:'Lamine',  nom:'GOUDIABY',  cat:'Senior', type:'Joueur',     statut:'Avertissement', cartons:'🟨 1' },
+          { id:'5R-005', prenom:'Lamine',  nom:'GOUDIABY',  cat:'Senior', type:'Joueur',     statut:'Avertissement', cartons:'J:1' },
         ],
         'ASC Deggo': [
-          { id:'5R-009', prenom:'Aliou',   nom:'DIEME',     cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟨 2' },
+          { id:'5R-009', prenom:'Aliou',   nom:'DIEME',     cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'J:2' },
         ],
         'ASC Kafesse': [
-          { id:'5R-010', prenom:'Omar',    nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'🟥 1' },
+          { id:'5R-010', prenom:'Omar',    nom:'DIATTA',    cat:'Senior', type:'Joueur',     statut:'Suspendu',      cartons:'R:1' },
         ],
       };
       localStorage.setItem('zone5r_players', JSON.stringify(init));
@@ -3127,7 +3132,7 @@ function renderTeamPlayers(team) {
     const statutCls = p.statut === 'Actif' ? 'green' : p.statut === 'Suspendu' ? 'red' : 'amber';
     const delBtn    = isSuperAdmin
       ? `<button class="btn danger" style="font-size:11px;padding:3px 8px"
-           onclick="deletePlayer('${team}','${p.id}','${p.prenom} ${p.nom}')">🗑️</button>`
+           onclick="deletePlayer('${team}','${p.id}','${p.prenom} ${p.nom}')"><i class="fa-solid fa-trash"></i></button>`
       : '';
     return `<tr>
       <td style="font-family:monospace;font-size:12px">${p.id}</td>
@@ -3151,7 +3156,7 @@ function deletePlayer(team, playerId, playerName) {
     logAction('DELETE_PLAYER', { detail: playerName + ' · ' + team });
     initTeamTabs();
     renderTeamPlayers(team);
-    showToast('🗑️ ' + playerName + ' supprimé(e).');
+    showToast('' + playerName + ' supprimé(e).');
   }
 }
 
@@ -3202,7 +3207,7 @@ function savePlayer() {
   closeModal('modal-joueur');
   initTeamTabs();                    // Rafraîchir les compteurs
   if (currentTeam === team) renderTeamPlayers(team);
-  showToast('✅ ' + prenom + ' ' + nom + ' ajouté(e) à ' + team);
+  showToast('' + prenom + ' ' + nom + ' ajouté(e) à ' + team);
 }
 
 // ============================================================
@@ -3294,9 +3299,9 @@ function renderMembersTable() {
   const code  = u => `<code style="background:var(--gray-l);padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace">${u}</code>`;
   const actionBtns = (username, name) => `
     <button class="btn" style="font-size:11px;padding:3px 8px"
-      onclick="openChangePasswordModal('${username}','${name.replace(/'/g,"\\'")}')">🔑 MDP</button>
+      onclick="openChangePasswordModal('${username}','${name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-key"></i> MDP</button>
     <button class="btn danger" style="font-size:11px;padding:3px 8px"
-      onclick="deleteAccount('${username}','${name.replace(/'/g,"\\'")}')">🗑️</button>`;
+      onclick="deleteAccount('${username}','${name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>`;
 
   // ── Section 1 : Membres du Bureau ──────────────────────────
   const bureauRows = BUREAU_MEMBERS.map((m, i) => {
@@ -3307,7 +3312,7 @@ function renderMembersTable() {
       <td>${active ? code(m.username) : ''}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         ${active
-          ? `<span class="badge green" style="font-size:10px">✅ Actif</span>${actionBtns(m.username, m.name)}`
+          ? `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Actif</span>${actionBtns(m.username, m.name)}`
           : `<button class="btn primary" style="font-size:11px;padding:3px 10px"
                onclick="createBureauAccount(${i})">Créer accès</button>`}
       </td>
@@ -3330,8 +3335,8 @@ function renderMembersTable() {
     background:var(--gray-l);border-top:1px solid var(--border)">${label}</td></tr>`;
 
   tbody.innerHTML =
-    sep('📋 Membres du Bureau') + bureauRows +
-    (customRows ? sep('👤 Comptes personnalisés') + customRows : '');
+    sep('<i class="fa-solid fa-clipboard-list"></i> Membres du Bureau') + bureauRows +
+    (customRows ? sep('<i class="fa-solid fa-user"></i> Comptes personnalisés') + customRows : '');
 }
 
 function deleteAccount(username, name) {
@@ -3341,17 +3346,17 @@ function deleteAccount(username, name) {
   delete users[username];
   saveUsers(users);
   renderMembersTable();
-  showToast('🗑️ Compte ' + username + ' supprimé.');
+  showToast('Compte ' + username + ' supprimé.');
 }
 
 function createBureauAccount(index) {
   const m = BUREAU_MEMBERS[index];
   const users = getUsers();
-  if (users[m.username]) { showToast('⚠️ Ce compte existe déjà.'); return; }
+  if (users[m.username]) { showToast('Ce compte existe déjà.'); return; }
   users[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
   saveUsers(users);
   renderMembersTable();
-  showToast('✅ ' + m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP : ' + m.defaultPwd);
+  showToast('' + m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP : ' + m.defaultPwd);
 }
 
 function createAllBureauAccounts() {
@@ -3366,7 +3371,7 @@ function createAllBureauAccounts() {
   if (created === 0) { showToast('ℹ️ Tous les comptes bureau sont déjà actifs.'); return; }
   saveUsers(users);
   renderMembersTable();
-  showToast('✅ ' + created + ' compte(s) activé(s) et synchronisés sur Firebase.');
+  showToast('' + created + ' compte(s) activé(s) et synchronisés sur Firebase.');
 }
 
 function openChangePasswordModal(username, name) {
@@ -3379,9 +3384,9 @@ function openChangePasswordModal(username, name) {
   document.getElementById('new-pwd').type                     = 'password';
   document.getElementById('confirm-pwd').value                = '';
   document.getElementById('pwd-error').classList.remove('show');
-  // Remettre les icônes des boutons toggle à 👁️
+  // Remettre les icônes des boutons toggle
   document.querySelectorAll('#modal-change-pwd .btn[onclick*="togglePwdVisibility"]')
-    .forEach(b => b.textContent = '👁️');
+    .forEach(b => b.textContent = '<i class="fa-solid fa-eye"></i>');
   openModal('modal-change-pwd');
 }
 
@@ -3389,10 +3394,10 @@ function togglePwdVisibility(inputId, btn) {
   const input = document.getElementById(inputId);
   if (input.type === 'password') {
     input.type = 'text';
-    btn.textContent = '🙈';
+    btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
   } else {
     input.type = 'password';
-    btn.textContent = '👁️';
+    btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
   }
 }
 
@@ -3419,7 +3424,7 @@ function saveNewPassword() {
     saveUsers(users);
     logAction('CHANGE_PASSWORD', { detail: 'Compte : ' + username + ' (' + users[username].name + ')' });
     closeModal('modal-change-pwd');
-    showToast('✅ Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
+    showToast('Mot de passe de ' + users[username].name.split(' ')[0] + ' mis à jour.');
   }
 }
 
@@ -3460,7 +3465,7 @@ function createAccount() {
   logAction('CREATE_ACCOUNT', { detail: username + ' · ' + name + ' · ' + role });
   closeModal('modal-create-account');
   renderMembersTable();
-  showToast('✅ Compte ' + username + ' créé avec succès.');
+  showToast('Compte ' + username + ' créé avec succès.');
 }
 
 // ============================================================
@@ -3534,7 +3539,7 @@ function renderSeasonBar() {
   const selected = getSelectedSaison();
   pills.innerHTML = [...saisons].reverse().map(s => {
     const isSelected = s.id === selected?.id;
-    const label = s.nom + (s.active ? ' 🟢' : '');
+    const label = s.nom + (s.active ? ' <span class=\'dot dot-g\'></span>' : '');
     return `<button onclick="selectSaison('${s.id}')"
       style="font-size:11px;padding:4px 12px;border-radius:20px;border:none;cursor:pointer;font-weight:600;
              background:${isSelected ? 'var(--green)' : 'var(--gray-l)'};
@@ -3593,7 +3598,7 @@ function renderSaisonPanel() {
     // Bouton clôturer : superadmin + président uniquement
     const btnCloturer = document.querySelector('#saison-panel .btn.danger');
     if (btnCloturer) btnCloturer.style.display = hasPermission('declare_saison') ? '' : 'none';
-    badge.textContent    = saison.declaredOpen ? '🚀 Ouverte' : 'En cours';
+    badge.textContent    = saison.declaredOpen ? 'Ouverte' : 'En cours';
     badge.className      = saison.declaredOpen ? 'badge green' : 'badge amber';
 
     document.getElementById('saison-nom-display').textContent     = saison.nom;
@@ -3613,11 +3618,11 @@ function renderSaisonPanel() {
       step2.style.background   = 'var(--green-l)';
       step2.style.borderColor  = 'var(--green)';
       step2.style.opacity      = '1';
-      document.getElementById('step-tirage-icon').textContent  = '✅';
+      document.getElementById('step-tirage-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
       document.getElementById('step-tirage-title').textContent = 'Étape 2 · Tirage effectué';
       const nbPoules = saison.poules ? Object.keys(saison.poules).length : 0;
       document.getElementById('step-tirage-desc').textContent  = nbPoules + ' poule(s) définies';
-      if (btn2) btn2.textContent = '🔄 Refaire';
+      if (btn2) btn2.textContent = 'Refaire';
     } else {
       step2.style.background   = 'var(--gray-l)';
       step2.style.borderColor  = 'var(--gray)';
@@ -3634,7 +3639,7 @@ function renderSaisonPanel() {
     if (saison.matchsProgrammes) {
       step3.style.background  = 'var(--green-l)';
       step3.style.borderColor = 'var(--green)';
-      document.getElementById('step-matchs-icon').textContent  = '✅';
+      document.getElementById('step-matchs-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
       document.getElementById('step-matchs-title').textContent = 'Étape 3 · Matchs programmés';
       document.getElementById('step-matchs-desc').textContent  = (saison.matchs||[]).length + ' rencontres générées';
     }
@@ -3651,11 +3656,11 @@ function renderSaisonPanel() {
     if (saison.declaredOpen) {
       step4.style.background  = 'var(--green-l)';
       step4.style.borderColor = 'var(--green)';
-      document.getElementById('step-ouverture-icon').textContent  = '✅';
+      document.getElementById('step-ouverture-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
       document.getElementById('step-ouverture-title').textContent = 'Étape 4 · Compétition déclarée ouverte';
       const d = new Date(saison.dateOuverture).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
       document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
-      if (btn4) { btn4.disabled = true; btn4.textContent = '✅ Ouverte'; }
+      if (btn4) { btn4.disabled = true; btn4.textContent = 'Ouverte'; }
     }
   } else {
     active.style.display = 'none';
@@ -3669,15 +3674,15 @@ function renderSaisonPanel() {
 }
 
 function declarerSaison() {
-  if (!hasPermission('declare_saison')) return showToast('🚫 Action réservée au Président et au Super Admin.');
+  if (!hasPermission('declare_saison')) return showToast('Action réservée au Président et au Super Admin.');
   const nom   = document.getElementById('saison-nom').value.trim();
   const date  = document.getElementById('saison-date').value;
   const selEl = document.getElementById('saison-equipes-select');
   const equipes = Array.from(selEl.selectedOptions).map(o => o.value);
 
-  if (!nom)           return showToast('⚠️ Veuillez saisir un nom de saison.');
-  if (!date)          return showToast('⚠️ Veuillez choisir une date de démarrage.');
-  if (equipes.length < 2) return showToast('⚠️ Sélectionnez au moins 2 équipes.');
+  if (!nom)           return showToast('Veuillez saisir un nom de saison.');
+  if (!date)          return showToast('Veuillez choisir une date de démarrage.');
+  if (equipes.length < 2) return showToast('Sélectionnez au moins 2 équipes.');
 
   const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
   const id = 'S' + Date.now();
@@ -3690,7 +3695,7 @@ function declarerSaison() {
 
   renderSaisonPanel();
   renderSeasonBar();
-  showToast('🚀 Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
+  showToast('Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
 }
 
 function cloturerSaison() {
@@ -3699,7 +3704,7 @@ function cloturerSaison() {
   if (saison) { saison.active = false; saveSaison(saison); }
   renderSaisonPanel();
   renderSeasonBar();
-  showToast('🔒 Saison clôturée.');
+  showToast('Saison clôturée.');
 }
 
 // ============================================================
@@ -3740,9 +3745,9 @@ function renderEquipesPanel() {
   panel.innerHTML = keys.map(nom => {
     const t = teams[nom];
     const meta = [
-      t.quartier ? '📍 ' + t.quartier : '',
-      t.annee    ? '📅 ' + t.annee    : '',
-      t.couleurs ? '🎨 ' + t.couleurs : '',
+      t.quartier ? '<i class="fa-solid fa-location-dot"></i> ' + t.quartier : '',
+      t.annee    ? '<i class="fa-solid fa-calendar"></i> ' + t.annee    : '',
+      t.couleurs ? '<i class="fa-solid fa-palette"></i> ' + t.couleurs : '',
     ].filter(Boolean).join('  ·  ');
     const repsHtml = (t.representants || []).filter(r => r.nom).map(r =>
       `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">
@@ -3804,7 +3809,7 @@ function saveTeam() {
   closeModal('modal-add-team');
   renderEquipesPanel();
   initTeamTabs();
-  showToast('✅ ' + nom + ' enregistrée avec ' + reps.length + ' représentant(s).');
+  showToast('' + nom + ' enregistrée avec ' + reps.length + ' représentant(s).');
 }
 
 function deleteTeam(nom) {
@@ -3875,7 +3880,7 @@ function confirmTirage() {
 
   closeModal('modal-tirage');
   renderSaisonPanel();
-  showToast('✅ Tirage confirmé ! Les poules sont définies.');
+  showToast('Tirage confirmé ! Les poules sont définies.');
 }
 
 // ============================================================
@@ -3884,7 +3889,7 @@ function confirmTirage() {
 function programmerMatchs() {
   const saison = getSaison();
   if (!saison || !saison.tirageDone) {
-    showToast('⚠️ Effectuez d\'abord le tirage au sort.');
+    showToast('Effectuez d\'abord le tirage au sort.');
     return;
   }
   const allMatchs = [];
@@ -3902,7 +3907,7 @@ function programmerMatchs() {
   saveSaison(saison);
 
   renderSaisonPanel();
-  showToast('✅ ' + allMatchs.length + ' matchs générés pour la phase de poules !');
+  showToast('' + allMatchs.length + ' matchs générés pour la phase de poules !');
 }
 
 // ============================================================
@@ -3911,12 +3916,12 @@ function programmerMatchs() {
 function declarerOuverte() {
   const dateOuverture = document.getElementById('ouverture-date-input').value;
   if (!dateOuverture) {
-    showToast('⚠️ Veuillez choisir une date d\'ouverture.');
+    showToast('Veuillez choisir une date d\'ouverture.');
     return;
   }
   const today = new Date().toISOString().split('T')[0];
   if (dateOuverture <= today) {
-    showToast('⚠️ La date d\'ouverture doit être dans le futur.');
+    showToast('La date d\'ouverture doit être dans le futur.');
     return;
   }
   const saison = getSaison();
@@ -3926,7 +3931,7 @@ function declarerOuverte() {
 
   renderSaisonPanel();
   const d = new Date(dateOuverture).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
-  showToast('🚀 Compétition déclarée ouverte le ' + d + ' !');
+  showToast('Compétition déclarée ouverte le ' + d + ' !');
 }
 
 // ============================================================
@@ -4046,7 +4051,7 @@ function saveFicheJournee() {
   logAction('ADD_FICHE', { detail: journee + ' · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA' });
   closeModal('modal-fiche-journee');
   renderFichesList();
-  showToast('✅ Fiche ' + journee + ' enregistrée · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA');
+  showToast('Fiche ' + journee + ' enregistrée · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA');
 }
 
 function renderFichesList() {
@@ -4143,16 +4148,16 @@ function renderFichesList() {
       <!-- Pied : auteur + statut + actions -->
       <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
         <div style="font-size:11px;color:var(--muted);line-height:1.6">
-          <div>📝 Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
+          <div><i class="fa-solid fa-file-pen"></i> Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
           ${isValidated
-            ? `<div style="color:var(--green-d)">✅ Validée par <strong>${f.validatedBy||'?'}</strong>${validatedPoste?' · <em>'+validatedPoste+'</em>':''} · ${validatedDt}</div>`
+            ? `<div style="color:var(--green-d)"><i class="fa-solid fa-check"></i> Validée par <strong>${f.validatedBy||'?'}</strong>${validatedPoste?' · <em>'+validatedPoste+'</em>':''} · ${validatedDt}</div>`
             : `<div style="color:var(--amber-d)">⏳ En attente de validation TGA</div>`
           }
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheDetail('${f.id}')">📋 Historique</button>
-          ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')">✅ Valider</button>` : ''}
-          ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')">✏️ Modifier</button>` : ''}
+          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheDetail('${f.id}')"><i class="fa-solid fa-clipboard-list"></i> Historique</button>
+          ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')"><i class="fa-solid fa-check"></i> Valider</button>` : ''}
+          ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -4180,10 +4185,10 @@ function renderStadesPanel() {
   body.innerHTML = stades.map((s, i) => `
     <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-size:13px;font-weight:600">🏟️ ${s.nom}</div>
+        <div style="font-size:13px;font-weight:600"><i class="fa-solid fa-building"></i> ${s.nom}</div>
         <div style="font-size:11px;color:var(--muted)">${s.lieu} · Cap. ${(s.capacite||0).toLocaleString('fr-FR')} · ${s.contact||''}</div>
       </div>
-      <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteStade(${i})">✕</button>
+      <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteStade(${i})"><i class="fa-solid fa-xmark"></i></button>
     </div>`).join('');
   // Mettre à jour les selects de stades
   const opts = stades.map(s => `<option value="${s.nom}">${s.nom}</option>`).join('');
@@ -4205,7 +4210,7 @@ function saveStade() {
   saveStades(stades);
   closeModal('modal-add-stade');
   renderStadesPanel();
-  showToast('✅ Terrain « ' + nom + ' » enregistré.');
+  showToast('Terrain « ' + nom + ' » enregistré.');
 }
 
 function deleteStade(i) {
@@ -4236,10 +4241,10 @@ function renderSuspensions() {
   if (alert) {
     if (susp.length > 0) {
       alert.className = 'alert danger';
-      alert.innerHTML = `🟥 <strong>${susp.length} joueur(s) suspendu(s)</strong> · vérifiez avant validation des feuilles de match`;
+      alert.innerHTML = `<span class="dot dot-r"></span> <strong>${susp.length} joueur(s) suspendu(s)</strong> · vérifiez avant validation des feuilles de match`;
     } else {
       alert.className = 'alert success';
-      alert.innerHTML = '✅ Aucune suspension active en ce moment.';
+      alert.innerHTML = '<i class="fa-solid fa-check"></i> Aucune suspension active en ce moment.';
     }
   }
   const isMember = currentUser !== null;
@@ -4262,7 +4267,7 @@ function leverSuspension(id) {
   logAction('LEVER_SUSPENSION', { detail: 'Suspension #' + id });
   renderSuspensions();
   updateCaisse();
-  showToast('✅ Suspension levée.');
+  showToast('Suspension levée.');
 }
 
 // ============================================================
@@ -4316,7 +4321,7 @@ function saveLitige() {
   closeModal('modal-litige');
   renderLitiges();
   updateCaisse(); // Les amendes sont des recettes
-  showToast('⚖️ Litige enregistré' + (litige.amende ? ' · Amende : ' + litige.amende.toLocaleString('fr-FR') + ' FCFA' : '') + '.');
+  showToast('Litige enregistré' + (litige.amende ? ' · Amende : ' + litige.amende.toLocaleString('fr-FR') + ' FCFA' : '') + '.');
 }
 
 function renderLitiges() {
@@ -4338,7 +4343,7 @@ function renderLitiges() {
       <td>${l.motif}<br>${l.plaignant?`<span style="font-size:11px;color:var(--muted)">Plaignant : ${l.plaignant}</span>`:''}</td>
       <td>${l.amende ? `<span class="badge red">${l.amende.toLocaleString('fr-FR')}</span>` : ''}</td>
       <td><span class="badge ${CLASSES[l.decision]||'gray'}">${LABELS[l.decision]||l.decision}</span></td>
-      <td>${l.pvName ? `<span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:12px;cursor:default" title="PV non téléchargeable">📄 ${l.pvName}</span>` : ''}</td>
+      <td>${l.pvName ? `<span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:12px;cursor:default" title="PV non téléchargeable"><i class="fa-solid fa-file"></i> ${l.pvName}</span>` : ''}</td>
       <td>${currentUser?.role==='juridique' ? `<button class="btn" style="font-size:11px;padding:4px 8px" onclick="editLitige('${l.id}')">Modifier</button>` : ''}</td>
     </tr>`).join('')
   : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Aucun litige déclaré</td></tr>';
@@ -4416,7 +4421,7 @@ function saveFinale() {
   closeModal('modal-finale');
   renderFinaleDisplay();
   updateCaisse();
-  showToast('🏆 Bilan finale enregistré !');
+  showToast('Bilan finale enregistré !');
 }
 
 function renderFinaleDisplay() {
@@ -4428,7 +4433,7 @@ function renderFinaleDisplay() {
   div.innerHTML = `
     <div class="card mb">
       <div style="background:var(--amber-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:14px">
-        🏆 FINALE · ${f.equipeA} vs ${f.equipeB}
+        <i class="fa-solid fa-trophy"></i> FINALE · ${f.equipeA} vs ${f.equipeB}
       </div>
       <div style="background:var(--amber-l);padding:6px 16px;text-align:center;font-size:12px;color:var(--amber-d)">
         ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
@@ -4506,7 +4511,7 @@ function saveLicence() {
   closeModal('modal-licence');
   renderLicencesTable();
   updateCaisse();
-  showToast('✅ Vente enregistrée pour ' + asc + ' · ' + (j*200+t*250+b*500).toLocaleString('fr-FR') + ' FCFA');
+  showToast('Vente enregistrée pour ' + asc + ' · ' + (j*200+t*250+b*500).toLocaleString('fr-FR') + ' FCFA');
 }
 
 function renderLicencesTable() {
@@ -4580,13 +4585,13 @@ function openDepenseDetail(id) {
 
   const BADGES = {
     en_attente: `<span class="badge amber">⏳ En attente de validation</span>`,
-    validee:    `<span class="badge green">✅ Validée — En attente de décaissement</span>`,
-    decaissee:  `<span class="badge blue">💰 Décaissée — En attente de confirmation</span>`,
-    recue:      `<span class="badge green">🤝 Reçue et clôturée</span>`,
-    rejetee:    `<span class="badge red">❌ Rejetée</span>`,
+    validee:    `<span class="badge green"><i class="fa-solid fa-check"></i> Validée — En attente de décaissement</span>`,
+    decaissee:  `<span class="badge blue"><i class="fa-solid fa-coins"></i> Décaissée — En attente de confirmation</span>`,
+    recue:      `<span class="badge green"><i class="fa-solid fa-handshake"></i> Reçue et clôturée</span>`,
+    rejetee:    `<span class="badge red"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
   };
 
-  const HIST_ICONS  = { creation:'📝', approbation_president:'✅', rejet:'❌', decaissement:'💰', reception:'🤝' };
+  const HIST_ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', approbation_president:'<i class="fa-solid fa-check"></i>', rejet:'<i class="fa-solid fa-xmark"></i>', decaissement:'<i class="fa-solid fa-coins"></i>', reception:'<i class="fa-solid fa-handshake"></i>' };
   const HIST_LABELS = {
     creation:              'Demande créée par',
     approbation_president: 'Validée par',
@@ -4652,14 +4657,14 @@ function openDepenseDetail(id) {
   const canDecaisser         = hasPermission('decaisser_depense');
   if (isD) {
     if (statut === 'en_attente' && canValidatePresident) {
-      actDiv.innerHTML += `<button class="btn primary" onclick="approveDepense('${d.id}');closeModal('modal-dep-detail')">✓ Valider</button>`;
-      actDiv.innerHTML += `<button class="btn danger"  onclick="closeModal('modal-dep-detail');rejectDepense('${d.id}')">✗ Rejeter</button>`;
+      actDiv.innerHTML += `<button class="btn primary" onclick="approveDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-check"></i> Valider</button>`;
+      actDiv.innerHTML += `<button class="btn danger"  onclick="closeModal('modal-dep-detail');rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
     }
     if (statut === 'validee' && canDecaisser) {
-      actDiv.innerHTML += `<button class="btn primary" style="background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}');closeModal('modal-dep-detail')">💰 Décaisser</button>`;
+      actDiv.innerHTML += `<button class="btn primary" style="background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
     }
     if (statut === 'decaissee' && d.createdBy === me) {
-      actDiv.innerHTML += `<button class="btn primary" style="background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}');closeModal('modal-dep-detail')">🤝 Confirmer réception</button>`;
+      actDiv.innerHTML += `<button class="btn primary" style="background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
     }
   }
 
@@ -4692,8 +4697,8 @@ function renderDepensesList() {
   const decaisseePendingCount = allDep.filter(d => d.type === 'depense' && d.statut === 'decaissee' && d.createdBy === me).length;
   const btnD = document.getElementById('df-decaissee');
   if (btnD) btnD.innerHTML = decaisseePendingCount
-    ? `💰 Décaissées <span style="background:var(--blue);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${decaisseePendingCount}</span>`
-    : '💰 Décaissées';
+    ? `<i class="fa-solid fa-coins"></i> Décaissées <span style="background:var(--blue);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${decaisseePendingCount}</span>`
+    : '<i class="fa-solid fa-coins"></i> Décaissées';
 
   // Appliquer le filtre
   let dep = allDep;
@@ -4718,18 +4723,18 @@ function renderDepensesList() {
     if (isD) {
       if (statut === 'validee') {
         const p = d.approvals?.president?.name || '?';
-        etatLine = `<div style="font-size:11px;color:var(--green-d);margin-top:3px">✅ Validée par <strong>${p}</strong> (Président) · En attente de décaissement</div>`;
+        etatLine = `<div style="font-size:11px;color:var(--green-d);margin-top:3px"><i class="fa-solid fa-check"></i> Validée par <strong>${p}</strong> (Président) · En attente de décaissement</div>`;
       } else if (statut === 'decaissee') {
         const dec = d.decaissement;
-        etatLine = `<div style="font-size:11px;color:var(--blue);margin-top:3px">💰 Décaissée par <strong>${dec?.name||'?'}</strong> · En attente de confirmation</div>`;
+        etatLine = `<div style="font-size:11px;color:var(--blue);margin-top:3px"><i class="fa-solid fa-coins"></i> Décaissée par <strong>${dec?.name||'?'}</strong> · En attente de confirmation</div>`;
       } else if (statut === 'recue') {
         const dec = d.decaissement;
         const rec = d.reception;
-        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px">🤝 Décaissé par <strong>${dec?.name||'?'}</strong> · Réception confirmée par <strong>${rec?.name||'?'}</strong></div>`;
+        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-handshake"></i> Décaissé par <strong>${dec?.name||'?'}</strong> · Réception confirmée par <strong>${rec?.name||'?'}</strong></div>`;
       } else if (statut === 'rejetee') {
         const by   = d.history?.slice().reverse().find(h => h.action === 'rejet');
         const raison = by?.raison ? ` — <em>"${by.raison}"</em>` : '';
-        etatLine = `<div style="font-size:11px;color:var(--red);margin-top:3px">❌ Rejetée par <strong>${by?.name||'?'}</strong>${raison}</div>`;
+        etatLine = `<div style="font-size:11px;color:var(--red);margin-top:3px"><i class="fa-solid fa-xmark"></i> Rejetée par <strong>${by?.name||'?'}</strong>${raison}</div>`;
       }
     }
 
@@ -4737,20 +4742,20 @@ function renderDepensesList() {
     let actionBtns = '';
     if (isD) {
       if (statut === 'en_attente' && canValidatePresident) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}')">✓ Valider</button>`;
-        actionBtns += `<button class="btn danger"  style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')">✗ Rejeter</button>`;
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}')"><i class="fa-solid fa-check"></i> Valider</button>`;
+        actionBtns += `<button class="btn danger"  style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
       }
       if (statut === 'validee' && canDecaisser) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}')">💰 Décaisser</button>`;
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
       }
       if (statut === 'decaissee' && d.createdBy === me) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}')">🤝 Confirmer réception</button>`;
+        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
       }
     }
 
     // Historique timeline
     const hist = d.history || [];
-    const HIST_ICONS  = { creation:'📝', approbation_president:'✅', rejet:'❌', decaissement:'💰', reception:'🤝' };
+    const HIST_ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', approbation_president:'<i class="fa-solid fa-check"></i>', rejet:'<i class="fa-solid fa-xmark"></i>', decaissement:'<i class="fa-solid fa-coins"></i>', reception:'<i class="fa-solid fa-handshake"></i>' };
     const HIST_LABELS = { creation:'Demande créée', approbation_president:'Validée (Président)', rejet:'Rejetée', decaissement:'Décaissement effectué', reception:'Réception confirmée' };
     const histRows = hist.map(h => {
       const dt    = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
@@ -4767,17 +4772,17 @@ function renderDepensesList() {
     // Badge statut
     const BADGES = {
       en_attente: `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`,
-      validee:    `<span class="badge green" style="font-size:10px">✅ Validée</span>`,
-      decaissee:  `<span class="badge blue"  style="font-size:10px">💰 Décaissée</span>`,
-      recue:      `<span class="badge green" style="font-size:10px">🤝 Reçue</span>`,
-      rejetee:    `<span class="badge red"   style="font-size:10px">❌ Rejetée</span>`,
+      validee:    `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Validée</span>`,
+      decaissee:  `<span class="badge blue"  style="font-size:10px"><i class="fa-solid fa-coins"></i> Décaissée</span>`,
+      recue:      `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-handshake"></i> Reçue</span>`,
+      rejetee:    `<span class="badge red"   style="font-size:10px"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
     };
     const statusBadge = isD ? (BADGES[statut] || '') : '';
 
     return `
     <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0;cursor:pointer" onclick="openDepenseDetail('${d.id}')">
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'💸':'💰'}</div>
+        <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'<i class="fa-solid fa-money-bill-wave"></i>':'<i class="fa-solid fa-coins"></i>'}</div>
         <div style="flex:1;min-width:0">
           <div class="tx-desc">${d.description||d.categorie}</div>
           <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -4788,7 +4793,7 @@ function renderDepensesList() {
         </div>
         <div style="text-align:right;flex-shrink:0;align-self:flex-start">
           <div class="tx-amount ${isD?'depense':'recette'}" style="margin:0">${isD?'–':'+'} ${fmt(d.montant)}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">📋 ${hist.length} étape${hist.length>1?'s':''}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-clipboard-list"></i> ${hist.length} étape${hist.length>1?'s':''}</div>
         </div>
       </div>
     </div>`;
@@ -4807,7 +4812,7 @@ function approveDepense(id) {
   d.history.push({ action: 'approbation_president', by: currentUser?.username, name: currentUser?.name, at: now });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
-  showToast('✅ Dépense validée.');
+  showToast('Dépense validée.');
   logAction('APPROVE_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
@@ -4821,7 +4826,7 @@ function rejectDepense(id) {
 
 function confirmRejectDepense() {
   const raison = document.getElementById('reject-dep-reason')?.value.trim();
-  if (!raison) { showToast('⚠️ Veuillez saisir la raison du rejet.'); return; }
+  if (!raison) { showToast('Veuillez saisir la raison du rejet.'); return; }
   const dep = _rawDepenses();
   const d   = dep.find(x => x.id === _rejectDepenseId);
   if (!d) return;
@@ -4831,7 +4836,7 @@ function confirmRejectDepense() {
   saveDepensesDiverses(dep);
   closeModal('modal-reject-dep');
   renderDepensesList(); updateCaisse(); renderBilan();
-  showToast('❌ Dépense rejetée.');
+  showToast('Dépense rejetée.');
   logAction('REJECT_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA · Raison: ' + raison });
 }
 
@@ -4846,7 +4851,7 @@ function decaisserDepense(id) {
   d.history.push({ action: 'decaissement', by: currentUser?.username, name: currentUser?.name, at: now });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
-  showToast('💰 Décaissement enregistré. Le demandeur doit confirmer la réception.');
+  showToast('Décaissement enregistré. Le demandeur doit confirmer la réception.');
   logAction('DECAISSER_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
@@ -4861,7 +4866,7 @@ function confirmerReceptionDepense(id) {
   d.history.push({ action: 'reception', by: currentUser?.username, name: currentUser?.name, at: now });
   saveDepensesDiverses(dep);
   renderDepensesList(); updateCaisse(); renderBilan();
-  showToast('🤝 Réception confirmée. Dépense clôturée.');
+  showToast('Réception confirmée. Dépense clôturée.');
   logAction('CONFIRMER_RECEPTION_DEPENSE', { detail: (d.description||d.categorie) + ' · ' + (d.montant||0).toLocaleString('fr-FR') + ' FCFA' });
 }
 
@@ -4886,12 +4891,12 @@ function saveOperation() {
   const date     = document.getElementById('tx-date')?.value || '';
   const desc     = document.getElementById('tx-desc')?.value.trim() || '';
 
-  if (!montant) { showToast('⚠️ Veuillez saisir un montant.'); return; }
-  if (!desc)    { showToast('⚠️ Veuillez décrire la dépense.'); return; }
+  if (!montant) { showToast('Veuillez saisir un montant.'); return; }
+  if (!desc)    { showToast('Veuillez décrire la dépense.'); return; }
 
   // Recettes réservées aux tresorier/admin
   if (type === 'recette' && !['superadmin','admin','tresorier'].includes(currentUser?.role)) {
-    showToast('⚠️ Seuls le Trésorier et le Président peuvent enregistrer une recette.'); return;
+    showToast('Seuls le Trésorier et le Président peuvent enregistrer une recette.'); return;
   }
 
   const dep = _rawDepenses();
@@ -4911,8 +4916,8 @@ function saveOperation() {
   renderDepensesList();
   updateCaisse();
   const msg = type === 'depense'
-    ? '✅ Demande soumise · En attente de validation par le Président.'
-    : '✅ Recette enregistrée · ' + montant.toLocaleString('fr-FR') + ' FCFA';
+    ? 'Demande soumise · En attente de validation par le Président.'
+    : 'Recette enregistrée · ' + montant.toLocaleString('fr-FR') + ' FCFA';
   showToast(msg);
 }
 
@@ -4976,7 +4981,7 @@ function renderBilan() {
     </div>
 
     <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--green-d);margin-bottom:10px">📥 RECETTES</div>
+      <div style="font-size:12px;font-weight:700;color:var(--green-d);margin-bottom:10px"><i class="fa-solid fa-file-import"></i> RECETTES</div>
       ${row('Solde de départ (report)', b.soldeDep, 'var(--blue)')}
       ${row('Journées de championnat ('+b.nbFiches+' fiches)', b.recJournees, 'var(--green-d)')}
       ${row('Finale', b.recFinale, 'var(--green-d)')}
@@ -4990,7 +4995,7 @@ function renderBilan() {
     </div>
 
     <div style="background:var(--red-l);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px">📤 DÉPENSES</div>
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px"><i class="fa-solid fa-file-export"></i> DÉPENSES</div>
       ${row('Journées de championnat', b.depJournees, 'var(--red)')}
       ${row('Finale', b.depFinale, 'var(--red)')}
       ${row('Dépenses diverses', b.depDiversTotal, 'var(--red)')}
@@ -5096,7 +5101,7 @@ function printBilan() {
   </div>
   <div class="hdr-right">
     <div class="logo-ring">
-      <span class="ico">⚽</span>
+      <span class="ico"><i class="fa-solid fa-futbol"></i></span>
       <span class="txt">ORGAM</span>
     </div>
     <div class="logo-tag">" LE RENOUVEAU DES NAVETANES "</div>
@@ -5114,7 +5119,7 @@ function printBilan() {
 
 <!-- RECETTES -->
 <div class="bloc bloc-rec">
-  <div class="bloc-label">📥 Recettes</div>
+  <div class="bloc-label"><i class="fa-solid fa-file-import"></i> Recettes</div>
   ${row('Solde de départ (report saison précédente)', b.soldeDep, '#185FA5')}
   ${row('Journées de championnat ('+b.nbFiches+' fiches)', b.recJournees, '#085041')}
   ${row('Finale', b.recFinale, '#085041')}
@@ -5129,7 +5134,7 @@ function printBilan() {
 
 <!-- DÉPENSES -->
 <div class="bloc bloc-dep">
-  <div class="bloc-label">📤 Dépenses</div>
+  <div class="bloc-label"><i class="fa-solid fa-file-export"></i> Dépenses</div>
   ${row('Journées de championnat', b.depJournees, '#A32D2D')}
   ${row('Finale', b.depFinale, '#A32D2D')}
   ${row('Dépenses diverses', b.depDiversTotal, '#A32D2D')}
@@ -5166,7 +5171,7 @@ function printBilan() {
 
 <!-- PIED DE PAGE -->
 <div class="footer">
-  ────────────────── ✦ ──────────────────<br>
+  ──────────────────────────────────────<br>
   <strong>Siège Social :</strong> <em>Collège René COLY, à côté de la Mairie de Bignona</em>
   &nbsp;·&nbsp;
   <strong>Contact :</strong> +221 77 418 97 75 (Président)
@@ -5182,7 +5187,7 @@ function printBilan() {
 
 function sendBilan() {
   closeModal('modal-send-bilan');
-  showToast('📤 Bilan marqué comme envoyé aux ASC & instances supérieures.');
+  showToast('Bilan marqué comme envoyé aux ASC & instances supérieures.');
 }
 
 // ============================================================
@@ -5244,8 +5249,8 @@ let _contribAdded = [];
 function addContribRow() {
   const sel = document.getElementById('fj-contrib-select');
   const asc = sel?.value;
-  if (!asc) { showToast('⚠️ Choisissez une ASC d\'abord.'); return; }
-  if (_contribAdded.includes(asc)) { showToast('⚠️ ' + asc + ' est déjà ajoutée.'); return; }
+  if (!asc) { showToast('Choisissez une ASC d\'abord.'); return; }
+  if (_contribAdded.includes(asc)) { showToast('' + asc + ' est déjà ajoutée.'); return; }
   _contribAdded.push(asc);
   const rowsDiv = document.getElementById('contrib-rows');
   if (!rowsDiv) return;
@@ -5256,7 +5261,7 @@ function addContribRow() {
     <span style="font-size:12px;flex:1;font-weight:500">${asc}</span>
     <input type="number" class="fj-contrib" data-equipe="${asc}" value="0" min="0"
       style="width:110px;font-size:12px;padding:5px 8px" oninput="updateFicheTotaux()">
-    <button type="button" class="btn danger" style="font-size:11px;padding:3px 8px" onclick="removeContribRow(this,'${asc}')">✕</button>`;
+    <button type="button" class="btn danger" style="font-size:11px;padding:3px 8px" onclick="removeContribRow(this,'${asc}')"><i class="fa-solid fa-xmark"></i></button>`;
   rowsDiv.appendChild(div);
   sel.value = '';
   updateFicheTotaux();
@@ -5294,7 +5299,7 @@ function validateFiche(id) {
   f.history.push({ action: 'validation', by: me, name: currentUser?.name || '?', poste: currentUser?.poste || '', at: now });
   saveFiches(allFiches);
   renderFichesList(); updateCaisse();
-  showToast('✅ Fiche validée par ' + currentUser?.name);
+  showToast('Fiche validée par ' + currentUser?.name);
   logAction('VALIDATE_FICHE', { detail: f.journee });
 }
 
@@ -5302,7 +5307,7 @@ function validateFiche(id) {
 function openFicheDetail(id) {
   const f = _rawFiches().find(x => x.id === id);
   if (!f) return;
-  const ICONS  = { creation:'📝', validation:'✅', modification:'✏️' };
+  const ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', validation:'<i class="fa-solid fa-check"></i>', modification:'<i class="fa-solid fa-pen"></i>' };
   const LABELS = { creation:'Fiche remplie par', validation:'Validée par', modification:'Modifiée par' };
   const hist   = f.history || [{ action:'creation', by: f.declaredByUsername||'', name: f.declaredBy||'?', poste:'', at: f.declaredAt||'' }];
   const rows   = hist.map((h, i) => {
@@ -5321,7 +5326,7 @@ function openFicheDetail(id) {
       </div>
     </div>`;
   }).join('');
-  document.getElementById('fiche-detail-title').textContent = '📋 ' + f.journee + (f.terrain ? ' · ' + f.terrain : '');
+  document.getElementById('fiche-detail-title').textContent = '' + f.journee + (f.terrain ? ' · ' + f.terrain : '');
   document.getElementById('fiche-detail-body').innerHTML = `<div style="padding:4px 0 14px">${rows}</div>`;
   openModal('modal-fiche-detail');
 }
@@ -5390,7 +5395,7 @@ function saveFicheEdit() {
   saveFiches(allFiches);
   closeModal('modal-fiche-edit');
   renderFichesList(); updateCaisse();
-  showToast('✅ Fiche modifiée — raison enregistrée.');
+  showToast('Fiche modifiée — raison enregistrée.');
   logAction('EDIT_FICHE', { detail: f.journee + ' · ' + reason });
 }
 
@@ -5469,7 +5474,7 @@ function renderCompMatches() {
     el.innerHTML = `
       <div class="card mb">
         <div class="card-header">
-          <span class="card-title">Poule ${p.toUpperCase()} · ${_currentComp === 'cadets' ? '🌟 Cadets' : '⚽ Seniors'}</span>
+          <span class="card-title">Poule ${p.toUpperCase()} · ${_currentComp === 'cadets' ? '<i class="fa-solid fa-star"></i> Cadets' : '<i class="fa-solid fa-futbol"></i> Seniors'}</span>
           <span class="badge green">${teams.length} équipes</span>
         </div>
         <div class="gap" style="padding:12px;gap:6px">
@@ -5494,7 +5499,7 @@ function _matchCardHtml(m, canLive) {
   else                          badgeHtml = `<span style="font-size:11px;color:var(--muted)">${m.date}</span>`;
   const liveBtn = canLive
     ? `<button class="btn" style="padding:4px 10px;font-size:11px;flex-shrink:0" onclick="openLiveMatch('${m.id}')">
-         ${m.statut === 'live' ? '🔴 En direct' : (isDone ? '✏️ Modifier' : '▶ Démarrer')}
+         ${m.statut === 'live' ? '<i class="fa-solid fa-circle-dot"></i> En direct' : (isDone ? '<i class="fa-solid fa-pen"></i> Modifier' : '▶ Démarrer')}
        </button>`
     : '';
   return `
@@ -5535,14 +5540,14 @@ function renderClassementSection() {
     const sorted = Object.entries(teams).sort(([,a],[,b]) =>
       b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp
     );
-    const medals = ['🥇','🥈','🥉'];
+    const medals = ['<span class="rank-medal gold">1</span>','<span class="rank-medal silver">2</span>','<span class="rank-medal bronze">3</span>'];
     const rows = sorted.map(([name, s], i) => {
       const diff = s.bp - s.bc;
       const db = diff > 0 ? `<span class="badge green">+${diff}</span>` : diff < 0 ? `<span class="badge red">${diff}</span>` : `<span class="badge gray">0</span>`;
       const cls = i < 3 ? `class="rank-${i+1}"` : '';
       return `<tr ${cls}><td>${medals[i]||i+1}</td><td>${i<2?`<strong>${name}</strong>`:name}</td><td>${s.j}</td><td>${s.g}</td><td>${s.n}</td><td>${s.p}</td><td>${s.bp}</td><td>${s.bc}</td><td>${db}</td><td><strong>${s.pts}</strong></td></tr>`;
     }).join('');
-    const compTitle = _currentComp === 'cadets' ? '🌟 Cadets' : '⚽ Seniors';
+    const compTitle = _currentComp === 'cadets' ? '<i class="fa-solid fa-star"></i> Cadets' : '<i class="fa-solid fa-futbol"></i> Seniors';
     el.innerHTML = `<div class="card"><div style="padding:10px 12px 0;font-size:12px;font-weight:700;color:var(--muted)">${compTitle} · Poule ${p.toUpperCase()}</div><div class="table-wrap"><table>
       <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>
@@ -5560,7 +5565,7 @@ function openLiveMatch(matchId) {
   const match = getMatchesData().find(m => m.id === matchId);
   if (!match) return;
   _liveMid = matchId;
-  const _compLabel = match.competition === 'cadets' ? '🌟 Cadets' : '⚽ Seniors';
+  const _compLabel = match.competition === 'cadets' ? '<i class="fa-solid fa-star"></i> Cadets' : '<i class="fa-solid fa-futbol"></i> Seniors';
   document.getElementById('live-modal-title').textContent = `${_compLabel} · Poule ${match.poule} · ${match.dom} vs ${match.ext}`;
   document.getElementById('live-dom-name').textContent  = match.dom;
   document.getElementById('live-ext-name').textContent  = match.ext;
@@ -5613,7 +5618,7 @@ function _liveRefreshUI(match) {
   if (s === 'upcoming')   { badge.innerHTML = '<span class="badge gray">À venir</span>'; timer.textContent = '--:--'; timer.className = 'live-timer'; }
   else if (s === 'live')     { badge.innerHTML = '<span class="live-badge">LIVE</span>'; timer.className = 'live-timer'; }
   else if (s === 'mi-temps') { badge.innerHTML = '<span class="badge amber">Mi-temps</span>'; timer.textContent = 'Mi-temps'; timer.className = 'live-timer halftime'; }
-  else if (s === 'termine')  { badge.innerHTML = canEditFinal ? '<span class="badge amber">✏️ Mode correction</span>' : '<span class="badge green">Terminé</span>'; timer.textContent = 'Terminé'; timer.className = 'live-timer ended'; }
+  else if (s === 'termine')  { badge.innerHTML = canEditFinal ? '<span class="badge amber"><i class="fa-solid fa-pen"></i> Mode correction</span>' : '<span class="badge green">Terminé</span>'; timer.textContent = 'Terminé'; timer.className = 'live-timer ended'; }
   // Boutons − correction : actifs dès que le match a démarré ou en mode correction
   const canMinus = s !== 'upcoming';
   // Boutons + correction : visibles seulement en mode correction post-match
@@ -5657,7 +5662,7 @@ function liveLoadPlayers(selectId, teamValue) {
   const prev = sel.value;
   sel.innerHTML = `<option value="">${isEmpty}</option>` +
     roster.map(p => {
-      const label = `#${p.id} — ${p.prenom} ${p.nom}` + (p.statut === 'Suspendu' ? ' ⛔' : '');
+      const label = `#${p.id} — ${p.prenom} ${p.nom}` + (p.statut === 'Suspendu' ? ' <i class="fa-solid fa-ban"></i>' : '');
       return `<option value="${p.id}|${p.prenom} ${p.nom}" ${p.statut==='Suspendu'?'disabled':''}>${label}</option>`;
     }).join('');
   if (prev) sel.value = prev;
@@ -5681,7 +5686,7 @@ function liveGoalEvent() {
   renderCompMatches();
   renderClassementSection();
   const tName = team === 'dom' ? match.dom : match.ext;
-  showToast('⚽ But — ' + tName + (pName ? ' · ' + pName : ''));
+  showToast('But — ' + tName + (pName ? ' · ' + pName : ''));
   logAction('LIVE_GOAL', { match: match.id, team, player: pName, score: `${match.score.dom}-${match.score.ext}` });
 }
 
@@ -5709,14 +5714,14 @@ function liveCard(type) {
   const team  = document.getElementById('live-card-team').value;
   const pVal  = document.getElementById('live-card-player').value;
   const [pId, pName] = pVal ? pVal.split('|') : ['',''];
-  if (!pVal) { showToast('⚠️ Sélectionner un joueur.'); return; }
+  if (!pVal) { showToast('Sélectionner un joueur.'); return; }
   const min = _liveGetMinute(match);
   match.events.push({ type:'carton', team, player: pName||'', id: pId||'', minute: min, detail: type });
   document.getElementById('live-card-player').value = '';
   saveMatchesData(matches);
   _liveRenderEvents(match);
   const tName = team === 'dom' ? match.dom : match.ext;
-  showToast((type === 'jaune' ? '🟨 Carton jaune' : '🟥 Carton rouge') + ' — ' + tName + ' · ' + pName);
+  showToast((type === 'jaune' ? 'Carton jaune' : 'Carton rouge') + ' — ' + tName + ' · ' + pName);
   logAction('LIVE_CARD', { match: match.id, team, type, player: pName, min });
 }
 
@@ -5724,11 +5729,11 @@ function liveSub() {
   if (!_liveMid) return;
   const matches = getMatchesData();
   const match   = matches.find(m => m.id === _liveMid);
-  if (!match || (match.statut !== 'live' && match.statut !== 'mi-temps')) { showToast('⚠️ Le match doit être en cours.'); return; }
+  if (!match || (match.statut !== 'live' && match.statut !== 'mi-temps')) { showToast('Le match doit être en cours.'); return; }
   const team   = document.getElementById('live-sub-team').value;
   const outVal = document.getElementById('live-sub-out').value;
   const inVal  = document.getElementById('live-sub-in').value;
-  if (!outVal || !inVal) { showToast('⚠️ Sélectionner les deux joueurs.'); return; }
+  if (!outVal || !inVal) { showToast('Sélectionner les deux joueurs.'); return; }
   const [outId, outName] = outVal.split('|');
   const [inId,  inName]  = inVal.split('|');
   const min = _liveGetMinute(match);
@@ -5738,7 +5743,7 @@ function liveSub() {
   saveMatchesData(matches);
   _liveRenderEvents(match);
   const tName = team === 'dom' ? match.dom : match.ext;
-  showToast('🔄 ' + tName + ' : ' + outName + ' ↩ → ↪ ' + inName);
+  showToast('' + tName + ' : ' + outName + ' ↩ → ↪ ' + inName);
   logAction('LIVE_SUB', { match: match.id, team, out: outName, in: inName, min });
 }
 
@@ -5794,13 +5799,13 @@ function _liveRenderEvents(match) {
     const tName = e.team === 'dom' ? match.dom : (e.team === 'ext' ? match.ext : '');
     let icon, desc;
     if (e.type === 'but') {
-      icon = '⚽';
+      icon = '<i class="fa-solid fa-futbol"></i>';
       desc = `<strong>${tName}</strong>${e.player ? ' · ' + e.player : ''}${e.detail === 'correction' ? ' <em style="color:var(--muted)">(correction)</em>' : ''}`;
     } else if (e.type === 'carton') {
-      icon = e.detail === 'rouge' ? '🟥' : '🟨';
+      icon = e.detail === 'rouge' ? '<span class="dot dot-r"></span>' : '<span class="dot dot-y"></span>';
       desc = `<strong>${tName}</strong> · ${e.player}`;
     } else if (e.type === 'remplacement') {
-      icon = '🔄';
+      icon = '<i class="fa-solid fa-arrows-rotate"></i>';
       desc = `<strong>${tName}</strong> : ↩ ${e.player} → ↪ ${e.playerIn}`;
     } else if (e.type === 'correction') {
       icon = '↩';
@@ -5854,7 +5859,7 @@ function _bootApp() {
     const banner = document.createElement('div');
     banner.id = 'fs-error-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:10px 16px;font-size:13px;font-weight:600;text-align:center';
-    banner.innerHTML = '⚠️ Synchronisation Firebase impossible — données locales uniquement. Superadmin : allez dans Dépenses et cliquez "☁️ Sync Firebase" après avoir corrigé les règles Firestore.';
+    banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Synchronisation Firebase impossible — données locales uniquement. Superadmin : allez dans Dépenses et cliquez "Forcer la synchronisation" après avoir corrigé les règles Firestore.';
     document.body.prepend(banner);
     console.error('[FS] FIREBASE INACCESSIBLE — vérifie les règles Firestore sur console.firebase.google.com → z5rb-a8286 → Firestore → Règles');
   }
@@ -5874,8 +5879,8 @@ initFirebase()
 <div id="modal-fiche-detail" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <span class="modal-title" id="fiche-detail-title">📋 Historique de la fiche</span>
-      <button class="close-btn" onclick="closeModal('modal-fiche-detail')">✕</button>
+      <span class="modal-title" id="fiche-detail-title"><i class="fa-solid fa-clipboard-list"></i> Historique de la fiche</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-detail')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="fiche-detail-body" style="max-height:60vh;overflow-y:auto"></div>
     <div style="display:flex;justify-content:flex-end;margin-top:14px">
@@ -5888,11 +5893,11 @@ initFirebase()
 <div id="modal-fiche-edit" class="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <span class="modal-title">✏️ Modifier la fiche</span>
-      <button class="close-btn" onclick="closeModal('modal-fiche-edit')">✕</button>
+      <span class="modal-title"><i class="fa-solid fa-pen"></i> Modifier la fiche</span>
+      <button class="close-btn" onclick="closeModal('modal-fiche-edit')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="background:var(--amber-l);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--amber-d)">
-      ⚠️ Cette fiche a déjà été validée. La raison de modification est obligatoire.
+      <i class="fa-solid fa-triangle-exclamation"></i> Cette fiche a déjà été validée. La raison de modification est obligatoire.
     </div>
     <div class="form-group">
       <label>Raison de la modification <span style="color:var(--red)">*</span></label>
@@ -5902,7 +5907,7 @@ initFirebase()
     <div class="error-msg" id="fiche-edit-error" style="margin-top:8px">La raison est obligatoire.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn" onclick="closeModal('modal-fiche-edit')">Annuler</button>
-      <button class="btn primary" onclick="saveFicheEdit()">✅ Enregistrer la modification</button>
+      <button class="btn primary" onclick="saveFicheEdit()"><i class="fa-solid fa-check"></i> Enregistrer la modification</button>
     </div>
   </div>
 </div>
@@ -5911,7 +5916,7 @@ initFirebase()
 <div style="text-align:center;padding:28px 16px 20px;margin-top:16px">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
   <span style="font-family:'Dancing Script',cursive;font-size:15px;color:var(--muted);letter-spacing:.02em">
-    Développé avec ❤️ par <strong style="color:var(--green-d)">Aliou Badara SAGNA</strong>
+    Développé avec passion par <strong style="color:var(--green-d)">Aliou Badara SAGNA</strong>
   </span>
 </div>
 
