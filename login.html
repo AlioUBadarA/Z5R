@@ -328,13 +328,26 @@ function _saveSession(username, profile) {
   } catch(e) {}
 }
 
-// ── Bootstrap migration for DEFAULT_USERS ────────────────────
-// These 3 accounts were never in Firestore (in-memory only).
-// Used once to create their Firebase Auth accounts; irrelevant after that.
+// ── Bootstrap migration ───────────────────────────────────────
+// Used once per account to create the Firebase Auth entry.
+// After first login the account exists in Firebase Auth — this list
+// is no longer consulted. Passwords here are already in git history.
 const _DEFAULT_USERS = {
-  'aliou.sagna':   { pwd: 'Zone5R!2025',  role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
-  'test.admin':    { pwd: 'TestAdmin25',  role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
-  'test.visiteur': { pwd: 'TestVisit25',  role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
+  'aliou.sagna':    { pwd: 'Zone5R!2025',  role: 'superadmin',    name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'test.admin':     { pwd: 'TestAdmin25',  role: 'superadmin',    name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
+  'test.visiteur':  { pwd: 'TestVisit25',  role: 'visiteur',      name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
+  'djiby.diatta':   { pwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',        poste: 'Président Zone 5R' },
+  'boubacar.camara':{ pwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',            poste: 'Secrétaire Général' },
+  'papis.sagna':    { pwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',        poste: 'SG Adjoint' },
+  'habib.sane':     { pwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',       poste: 'Trésorier Général' },
+  'agnile.dieng':   { pwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',           poste: 'Trésorier Adjoint' },
+  'ibrahima.dieme': { pwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',             poste: 'Pdt Commission Finances' },
+  'sidiky.doumbia': { pwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',             poste: 'Commission des Sports' },
+  'fode.goudiaby':  { pwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',              poste: 'Commission Juridique' },
+  'cheikh.diatta':  { pwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',           poste: 'Commission Communication' },
+  'aicha.mbaye':    { pwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',                poste: 'Commissaire aux Comptes' },
+  'idrissa.diallo': { pwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',             poste: 'Commissaire aux Comptes' },
+  'nouha.coly':     { pwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',                 poste: 'Secrétaire Administratif' },
 };
 
 // ── Firestore migration fallback ──────────────────────────────
