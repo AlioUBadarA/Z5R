@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion · Zone 5R ODGAM</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --green: #1D9E75; --green-l: #E1F5EE; --green-d: #085041;
+    --amber: #BA7517; --amber-d: #412402;
+    --red: #A32D2D; --red-l: #FCEBEB;
+    --text: #1a1a18; --muted: #6b6a65;
+    --radius: 14px; --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(145deg, #063528 0%, #0b5940 40%, #1D9E75 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .login-wrap {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* ── Branding ── */
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+  }
+  .brand-logo {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--amber);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 22px; color: var(--amber-d);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    letter-spacing: -0.5px;
+  }
+  .brand-name {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
+    text-align: center;
+  }
+  .brand-sub {
+    font-size: 13px; opacity: 0.75; text-align: center; margin-top: -8px;
+  }
+
+  /* ── Card ── */
+  .card {
+    width: 100%;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  }
+  .card-title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title i { color: var(--green); font-size: 15px; }
+  .card-sub {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap i {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+  .input-wrap input {
+    width: 100%; padding: 11px 12px 11px 36px;
+    border: 1.5px solid #d1d5db; border-radius: var(--radius-sm);
+    font-size: 14px; color: var(--text);
+    background: #fafafa;
+    outline: none; transition: border-color 0.15s, background 0.15s;
+  }
+  .input-wrap input:focus {
+    border-color: var(--green); background: #fff;
+    box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+  }
+  .pwd-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 14px; padding: 4px;
+    pointer-events: auto;
+  }
+  .pwd-toggle:hover { color: var(--green); }
+
+  /* ── Error ── */
+  .error-msg {
+    background: var(--red-l); color: var(--red);
+    border: 1px solid rgba(163,45,45,0.2);
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 500;
+    margin-bottom: 16px;
+    display: none; align-items: center; gap: 8px;
+  }
+  .error-msg.show { display: flex; }
+
+  /* ── Submit button ── */
+  .btn-login {
+    width: 100%; padding: 13px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+  .btn-login:hover:not(:disabled) { background: #168a64; }
+  .btn-login:active:not(:disabled) { transform: scale(0.98); }
+  .btn-login:disabled { opacity: 0.6; cursor: default; }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Back link ── */
+  .back-link {
+    color: rgba(255,255,255,0.65); font-size: 12px;
+    text-decoration: none; display: flex; align-items: center; gap: 6px;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: #fff; }
+
+  /* ── Footer ── */
+  .footer-note {
+    font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 24px 18px; }
+    .brand-logo { width: 60px; height: 60px; font-size: 18px; }
+    .brand-name { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- Branding -->
+  <div class="brand">
+    <div class="brand-logo">Z5R</div>
+    <div>
+      <div class="brand-name">Zone 5R ODGAM</div>
+      <div class="brand-sub">Navetanes Bignona 2025</div>
+    </div>
+  </div>
+
+  <!-- Formulaire -->
+  <div class="card">
+    <div class="card-title">
+      <i class="fa-solid fa-lock"></i>
+      Espace membres
+    </div>
+    <p class="card-sub">Connectez-vous pour accéder aux fonctions du bureau.</p>
+
+    <div class="error-msg" id="login-error">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span id="error-text">Identifiant ou mot de passe incorrect.</span>
+    </div>
+
+    <div class="form-group">
+      <label>Identifiant</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input type="text" id="login-username" placeholder="ex : aliou.sagna"
+               autocomplete="username" autofocus
+               onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <div class="input-wrap">
+        <i class="fa-solid fa-key"></i>
+        <input type="password" id="login-password" placeholder="••••••••"
+               autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="pwd-toggle" type="button" id="pwd-toggle" onclick="togglePwd()" tabindex="-1">
+          <i class="fa-solid fa-eye" id="pwd-icon"></i>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">
+      <div class="spinner" id="spinner"></div>
+      <i class="fa-solid fa-arrow-right-to-bracket" id="btn-icon"></i>
+      <span id="btn-text">Se connecter</span>
+    </button>
+  </div>
+
+  <!-- Retour visiteur -->
+  <a href="Zone-5R.html" class="back-link">
+    <i class="fa-solid fa-chevron-left"></i>
+    Accès visiteur
+  </a>
+
+  <div class="footer-note">Accès réservé au bureau Zone 5R · Identifiants fournis par l'administrateur</div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
+// ── Redirect if already logged in
+(function() {
+  try {
+    const s = localStorage.getItem('zone5r_session');
+    if (s && JSON.parse(s)) window.location.replace('Zone-5R.html');
+  } catch(e) {}
+})();
+
+// ── Firebase config (même projet que Zone-5R)
+firebase.initializeApp({
+  apiKey:            'AIzaSyAf4rYCVwRISriNK57kq6PxUCLAffxbRYo',
+  authDomain:        'z5rb-a8286.firebaseapp.com',
+  projectId:         'z5rb-a8286',
+  storageBucket:     'z5rb-a8286.firebasestorage.app',
+  messagingSenderId: '156095222819',
+  appId:             '1:156095222819:web:2e914f0377a76dfa5c4d96'
+});
+const _db  = firebase.firestore();
+const _COL = 'zone5r';
+
+// ── Données par défaut (identiques à Zone-5R.html)
+const DEFAULT_USERS = {
+  'aliou.sagna':   { password: 'Zone5R!2025', role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'test.admin':    { password: 'TestAdmin25', role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
+  'test.visiteur': { password: 'TestVisit25', role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
+};
+const BUREAU_MEMBERS = [
+  { username: 'djiby.diatta',    defaultPwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
+  { username: 'boubacar.camara', defaultPwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
+  { username: 'papis.sagna',     defaultPwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
+  { username: 'habib.sane',      defaultPwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',    poste: 'Trésorier Général'          },
+  { username: 'agnile.dieng',    defaultPwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',         poste: 'Trésorier Adjoint'          },
+  { username: 'ibrahima.dieme',  defaultPwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',           poste: 'Pdt Commission Finances'    },
+  { username: 'sidiky.doumbia',  defaultPwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',           poste: 'Commission des Sports'      },
+  { username: 'fode.goudiaby',   defaultPwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',           poste: 'Commission Juridique'       },
+  { username: 'cheikh.diatta',   defaultPwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',         poste: 'Commission Communication'   },
+  { username: 'aicha.mbaye',     defaultPwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',             poste: 'Commissaire aux Comptes'    },
+  { username: 'idrissa.diallo',  defaultPwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',           poste: 'Commissaire aux Comptes'    },
+  { username: 'nouha.coly',      defaultPwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',               poste: 'Secrétaire Administratif'   },
+];
+
+function getLocalUsers() {
+  try {
+    const stored = localStorage.getItem('zone5r_users');
+    const base   = JSON.parse(JSON.stringify(DEFAULT_USERS));
+    BUREAU_MEMBERS.forEach(m => {
+      if (!base[m.username]) base[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+    });
+    if (!stored) return base;
+    return Object.assign(base, JSON.parse(stored));
+  } catch(e) { return {}; }
+}
+
+async function loadUsersFromFirestore() {
+  try {
+    const snap = await _db.collection(_COL).doc('users').get();
+    if (snap.exists) {
+      const base = JSON.parse(JSON.stringify(DEFAULT_USERS));
+      BUREAU_MEMBERS.forEach(m => {
+        if (!base[m.username]) base[m.username] = { password: m.defaultPwd, role: m.role, name: m.name, poste: m.poste };
+      });
+      const merged = Object.assign(base, snap.data().data);
+      localStorage.setItem('zone5r_users', JSON.stringify(merged));
+      return merged;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function setLoading(on) {
+  const btn  = document.getElementById('btn-login');
+  const spin = document.getElementById('spinner');
+  const icon = document.getElementById('btn-icon');
+  const txt  = document.getElementById('btn-text');
+  btn.disabled = on;
+  spin.style.display = on ? 'block' : 'none';
+  icon.style.display = on ? 'none' : '';
+  txt.textContent    = on ? 'Vérification…' : 'Se connecter';
+}
+
+function showError(msg) {
+  const el = document.getElementById('login-error');
+  document.getElementById('error-text').textContent = msg || 'Identifiant ou mot de passe incorrect.';
+  el.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('login-error').classList.remove('show');
+}
+
+function togglePwd() {
+  const input = document.getElementById('login-password');
+  const icon  = document.getElementById('pwd-icon');
+  const show  = input.type === 'password';
+  input.type      = show ? 'text' : 'password';
+  icon.className  = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+}
+
+async function doLogin() {
+  hideError();
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+
+  if (!username || !password) {
+    showError('Veuillez renseigner votre identifiant et mot de passe.');
+    return;
+  }
+
+  let users = getLocalUsers();
+
+  // Identifiants incorrects localement → essai Firestore
+  if (!users[username] || users[username].password !== password) {
+    setLoading(true);
+    try { await firebase.auth().signInAnonymously(); } catch(e) {}
+    const fsUsers = await loadUsersFromFirestore();
+    if (fsUsers) users = fsUsers;
+    setLoading(false);
+  }
+
+  if (users[username] && users[username].password === password) {
+    const user = { username, ...users[username] };
+    localStorage.setItem('zone5r_session',   JSON.stringify(user));
+    localStorage.setItem('zone5r_login_toast', user.name.split(' ')[0]);
+    // Log de connexion (best-effort, sans bloquer la navigation)
+    try {
+      const log = JSON.parse(localStorage.getItem('zone5r_auditlog') || '[]');
+      log.unshift({ id: 'A' + Date.now(), ts: new Date().toISOString(),
+        username: user.username, name: user.name, role: user.role,
+        action: 'LOGIN', detail: 'Connexion depuis ' + (navigator.platform || 'inconnu') });
+      localStorage.setItem('zone5r_auditlog', JSON.stringify(log.slice(0, 1000)));
+    } catch(e) {}
+    window.location.replace('Zone-5R.html');
+  } else {
+    document.getElementById('login-password').value = '';
+    showError('Identifiant ou mot de passe incorrect.');
+  }
+}
+
+// Init Firebase auth silencieusement
+firebase.auth().signInAnonymously().catch(() => {});
+</script>
+</body>
+</html>

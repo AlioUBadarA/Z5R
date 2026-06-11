@@ -529,27 +529,6 @@
       </div>
     </div>
 
-    <!-- CONNEXION — espace membres -->
-    <div id="login-section" class="mb">
-      <div class="login-card">
-        <h3><i class="fa-solid fa-lock"></i> Espace membres</h3>
-        <p class="login-sub">Connectez-vous pour accéder aux fonctions réservées au bureau Zone 5R.</p>
-        <div class="error-msg" id="login-error">Identifiant ou mot de passe incorrect.</div>
-        <div class="form-group">
-          <label>Identifiant</label>
-          <input type="text" id="login-username" placeholder="Ex : aliou.sagna" autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label>Mot de passe</label>
-          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
-                 onkeydown="if(event.key==='Enter') doLogin()">
-        </div>
-        <button id="btn-login" class="btn primary" style="width:100%;justify-content:center" onclick="doLogin()">Se connecter</button>
-        <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">
-          Identifiants fournis par le Super Admin · Aliou B. S. SAGNA
-        </p>
-      </div>
-    </div>
   </div><!-- /visitor-view -->
 
   <!-- ── VUE MEMBRE ── -->
@@ -2396,18 +2375,14 @@ async function doLogin() {
 function doLogout() {
   logAction('LOGOUT', { detail: '' });
   localStorage.removeItem('zone5r_session');
-  window.location.reload();
+  window.location.replace('login.html');
 }
 
 function toggleAuth() {
   if (currentUser) {
     doLogout();
   } else {
-    showSection('dashboard');
-    setTimeout(() => {
-      const el = document.getElementById('login-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 80);
+    window.location.href = 'login.html';
   }
 }
 
