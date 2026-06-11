@@ -2375,6 +2375,7 @@ async function doLogin() {
 function doLogout() {
   logAction('LOGOUT', { detail: '' });
   localStorage.removeItem('zone5r_session');
+  sessionStorage.removeItem('z5r_visitor');
   window.location.replace('login.html');
 }
 
@@ -5838,6 +5839,11 @@ function _bootApp() {
     document.body.prepend(banner);
     console.error('[FS] FIREBASE INACCESSIBLE — vérifie les règles Firestore sur console.firebase.google.com → z5rb-a8286 → Firestore → Règles');
   }
+}
+
+// Redirection vers login.html si non connecté et pas en mode visiteur explicite
+if (!currentUser && !sessionStorage.getItem('z5r_visitor')) {
+  window.location.replace('login.html');
 }
 
 updateUI(); // session déjà en localStorage — affiche immédiatement la bonne vue sans attendre Firebase
