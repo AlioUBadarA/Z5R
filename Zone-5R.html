@@ -5841,11 +5841,6 @@ function _bootApp() {
   }
 }
 
-// Redirection vers login.html si non connecté et pas en mode visiteur explicite
-if (!currentUser && !sessionStorage.getItem('z5r_visitor')) {
-  window.location.replace('login.html');
-}
-
 updateUI(); // session déjà en localStorage — affiche immédiatement la bonne vue sans attendre Firebase
 
 initFirebase()
