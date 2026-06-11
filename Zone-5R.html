@@ -5027,10 +5027,9 @@ function printBilan() {
   .hdr-left{font-size:10.5px;line-height:1.55}
   .hdr-left .zone{font-size:17px;font-weight:900;letter-spacing:.02em}
   .hdr-right{text-align:center}
-  .logo-ring{width:68px;height:68px;border-radius:50%;border:3px solid #1D9E75;display:flex;
-    flex-direction:column;align-items:center;justify-content:center;gap:1px}
-  .logo-ring .ico{font-size:22px;line-height:1}
-  .logo-ring .txt{font-size:9px;font-weight:900;color:#085041;letter-spacing:.06em}
+  .logo-ring{width:68px;height:68px;border-radius:50%;border:3px solid #1D9E75;
+    overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff}
+  .logo-ring img{width:145%;height:145%;object-fit:contain;transform:translateX(-5px)}
   .logo-tag{font-size:8.5px;font-style:italic;color:#333;margin-top:3px;max-width:90px}
   .sep{border:none;border-top:2px solid #1D9E75;margin:5px 0 8px}
   /* ── TITRE ── */
@@ -5078,8 +5077,7 @@ function printBilan() {
   </div>
   <div class="hdr-right">
     <div class="logo-ring">
-      <span class="ico"><i class="fa-solid fa-futbol"></i></span>
-      <span class="txt">ORGAM</span>
+      <img src="assets/logo.png" alt="ORGAM">
     </div>
     <div class="logo-tag">" LE RENOUVEAU DES NAVETANES "</div>
   </div>
