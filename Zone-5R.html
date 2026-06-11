@@ -25,9 +25,10 @@
   header { background: var(--green-d); color: #fff; padding: 0 16px; display: flex;
     align-items: center; gap: 12px; height: 56px; position: sticky; top: 0; z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-  .logo-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--amber);
-    display: flex; align-items: center; justify-content: center; font-weight: 700;
-    font-size: 13px; color: var(--amber-d); flex-shrink: 0; }
+  .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    overflow: hidden; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+  .logo-circle img { width: 100%; height: 100%; object-fit: contain; }
   .header-title { flex: 1; }
   .header-title h1 { font-size: 15px; font-weight: 600; }
   .header-title p { font-size: 11px; opacity: 0.75; }
@@ -312,7 +313,7 @@
      HEADER
      ============================== -->
 <header>
-  <div class="logo-circle">5R</div>
+  <div class="logo-circle"><img src="assets/logo.png" alt="Zone 5R"></div>
   <div class="header-title">
     <h1>Zone 5R ODGAM</h1>
     <p id="header-subtitle">Le Renouveau des Navetanes · Bignona</p>
