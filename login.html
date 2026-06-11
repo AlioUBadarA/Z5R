@@ -328,6 +328,15 @@ function _saveSession(username, profile) {
   } catch(e) {}
 }
 
+// ── Bootstrap migration for DEFAULT_USERS ────────────────────
+// These 3 accounts were never in Firestore (in-memory only).
+// Used once to create their Firebase Auth accounts; irrelevant after that.
+const _DEFAULT_USERS = {
+  'aliou.sagna':   { pwd: 'Zone5R!2025',  role: 'superadmin', name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
+  'test.admin':    { pwd: 'TestAdmin25',  role: 'superadmin', name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
+  'test.visiteur': { pwd: 'TestVisit25',  role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
+};
+
 // ── Firestore migration fallback ──────────────────────────────
 // Returns profile if username/password match a Firestore record that
 // still has a temporary password field (set by admin during reset).
@@ -399,7 +408,7 @@ async function doLogin() {
     }
   }
 
-  // 2. Firestore migration fallback (for accounts not yet in Firebase Auth)
+  // 2. Firestore migration fallback (for bureau accounts not yet in Firebase Auth)
   const profile = await _tryFirestoreFallback(username, password);
   if (profile) {
     const migrated = await _migrateToFirebase(username, password);
@@ -415,7 +424,24 @@ async function doLogin() {
     return;
   }
 
-  // 3. Invalid credentials
+  // 3. Bootstrap fallback for DEFAULT_USERS (first-login migration to Firebase Auth)
+  const bootstrap = _DEFAULT_USERS[username];
+  if (bootstrap && bootstrap.pwd === password) {
+    await _migrateToFirebase(username, password);
+    try {
+      await firebase.auth().signInWithEmailAndPassword(username + _AUTH_SUFFIX, password);
+    } catch(e) {}
+    const stored = localStorage.getItem('zone5r_users');
+    const profiles = stored ? JSON.parse(stored) : {};
+    const p = profiles[username] || { role: bootstrap.role, name: bootstrap.name, poste: bootstrap.poste };
+    _saveSession(username, p);
+    _loginAttempts = 0;
+    setLoading(false);
+    window.location.replace('Zone-5R.html');
+    return;
+  }
+
+  // 4. Invalid credentials
   setLoading(false);
   document.getElementById('login-password').value = '';
   _loginAttempts++;
