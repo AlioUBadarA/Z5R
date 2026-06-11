@@ -338,7 +338,32 @@ function togglePwd() {
   icon.className  = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
 }
 
+// Protection brute-force — max 10 tentatives par session, délai croissant
+let _loginAttempts = 0;
+let _loginLocked   = false;
+
+function _lockLogin(seconds) {
+  _loginLocked = true;
+  const btn = document.getElementById('btn-login');
+  const txt = document.getElementById('btn-text');
+  let remaining = seconds;
+  txt.textContent = `Réessayer dans ${remaining}s`;
+  btn.disabled = true;
+  const iv = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(iv);
+      _loginLocked = false;
+      btn.disabled = false;
+      txt.textContent = 'Se connecter';
+    } else {
+      txt.textContent = `Réessayer dans ${remaining}s`;
+    }
+  }, 1000);
+}
+
 async function doLogin() {
+  if (_loginLocked) return;
   hideError();
   const username = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
@@ -360,10 +385,10 @@ async function doLogin() {
   }
 
   if (users[username] && users[username].password === password) {
+    _loginAttempts = 0;
     const user = { username, ...users[username] };
     localStorage.setItem('zone5r_session',   JSON.stringify(user));
     localStorage.setItem('zone5r_login_toast', user.name.split(' ')[0]);
-    // Log de connexion (best-effort, sans bloquer la navigation)
     try {
       const log = JSON.parse(localStorage.getItem('zone5r_auditlog') || '[]');
       log.unshift({ id: 'A' + Date.now(), ts: new Date().toISOString(),
@@ -373,8 +398,16 @@ async function doLogin() {
     } catch(e) {}
     window.location.replace('Zone-5R.html');
   } else {
+    _loginAttempts++;
     document.getElementById('login-password').value = '';
-    showError('Identifiant ou mot de passe incorrect.');
+    if (_loginAttempts >= 10) {
+      showError('Trop de tentatives. Veuillez contacter l\'administrateur.');
+      _lockLogin(60);
+    } else {
+      const delay = Math.min(_loginAttempts * 3, 15);
+      showError('Identifiant ou mot de passe incorrect.' + (_loginAttempts >= 3 ? ` (${_loginAttempts} tentatives)` : ''));
+      if (_loginAttempts >= 3) _lockLogin(delay);
+    }
   }
 }
 
