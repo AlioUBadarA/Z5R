@@ -1932,17 +1932,37 @@
           <option value="6">6 poules</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Mode de répartition</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px">
+          <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer">
+            <input type="radio" name="tirage-mode" value="auto" checked> <i class="fa-solid fa-dice"></i> Tirage au sort automatique
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer">
+            <input type="radio" name="tirage-mode" value="manuel"> <i class="fa-solid fa-hand-pointer"></i> Répartition manuelle
+          </label>
+        </div>
+      </div>
       <div class="alert info" id="tirage-equipes-info" style="margin-bottom:16px">Chargement des équipes…</div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn" onclick="closeModal('modal-tirage')">Annuler</button>
-        <button class="btn primary" onclick="doTirage()"><i class="fa-solid fa-dice"></i> Tirer au sort</button>
+        <button class="btn primary" onclick="startTirage()"><i class="fa-solid fa-arrow-right"></i> Continuer</button>
+      </div>
+    </div>
+    <div id="tirage-etape-manuel" style="display:none">
+      <div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-hand-pointer"></i> Attribuez une poule à chaque équipe de la saison.</div>
+      <div id="tirage-manuel-list" style="max-height:320px;overflow-y:auto;margin-bottom:10px"></div>
+      <div id="tirage-manuel-count" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="backToTirageEtape1()"><i class="fa-solid fa-arrow-left"></i> Retour</button>
+        <button class="btn primary" onclick="validerTirageManuel()"><i class="fa-solid fa-check"></i> Valider la répartition</button>
       </div>
     </div>
     <div id="tirage-etape-2" style="display:none">
-      <div class="alert success" style="margin-bottom:16px"><i class="fa-solid fa-dice"></i> Tirage effectué ! Vérifiez les poules ci-dessous.</div>
+      <div class="alert success" style="margin-bottom:16px" id="tirage-etape-2-msg"><i class="fa-solid fa-dice"></i> Tirage effectué ! Vérifiez les poules ci-dessous.</div>
       <div id="tirage-result"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button class="btn" onclick="doTirage()"><i class="fa-solid fa-arrows-rotate"></i> Retirer</button>
+        <button class="btn" id="btn-retirer" onclick="doTirage()"><i class="fa-solid fa-arrows-rotate"></i> Retirer</button>
         <button class="btn primary" onclick="confirmTirage()"><i class="fa-solid fa-check"></i> Confirmer le tirage</button>
       </div>
     </div>
@@ -3819,8 +3839,23 @@ function openTirageModal() {
   const info = document.getElementById('tirage-equipes-info');
   if (info) info.textContent = saison.equipes.length + ' équipes à répartir · ' + saison.nom;
   document.getElementById('tirage-etape-1').style.display = 'block';
+  document.getElementById('tirage-etape-manuel').style.display = 'none';
   document.getElementById('tirage-etape-2').style.display = 'none';
+  const radioAuto = document.querySelector('input[name="tirage-mode"][value="auto"]');
+  if (radioAuto) radioAuto.checked = true;
   pendingTirage = null;
+}
+
+function startTirage() {
+  const mode = document.querySelector('input[name="tirage-mode"]:checked');
+  if (mode && mode.value === 'manuel') openTirageManuel();
+  else doTirage();
+}
+
+function backToTirageEtape1() {
+  document.getElementById('tirage-etape-manuel').style.display = 'none';
+  document.getElementById('tirage-etape-2').style.display = 'none';
+  document.getElementById('tirage-etape-1').style.display = 'block';
 }
 
 function doTirage() {
@@ -3838,8 +3873,11 @@ function doTirage() {
   });
 
   pendingTirage = { poules };
+  renderTirageResult(poules);
+  showTirageEtape2('auto');
+}
 
-  // Afficher le résultat
+function renderTirageResult(poules) {
   const resultDiv = document.getElementById('tirage-result');
   resultDiv.innerHTML = Object.entries(poules).map(([lettre, teams]) => `
     <div style="margin-bottom:10px">
@@ -3851,9 +3889,94 @@ function doTirage() {
       </div>
     </div>
   `).join('');
+}
+
+function showTirageEtape2(mode) {
+  const msg = document.getElementById('tirage-etape-2-msg');
+  const btn = document.getElementById('btn-retirer');
+  if (mode === 'manuel') {
+    msg.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> Répartition manuelle prête ! Vérifiez les poules ci-dessous.';
+    btn.innerHTML = '<i class="fa-solid fa-pen"></i> Modifier';
+    btn.onclick = function() {
+      document.getElementById('tirage-etape-2').style.display = 'none';
+      document.getElementById('tirage-etape-manuel').style.display = 'block';
+    };
+  } else {
+    msg.innerHTML = '<i class="fa-solid fa-dice"></i> Tirage effectué ! Vérifiez les poules ci-dessous.';
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Retirer';
+    btn.onclick = doTirage;
+  }
+  document.getElementById('tirage-etape-1').style.display = 'none';
+  document.getElementById('tirage-etape-manuel').style.display = 'none';
+  document.getElementById('tirage-etape-2').style.display = 'block';
+}
+
+function openTirageManuel() {
+  const saison = getSaison();
+  if (!saison) return;
+  const nbPoules = parseInt(document.getElementById('nb-poules').value);
+  const lettres  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, nbPoules);
+
+  // Pré-remplir si une répartition est déjà en cours (retour depuis l'étape 2)
+  const previous = {};
+  if (pendingTirage) {
+    Object.entries(pendingTirage.poules).forEach(([l, teams]) => teams.forEach(t => previous[t] = l));
+  }
+
+  const list = document.getElementById('tirage-manuel-list');
+  list.innerHTML = saison.equipes.map(eq => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px solid var(--gray-l)">
+      <span style="font-size:13px;font-weight:600">${eq}</span>
+      <select data-equipe="${eq}" onchange="updateTirageManuelCount()" style="width:auto;min-width:120px">
+        <option value="">— Poule —</option>
+        ${lettres.map(l => `<option value="${l}" ${previous[eq] === l ? 'selected' : ''}>Poule ${l}</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
 
   document.getElementById('tirage-etape-1').style.display = 'none';
-  document.getElementById('tirage-etape-2').style.display = 'block';
+  document.getElementById('tirage-etape-2').style.display = 'none';
+  document.getElementById('tirage-etape-manuel').style.display = 'block';
+  updateTirageManuelCount();
+}
+
+function updateTirageManuelCount() {
+  const sels = Array.from(document.querySelectorAll('#tirage-manuel-list select'));
+  const counts = {};
+  let sansPoule = 0;
+  sels.forEach(s => { if (s.value) counts[s.value] = (counts[s.value] || 0) + 1; else sansPoule++; });
+  const parts = Object.keys(counts).sort().map(l => 'Poule ' + l + ' : ' + counts[l]);
+  document.getElementById('tirage-manuel-count').textContent =
+    (parts.length ? parts.join(' · ') : 'Aucune équipe attribuée') +
+    (sansPoule ? ' · ' + sansPoule + ' équipe(s) sans poule' : ' · toutes les équipes sont attribuées');
+}
+
+function validerTirageManuel() {
+  const nbPoules = parseInt(document.getElementById('nb-poules').value);
+  const lettres  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, nbPoules);
+  const sels = Array.from(document.querySelectorAll('#tirage-manuel-list select'));
+
+  const poules = {};
+  lettres.forEach(l => poules[l] = []);
+  const sansPoule = [];
+  sels.forEach(s => {
+    if (!s.value) { sansPoule.push(s.dataset.equipe); return; }
+    poules[s.value].push(s.dataset.equipe);
+  });
+
+  if (sansPoule.length) {
+    showToast('Attribuez une poule à toutes les équipes (' + sansPoule.length + ' restante(s)).');
+    return;
+  }
+  const tropPetites = lettres.filter(l => poules[l].length < 2);
+  if (tropPetites.length) {
+    showToast('Chaque poule doit compter au moins 2 équipes (Poule ' + tropPetites.join(', Poule ') + ').');
+    return;
+  }
+
+  pendingTirage = { poules };
+  renderTirageResult(poules);
+  showTirageEtape2('manuel');
 }
 
 function confirmTirage() {
