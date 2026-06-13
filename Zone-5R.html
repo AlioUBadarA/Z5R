@@ -3399,24 +3399,30 @@ function renderDashboard() {
   const susp          = getSuspensions();
   const litEnCours    = getLitiges().filter(l => l.decision === 'en_cours').length;
 
-  // Statut lisible
+  // Statut lisible + étape de la compétition
   let statusText, statusBadge;
   if (!saison) {
     statusText  = 'Aucune saison en cours';
     statusBadge = '<span class="badge gray">Aucune saison</span>';
   } else if (saison.active) {
     if (!isStarted) {
-      statusText  = 'Démarrage le ' + dateFR(saison.date);
+      statusText  = 'À venir · Démarrage le ' + dateFR(saison.date);
       statusBadge = '<span class="badge amber">À venir</span>';
+    } else if (saison.eliminatoireGenere) {
+      statusText  = 'En cours · Phase éliminatoire';
+      statusBadge = '<span class="badge green">En cours</span>';
     } else if (saison.declaredOpen) {
       statusText  = 'En cours · Phase de poules';
       statusBadge = '<span class="badge green">En cours</span>';
+    } else if (saison.tirageDone) {
+      statusText  = 'En préparation · Tirage effectué';
+      statusBadge = '<span class="badge amber">En préparation</span>';
     } else {
-      statusText  = 'Saison en préparation';
+      statusText  = 'En préparation · Tirage à venir';
       statusBadge = '<span class="badge amber">En préparation</span>';
     }
   } else {
-    statusText  = 'Saison clôturée';
+    statusText  = 'Clôturée';
     statusBadge = '<span class="badge gray">Clôturée</span>';
   }
 
@@ -3425,7 +3431,9 @@ function renderDashboard() {
   const heroTitle = document.getElementById('dashboard-hero-title');
   const heroSub   = document.getElementById('dashboard-hero-sub');
   if (heroTitle) heroTitle.textContent = saison ? saison.nom : 'Zone 5R · Navetanes Bignona';
-  if (heroSub)   heroSub.textContent   = 'Zone 5R ODGAM · ' + (saison ? statusText : 'Bignona');
+  if (heroSub)   heroSub.textContent   = saison
+    ? 'Zone 5R / ODGAM de Bignona · ' + statusText
+    : 'Zone 5R / ODGAM de Bignona';
 
   // Stats visiteur
   const dashStats = document.getElementById('dashboard-stats');
