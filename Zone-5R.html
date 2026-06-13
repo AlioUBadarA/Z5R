@@ -3399,8 +3399,10 @@ function renderDashboard() {
 
   // Données filtrées sur la saison courante
   const allMatches    = getMatchesData().filter(m => !sid || (m.saisonId||'default') === sid);
-  const nbJoues       = allMatches.filter(m => m.statut === 'termine').length;
-  const nbTotal       = allMatches.length;
+  // Préférer saison.matchs pour les totaux (calendrier du tirage)
+  const _sm           = saison?.matchs || [];
+  const nbTotal       = _sm.length || allMatches.length;
+  const nbJoues       = _sm.length ? _sm.filter(m => m.joue).length : allMatches.filter(m => m.statut === 'termine').length;
   const fichesValidees = getFiches().filter(f => f.statut === 'validee');
   const totalFiches   = fichesValidees.reduce((s,f) => s+(f.totalRecettes||0), 0);
   const totalLicences = getLicences().reduce((s,l) => s+(l.total||0), 0);
@@ -3446,10 +3448,11 @@ function renderDashboard() {
       <div class="stat blue"><div class="stat-label">Saison</div><div class="stat-value">${saison ? new Date(saison.date).getFullYear() : '–'}</div><div class="stat-sub">${saison?.active ? 'Active' : (saison ? 'Clôturée' : '–')}</div></div>`;
   }
 
-  // Matchs visiteur
+  // Matchs visiteur (depuis saison.matchs — calendrier du tirage)
   const dashMatches = document.getElementById('dashboard-matches-card');
   if (dashMatches) {
-    if (!saison || nbTotal === 0) {
+    const sMatchsV = saison?.matchs || [];
+    if (!saison || !sMatchsV.length) {
       const msg = !saison ? 'Aucune saison en cours.' :
         !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
         saison.tirageDone ? 'Le calendrier des matchs est en cours de préparation.' :
@@ -3458,30 +3461,33 @@ function renderDashboard() {
         <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">
           <i class="fa-solid fa-calendar-plus" style="font-size:28px;margin-bottom:10px;display:block"></i>${msg}</div></div>`;
     } else {
-      const shown = [...allMatches]
-        .sort((a,b) => (b.statut==='termine'?1:0)-(a.statut==='termine'?1:0))
-        .slice(0,4);
+      const pending = sMatchsV.filter(m => !m.joue).map((m,_,arr) => ({ ...m, _idx: sMatchsV.indexOf(m) }))
+        .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; });
+      const shown = pending.slice(0, 4);
       const matchHtml = shown.map(m => {
-        const scoreHtml = m.statut==='termine'
-          ? `<div class="score-box">${m.score?.dom??0}</div><div class="match-vs">–</div><div class="score-box">${m.score?.ext??0}</div>`
-          : `<div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>`;
-        const statusHtml = m.statut==='termine'
-          ? `<span class="badge green">Joué</span>`
-          : m.statut==='live'
-          ? `<span class="badge red live-badge"><span></span> EN DIRECT</span>`
-          : `<div style="font-size:11px;color:var(--muted)">${m.date||'À programmer'}</div>`;
-        return `<div class="match-card">
+        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
+        const heureStr = m.heure ? ' · ' + m.heure : '';
+        const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px;display:block;margin-bottom:2px">REPORTÉ</span>` : '';
+        const dateDisplay = dateStr
+          ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
+          : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
+        const reportInfo = m.isReported && m.reportRaison
+          ? `<div style="font-size:11px;color:var(--amber-d);margin-top:2px"><i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison)}</div>` : '';
+        return `<div class="match-card" style="flex-wrap:wrap;row-gap:2px">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
           <div class="match-team">${esc(m.dom)}</div>
-          <div class="match-score">${scoreHtml}</div>
+          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
           <div class="match-team right">${esc(m.ext)}</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule ${(m.poule||'').toUpperCase()}</div>${statusHtml}
-          </div></div>`;
+          <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
+          ${reportInfo ? `<div style="width:100%;padding-left:58px">${reportInfo}</div>` : ''}
+        </div>`;
       }).join('');
+      const total = sMatchsV.length;
+      const joues = sMatchsV.filter(m => m.joue).length;
       dashMatches.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title">Matchs · À venir &amp; Récents</span>
+        <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Programme des matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${joues}/${total} joués</span></span>
           <button class="btn" onclick="showSection('competition')">Voir tout</button></div>
-        <div class="gap" style="padding:8px;gap:6px">${matchHtml}</div></div>`;
+        <div style="padding:8px;display:flex;flex-direction:column;gap:6px">${matchHtml}</div></div>`;
     }
   }
 
@@ -3570,7 +3576,9 @@ function renderDashboard() {
 
   const memberMatchCard = document.getElementById('member-matches-card');
   if (memberMatchCard) {
-    if (!saison || nbTotal === 0) {
+    const sMatchs = saison?.matchs || [];
+    const canEdit = hasPermission('declare_saison');
+    if (!saison || !sMatchs.length) {
       const msg = !saison ? 'Aucune saison en cours.' :
         !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
         saison.tirageDone ? 'Le calendrier est en cours de préparation.' :
@@ -3579,19 +3587,48 @@ function renderDashboard() {
         <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
         <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">${msg}</div></div>`;
     } else {
-      const upcoming = allMatches.filter(m => m.statut!=='termine').slice(0,3);
-      const upHtml = upcoming.length ? upcoming.map(m => `
-        <div class="match-card">
+      const prochains = sMatchs
+        .map((m,i) => ({ ...m, _idx: i }))
+        .filter(m => !m.joue)
+        .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; })
+        .slice(0, 5);
+      const upHtml = prochains.length ? prochains.map(m => {
+        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : null;
+        const heureStr = m.heure ? ' · ' + m.heure : '';
+        const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px"><i class="fa-solid fa-triangle-exclamation"></i> REPORTÉ</span>` : '';
+        const dateDisplay = dateStr
+          ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
+          : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
+        const reportInfo = m.isReported
+          ? `<div style="width:100%;padding-left:58px;font-size:11px;color:var(--amber-d);margin-top:3px">
+               <i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison||'')}
+               ${m.reportedFrom ? ' &nbsp;·&nbsp; <span style="text-decoration:line-through;opacity:0.7">' + new Date(m.reportedFrom).toLocaleDateString('fr-FR') + '</span>' : ''}
+             </div>` : '';
+        const adminBtns = canEdit
+          ? `<div style="width:100%;padding-left:58px;display:flex;gap:6px;margin-top:5px">
+               <button class="btn" style="font-size:10px;padding:3px 10px" onclick="fixerDateMatch(${m._idx})">
+                 <i class="fa-solid fa-calendar-days"></i> ${dateStr ? 'Modifier date' : 'Fixer date'}
+               </button>
+               <button class="btn" style="font-size:10px;padding:3px 10px;background:var(--amber-l);color:var(--amber-d);border-color:var(--amber-l)" onclick="reporterMatch(${m._idx})">
+                 <i class="fa-solid fa-rotate-left"></i> Reporter
+               </button>
+             </div>` : '';
+        return `<div class="match-card" style="flex-wrap:wrap;row-gap:3px;align-items:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
           <div class="match-team">${esc(m.dom)}</div>
           <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
           <div class="match-team right">${esc(m.ext)}</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule ${(m.poule||'').toUpperCase()}</div>
-            <div style="font-size:11px;color:var(--muted)">${m.date||'À programmer'}</div>
-          </div></div>`).join('')
+          <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
+          ${reportInfo}${adminBtns}
+        </div>`;
+      }).join('')
         : '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px">Tous les matchs sont joués.</div>';
+      const jouesCount = sMatchs.filter(m => m.joue).length;
       memberMatchCard.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+        <div class="card-header">
+          <span class="card-title">Prochains matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${jouesCount}/${sMatchs.length} joués</span></span>
+          <button class="btn" onclick="showSection('competition')">Voir tout</button>
+        </div>
         <div style="padding:8px"><div class="gap" style="gap:6px;padding:8px">${upHtml}</div></div></div>`;
     }
   }
@@ -5884,6 +5921,90 @@ function calculeClassementPoule(poule, comp, sid) {
     .sort(([,a],[,b]) => b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp)
     .map(([name, stats]) => ({ name, poule, ...stats }));
 }
+
+// ── GESTION DES DATES DE MATCHS (calendrier tirage) ─────────
+
+function fixerDateMatch(idx) {
+  if (!hasPermission('declare_saison')) return;
+  const saison = getSelectedSaison();
+  if (!saison?.matchs?.[idx]) return;
+  const m = saison.matchs[idx];
+  const mid = 'fdm_' + Date.now();
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="${mid}" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3000;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;min-width:300px;max-width:380px;box-shadow:var(--shadow)">
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px"><i class="fa-solid fa-calendar-days" style="color:var(--blue)"></i> Fixer la date</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${esc(m.dom)} vs ${esc(m.ext)} · Poule ${(m.poule||'').toUpperCase()}</div>
+        <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Date *</label>
+        <input type="date" id="${mid}_date" value="${m.date||''}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box;margin-bottom:10px">
+        <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Heure (optionnel)</label>
+        <input type="time" id="${mid}_heure" value="${m.heure||''}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box;margin-bottom:14px">
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" onclick="document.getElementById('${mid}').remove()">Annuler</button>
+          <button class="btn primary" onclick="_confirmDateMatch(${idx},'${mid}')">Confirmer</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function _confirmDateMatch(idx, mid) {
+  const d = document.getElementById(mid+'_date')?.value;
+  const h = document.getElementById(mid+'_heure')?.value || null;
+  document.getElementById(mid)?.remove();
+  if (!d) { showToast('Veuillez choisir une date.', 'error'); return; }
+  const saison = getSelectedSaison();
+  if (!saison?.matchs?.[idx]) return;
+  saison.matchs[idx].date  = d;
+  saison.matchs[idx].heure = h;
+  saveSaison(saison);
+  renderDashboard();
+  showToast('Date fixée.');
+}
+
+function reporterMatch(idx) {
+  if (!hasPermission('declare_saison')) return;
+  const saison = getSelectedSaison();
+  if (!saison?.matchs?.[idx]) return;
+  const m = saison.matchs[idx];
+  const mid = 'rpm_' + Date.now();
+  const ancienneDateFR = m.date ? new Date(m.date).toLocaleDateString('fr-FR') : '';
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="${mid}" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3000;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;min-width:300px;max-width:400px;box-shadow:var(--shadow)">
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px"><i class="fa-solid fa-rotate-left" style="color:var(--amber-d)"></i> Reporter le match</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${esc(m.dom)} vs ${esc(m.ext)} · Poule ${(m.poule||'').toUpperCase()}${ancienneDateFR ? ' · <strong>Date initiale : ' + ancienneDateFR + '</strong>' : ''}</div>
+        <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Raison du report *</label>
+        <textarea id="${mid}_raison" rows="2" placeholder="Ex : Terrain indisponible, conditions météo…" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box;resize:vertical;margin-bottom:10px">${esc(m.reportRaison||'')}</textarea>
+        <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Nouvelle date (optionnel)</label>
+        <input type="date" id="${mid}_date" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box;margin-bottom:6px">
+        <input type="time" id="${mid}_heure" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box;margin-bottom:14px">
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" onclick="document.getElementById('${mid}').remove()">Annuler</button>
+          <button class="btn" style="background:var(--amber-l);color:var(--amber-d);border-color:transparent" onclick="_confirmReportMatch(${idx},'${mid}')">Confirmer le report</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function _confirmReportMatch(idx, mid) {
+  const raison  = document.getElementById(mid+'_raison')?.value?.trim();
+  const newDate = document.getElementById(mid+'_date')?.value || null;
+  const newHeure = document.getElementById(mid+'_heure')?.value || null;
+  document.getElementById(mid)?.remove();
+  if (!raison) { showToast('Veuillez indiquer une raison.', 'error'); return; }
+  const saison = getSelectedSaison();
+  if (!saison?.matchs?.[idx]) return;
+  const m = saison.matchs[idx];
+  m.reportedFrom = m.date || null;
+  m.reportRaison = raison;
+  m.isReported   = true;
+  if (newDate)  { m.date = newDate; m.heure = newHeure; }
+  saveSaison(saison);
+  renderDashboard();
+  showToast('Match reporté.');
+}
+
+// ────────────────────────────────────────────────────────────
 
 function genererPhaseEliminatoire() {
   if (!hasPermission('declare_saison')) return;
