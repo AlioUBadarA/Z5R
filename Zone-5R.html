@@ -353,8 +353,8 @@
   <div id="visitor-view">
 
     <div class="visitor-hero">
-      <h2>Navetanes Bignona 2025</h2>
-      <p>Zone 5R ODGAM · Saison en cours · Phase de poules · Suivez toute l'actualité en temps réel</p>
+      <h2 id="dashboard-hero-title">Zone 5R · Navetanes Bignona</h2>
+      <p id="dashboard-hero-sub">Zone 5R ODGAM · Bignona</p>
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Rechercher une équipe, un match, une date..."
                oninput="searchMatches(this.value)" onkeydown="if(event.key==='Enter') searchMatches(this.value)">
@@ -371,256 +371,32 @@
       <div id="search-results-body" class="gap" style="padding:12px;gap:6px"></div>
     </div>
 
-    <div class="grid-3 mb">
-      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">18</div><div class="stat-sub">4 poules</div></div>
-      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">24</div><div class="stat-sub">sur 72 prévus</div></div>
-      <div class="stat blue"><div class="stat-label">Journées restantes</div><div class="stat-value">8</div><div class="stat-sub">saison 2025</div></div>
-    </div>
+    <!-- Statistiques (dynamiques) -->
+    <div class="grid-3 mb" id="dashboard-stats"></div>
 
-    <!-- Matchs à venir & résultats récents -->
-    <div class="card mb">
-      <div class="card-header">
-        <span class="card-title">Matchs · À venir & Récents</span>
-        <button class="btn" onclick="showSection('competition')">Voir tout</button>
-      </div>
-      <div class="gap" style="padding:8px;gap:6px">
-        <div class="match-card">
-          <div class="match-team">ASC Walidane</div>
-          <div class="match-score">
-            <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
-          </div>
-          <div class="match-team right">ASC Chicago</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule A</div>
-            <div style="font-size:11px;color:var(--green);font-weight:600">Auj. 16h</div>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-team">ASC Baraka</div>
-          <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
-          <div class="match-team right">ASC Deggo</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule B</div>
-            <span class="badge green">Joué</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-team">ASC Walidane</div>
-          <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">0</div></div>
-          <div class="match-team right">ASC Chicago</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule A · 07/09</div>
-            <span class="badge green">Joué</span>
-          </div>
-        </div>
-        <div class="match-card">
-          <div class="match-team">ASC Yengoulène</div>
-          <div class="match-score">
-            <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
-          </div>
-          <div class="match-team right">ASC Nafacounda</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule C</div>
-            <div style="font-size:11px;color:var(--muted)">13/09 · 15h</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Matchs / annonce -->
+    <div id="dashboard-matches-card" class="mb"></div>
 
-    <!-- Classement rapide -->
-    <div class="card mb">
-      <div class="card-header">
-        <span class="card-title">Classement · Poule A</span>
-        <button class="btn" onclick="showSection('competition');showSubSection('competition','comp-classement',document.getElementById('subnav-comp-classement'))">Voir tout</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>Pts</th></tr></thead>
-          <tbody>
-            <tr class="rank-1"><td><span class="rank-medal gold">1</span></td><td><strong>ASC Walidane</strong></td><td>3</td><td>2</td><td>1</td><td>0</td><td><strong>7</strong></td></tr>
-            <tr class="rank-2"><td><span class="rank-medal silver">2</span></td><td>ASC Baraka</td><td>3</td><td>1</td><td>2</td><td>0</td><td><strong>5</strong></td></tr>
-            <tr class="rank-3"><td><span class="rank-medal bronze">3</span></td><td>ASC Oryx MTG</td><td>2</td><td>1</td><td>0</td><td>1</td><td><strong>3</strong></td></tr>
-            <tr><td>4</td><td>ASC Kafesse</td><td>3</td><td>0</td><td>1</td><td>2</td><td><strong>1</strong></td></tr>
-            <tr><td>5</td><td>ASC Chicago</td><td>2</td><td>0</td><td>0</td><td>2</td><td><strong>0</strong></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="font-size:11px;color:var(--muted);padding:8px 12px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>
-    </div>
-
-    <!-- Poules (aperçu public) -->
-    <div class="card mb">
-      <div class="card-header">
-        <span class="card-title">Poules · Aperçu</span>
-        <button class="btn" onclick="showSection('competition')">Programme complet</button>
-      </div>
-      <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
-        <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--green-d);margin-bottom:6px">Poule A</div>
-          <div style="font-size:12px;color:var(--text);line-height:1.8">ASC Walidane<br>ASC Chicago<br>ASC Kafesse<br>ASC Baraka<br>ASC Oryx MTG</div>
-        </div>
-        <div style="background:var(--amber-l);border-radius:var(--radius-sm);padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--amber-d);margin-bottom:6px">Poule B</div>
-          <div style="font-size:12px;color:var(--text);line-height:1.8">ASC Baraka<br>ASC Deggo<br>ASC Médina Plateau<br>ASC Santhiaba</div>
-        </div>
-        <div style="background:var(--blue-l);border-radius:var(--radius-sm);padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px">Poule C</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.8;font-style:italic">Programme en attente de validation</div>
-        </div>
-        <div style="background:var(--gray-l);border-radius:var(--radius-sm);padding:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--gray);margin-bottom:6px">Poule D</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.8;font-style:italic">Programme en attente de validation</div>
-        </div>
-      </div>
-    </div>
+    <!-- Poules / équipes engagées -->
+    <div id="dashboard-poules-card" class="mb"></div>
 
     <!-- Fiches de recettes publiées -->
-    <div class="card mb">
-      <div class="card-header">
-        <span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span>
-        <span class="badge green">Officielles</span>
-      </div>
-      <div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Billetterie · Journée du 29/08</div>
-            <div class="fiche-meta">Saison 2024 · Publié le 01/09/2024</div>
-          </div>
-          <div class="fiche-amount">55 600 FCFA</div>
-        </div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Billetterie · Journée du 15/09</div>
-            <div class="fiche-meta">Saison 2024 · Publié le 18/09/2024</div>
-          </div>
-          <div class="fiche-amount">91 350 FCFA</div>
-        </div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Billetterie · Journée du 06/10</div>
-            <div class="fiche-meta">Saison 2024 · Publié le 10/10/2024</div>
-          </div>
-          <div class="fiche-amount">84 300 FCFA</div>
-        </div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-trophy"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Billetterie · Finale 28/12</div>
-            <div class="fiche-meta">Saison 2024 · Publié le 02/01/2025</div>
-          </div>
-          <div class="fiche-amount">495 250 FCFA</div>
-        </div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-building-columns"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Subvention Mairie de Bignona</div>
-            <div class="fiche-meta">Saison 2024 · Publié le 15/08/2024</div>
-          </div>
-          <div class="fiche-amount">150 000 FCFA</div>
-        </div>
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-chart-bar"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">Bilan total recettes 2024</div>
-            <div class="fiche-meta">Rapport annuel certifié · Publié le 15/01/2025</div>
-          </div>
-          <div class="fiche-amount">2 345 065 FCFA</div>
-        </div>
-      </div>
-    </div>
+    <div id="dashboard-fiches-card" class="mb"></div>
 
   </div><!-- /visitor-view -->
 
   <!-- ── VUE MEMBRE ── -->
   <div id="member-view" style="display:none">
-    <div class="flex-between mb">
-      <div>
-        <h2 style="font-size:18px;font-weight:700">Navetanes 2025</h2>
-        <p style="font-size:12px;color:var(--muted)">Saison en cours · Phase de poules</p>
-      </div>
-      <span class="badge green">En cours</span>
-    </div>
-
-    <div class="grid-3 mb">
-      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">18</div><div class="stat-sub">4 poules</div></div>
-      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">24</div><div class="stat-sub">sur 72 prévus</div></div>
-      <div class="stat blue"><div class="stat-label">Recettes</div><div class="stat-value">590K</div><div class="stat-sub">FCFA</div></div>
-      <div class="stat red"><div class="stat-label">Cartons rouges</div><div class="stat-value">3</div><div class="stat-sub">suspensions actives</div></div>
-    </div>
-
-    <div class="alert warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>2 réclamations</strong> en attente de traitement par la Commission Juridique</div>
-
-    <div class="card mb">
-      <div class="card-header">
-        <span class="card-title">Prochains matchs</span>
-        <button class="btn" onclick="showSection('competition')">Voir tout</button>
-      </div>
-      <div style="padding:8px">
-        <div class="gap" style="gap:6px;padding:8px">
-          <div class="match-card">
-            <div class="match-team">ASC Walidane</div>
-            <div class="match-score">
-              <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
-            </div>
-            <div class="match-team right">ASC Chicago</div>
-            <div style="flex-shrink:0;text-align:right">
-              <div style="font-size:11px;color:var(--muted)">Poule A</div>
-              <div style="font-size:11px;color:var(--green);font-weight:600">Auj. 16h</div>
-            </div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Baraka</div>
-            <div class="match-score"><div class="score-box">2</div><div class="match-vs">–</div><div class="score-box">1</div></div>
-            <div class="match-team right">ASC Deggo</div>
-            <div style="flex-shrink:0;text-align:right">
-              <div style="font-size:11px;color:var(--muted)">Poule B</div>
-              <span class="badge green">Joué</span>
-            </div>
-          </div>
-          <div class="match-card">
-            <div class="match-team">ASC Yengoulène</div>
-            <div class="match-score">
-              <div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>
-            </div>
-            <div class="match-team right">ASC Nafacounda</div>
-            <div style="flex-shrink:0;text-align:right">
-              <div style="font-size:11px;color:var(--muted)">Poule C</div>
-              <div style="font-size:11px;color:var(--muted)">13/09 · 15h</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><span class="card-title">Progression financière 2025</span></div>
-      <div class="card-body">
-        <div style="margin-bottom:12px">
-          <div class="flex-between" style="margin-bottom:4px">
-            <span style="font-size:12px">Recettes billetterie</span>
-            <span style="font-size:12px;font-weight:600;color:var(--green-d)">590 650 FCFA</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:51%;background:var(--green)"></div></div>
-        </div>
-        <div style="margin-bottom:12px">
-          <div class="flex-between" style="margin-bottom:4px">
-            <span style="font-size:12px">Recettes licences</span>
-            <span style="font-size:12px;font-weight:600;color:var(--blue)">52 250 FCFA</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:5%;background:var(--blue)"></div></div>
-        </div>
-        <div>
-          <div class="flex-between" style="margin-bottom:4px">
-            <span style="font-size:12px">Total recettes 2024 (réf.)</span>
-            <span style="font-size:12px;font-weight:600;color:var(--amber-d)">2 345 065 FCFA</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:100%;background:var(--amber)"></div></div>
-        </div>
-      </div>
-    </div>
+    <!-- En-tête saison (dynamique) -->
+    <div id="member-header" class="flex-between mb"></div>
+    <!-- Statistiques (dynamiques) -->
+    <div class="grid-3 mb" id="member-stats"></div>
+    <!-- Alerte litiges (dynamique) -->
+    <div id="member-litiges-alert"></div>
+    <!-- Matchs (dynamiques) -->
+    <div id="member-matches-card" class="mb"></div>
+    <!-- Finances (dynamiques) -->
+    <div id="member-finance-card"></div>
   </div><!-- /member-view -->
 
 </div><!-- /dashboard -->
@@ -2246,7 +2022,7 @@ async function initFirebase() {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_saisons', JSON.stringify(snap.data().data));
     if (!_appReady) return;
-    renderSeasonBar();
+    renderSeasonBar(); renderDashboard();
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
   });
   _db.collection(_COL).doc('finales').onSnapshot(snap => {
@@ -2278,7 +2054,7 @@ async function initFirebase() {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_fiches', JSON.stringify(snap.data().data));
     if (!_appReady) return;
-    renderFichesList();
+    renderFichesList(); renderDashboard();
   });
   _db.collection(_COL).doc('licences').onSnapshot(snap => {
     if (!snap.exists) return;
@@ -2322,6 +2098,7 @@ async function initFirebase() {
     if (!_appReady) return;
     renderCompMatches();
     renderClassementSection();
+    renderDashboard();
     if (_liveMid) {
       const m = getMatchesData().find(x => x.id === _liveMid);
       if (m) {
@@ -2547,6 +2324,7 @@ function updateUI() {
     renderSuspensions();
     renderLitiges();
     renderSeasonBar();
+    renderDashboard();
   } else {
     badge.textContent = 'Visiteur';
     badge.className   = 'role-badge visitor';
@@ -2560,6 +2338,7 @@ function updateUI() {
     adminPanel.style.display  = 'none';
     const sbLogout = document.getElementById('season-bar');
     if (sbLogout) sbLogout.style.display = 'none';
+    renderDashboard();
 
     document.getElementById('login-error')?.classList.remove('show');
   }
@@ -3538,7 +3317,7 @@ function saveSaison(saison) {
 
 function selectSaison(id) {
   _selectedSaisonId = id;
-  renderSeasonBar();
+  renderSeasonBar(); renderDashboard();
   renderFichesList(); renderLitiges(); renderLicencesTable();
   renderDepensesList(); renderFinaleDisplay(); renderSuspensions();
   updateCaisse(); renderBilan(); initTeamTabs();
@@ -3563,6 +3342,237 @@ function renderSeasonBar() {
       ${label}
     </button>`;
   }).join('');
+}
+
+function renderDashboard() {
+  const saison   = getSelectedSaison();
+  const sid      = saison?.id;
+  const fmt      = n => (n||0).toLocaleString('fr-FR');
+  const dateFR   = d => new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const now      = new Date();
+  const dateDebut = saison ? new Date(saison.date) : null;
+  const isStarted = dateDebut && dateDebut <= now;
+
+  // Données filtrées sur la saison courante
+  const allMatches    = getMatchesData().filter(m => !sid || (m.saisonId||'default') === sid);
+  const nbJoues       = allMatches.filter(m => m.statut === 'termine').length;
+  const nbTotal       = allMatches.length;
+  const fichesValidees = getFiches().filter(f => f.statut === 'validee');
+  const totalFiches   = fichesValidees.reduce((s,f) => s+(f.totalRecettes||0), 0);
+  const totalLicences = getLicences().reduce((s,l) => s+(l.total||0), 0);
+  const nbEquipes     = (saison?.equipes||[]).length;
+  const nbPoules      = saison?.poules ? Object.keys(saison.poules).length : 0;
+  const susp          = getSuspensions();
+  const litEnCours    = getLitiges().filter(l => l.decision === 'en_cours').length;
+
+  // Statut lisible
+  let statusText, statusBadge;
+  if (!saison) {
+    statusText  = 'Aucune saison en cours';
+    statusBadge = '<span class="badge gray">Aucune saison</span>';
+  } else if (saison.active) {
+    if (!isStarted) {
+      statusText  = 'Démarrage le ' + dateFR(saison.date);
+      statusBadge = '<span class="badge amber">À venir</span>';
+    } else if (saison.declaredOpen) {
+      statusText  = 'En cours · Phase de poules';
+      statusBadge = '<span class="badge green">En cours</span>';
+    } else {
+      statusText  = 'Saison en préparation';
+      statusBadge = '<span class="badge amber">En préparation</span>';
+    }
+  } else {
+    statusText  = 'Saison clôturée';
+    statusBadge = '<span class="badge gray">Clôturée</span>';
+  }
+
+  // ── VUE VISITEUR ────────────────────────────────────────────
+
+  const heroTitle = document.getElementById('dashboard-hero-title');
+  const heroSub   = document.getElementById('dashboard-hero-sub');
+  if (heroTitle) heroTitle.textContent = saison ? saison.nom : 'Zone 5R · Navetanes Bignona';
+  if (heroSub)   heroSub.textContent   = 'Zone 5R ODGAM · ' + (saison ? statusText : 'Bignona');
+
+  // Stats visiteur
+  const dashStats = document.getElementById('dashboard-stats');
+  if (dashStats) {
+    dashStats.innerHTML = `
+      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules ? nbPoules+' poules' : 'Tirage à venir'}</div></div>
+      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal ? 'sur '+nbTotal+' prévus' : 'Programme à venir'}</div></div>
+      <div class="stat blue"><div class="stat-label">Saison</div><div class="stat-value">${saison ? new Date(saison.date).getFullYear() : '–'}</div><div class="stat-sub">${saison?.active ? 'Active' : (saison ? 'Clôturée' : '–')}</div></div>`;
+  }
+
+  // Matchs visiteur
+  const dashMatches = document.getElementById('dashboard-matches-card');
+  if (dashMatches) {
+    if (!saison || nbTotal === 0) {
+      const msg = !saison ? 'Aucune saison en cours.' :
+        !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
+        saison.tirageDone ? 'Le calendrier des matchs est en cours de préparation.' :
+        'Le tirage au sort sera annoncé prochainement.';
+      dashMatches.innerHTML = `<div class="card mb"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Matchs</span></div>
+        <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">
+          <i class="fa-solid fa-calendar-plus" style="font-size:28px;margin-bottom:10px;display:block"></i>${msg}</div></div>`;
+    } else {
+      const shown = [...allMatches]
+        .sort((a,b) => (b.statut==='termine'?1:0)-(a.statut==='termine'?1:0))
+        .slice(0,4);
+      const matchHtml = shown.map(m => {
+        const scoreHtml = m.statut==='termine'
+          ? `<div class="score-box">${m.score?.dom??0}</div><div class="match-vs">–</div><div class="score-box">${m.score?.ext??0}</div>`
+          : `<div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>`;
+        const statusHtml = m.statut==='termine'
+          ? `<span class="badge green">Joué</span>`
+          : m.statut==='live'
+          ? `<span class="badge red live-badge"><span></span> EN DIRECT</span>`
+          : `<div style="font-size:11px;color:var(--muted)">${m.date||'À programmer'}</div>`;
+        return `<div class="match-card">
+          <div class="match-team">${esc(m.dom)}</div>
+          <div class="match-score">${scoreHtml}</div>
+          <div class="match-team right">${esc(m.ext)}</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule ${(m.poule||'').toUpperCase()}</div>${statusHtml}
+          </div></div>`;
+      }).join('');
+      dashMatches.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title">Matchs · À venir &amp; Récents</span>
+          <button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+        <div class="gap" style="padding:8px;gap:6px">${matchHtml}</div></div>`;
+    }
+  }
+
+  // Poules / équipes visiteur
+  const dashPoules = document.getElementById('dashboard-poules-card');
+  if (dashPoules) {
+    if (!saison) {
+      dashPoules.innerHTML = '';
+    } else if (saison.poules && Object.keys(saison.poules).length) {
+      const COLORS = [
+        {bg:'var(--green-l)',c:'var(--green-d)'},{bg:'var(--amber-l)',c:'var(--amber-d)'},
+        {bg:'var(--blue-l)', c:'var(--blue)'},   {bg:'var(--gray-l)', c:'var(--muted)'},
+      ];
+      const poulesHtml = Object.entries(saison.poules).map(([lettre,equipes],i) => {
+        const col = COLORS[i%COLORS.length];
+        return `<div style="background:${col.bg};border-radius:var(--radius-sm);padding:12px">
+          <div style="font-size:12px;font-weight:700;color:${col.c};margin-bottom:6px">Poule ${lettre.toUpperCase()}</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.8">${(equipes||[]).map(e=>esc(e)).join('<br>')}</div></div>`;
+      }).join('');
+      dashPoules.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title">Poules · Aperçu</span>
+          <button class="btn" onclick="showSection('competition')">Programme complet</button></div>
+        <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${poulesHtml}</div></div>`;
+    } else {
+      const teamsHtml = (saison.equipes||[]).map(e =>
+        `<span style="display:inline-block;padding:4px 12px;margin:3px;background:var(--green-l);border-radius:12px;font-size:12px;color:var(--green-d);font-weight:600">${esc(e)}</span>`
+      ).join('');
+      const startMsg = !isStarted
+        ? `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-clock"></i> La compétition démarrera le <strong>${dateFR(saison.date)}</strong>. Le tirage au sort sera annoncé prochainement.</div>`
+        : `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-dice"></i> Le tirage au sort est en cours de préparation.</div>`;
+      dashPoules.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title"><i class="fa-solid fa-shield-halved"></i> Équipes engagées · ${nbEquipes} associations</span></div>
+        <div style="padding:14px">${startMsg}<div>${teamsHtml}</div></div></div>`;
+    }
+  }
+
+  // Fiches publiées visiteur
+  const dashFiches = document.getElementById('dashboard-fiches-card');
+  if (dashFiches) {
+    if (!fichesValidees.length) {
+      dashFiches.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucune fiche publiée pour cette saison.</div></div>`;
+    } else {
+      const fHtml = fichesValidees.map(f => `
+        <div class="fiche-card">
+          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+          <div class="fiche-info">
+            <div class="fiche-title">${esc(f.journee||'Journée')}</div>
+            <div class="fiche-meta">${saison?'Saison '+esc(saison.nom):''} · Publié le ${f.validatedAt?new Date(f.validatedAt).toLocaleDateString('fr-FR'):'–'}</div>
+          </div>
+          <div class="fiche-amount">${fmt(f.totalRecettes)} FCFA</div>
+        </div>`).join('');
+      dashFiches.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
+        <div>${fHtml}</div></div>`;
+    }
+  }
+
+  // ── VUE MEMBRE ──────────────────────────────────────────────
+
+  const memberHeader = document.getElementById('member-header');
+  if (memberHeader) {
+    memberHeader.innerHTML = `
+      <div>
+        <h2 style="font-size:18px;font-weight:700">${saison ? esc(saison.nom) : 'Zone 5R · Navetanes'}</h2>
+        <p style="font-size:12px;color:var(--muted)">${statusText}</p>
+      </div>${statusBadge}`;
+  }
+
+  const memberStats = document.getElementById('member-stats');
+  if (memberStats) {
+    memberStats.innerHTML = `
+      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules?nbPoules+' poules':'Tirage à venir'}</div></div>
+      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal?'sur '+nbTotal+' prévus':'Programme à venir'}</div></div>
+      <div class="stat blue"><div class="stat-label">Recettes</div><div class="stat-value">${totalFiches>=1000?Math.round(totalFiches/1000)+'K':(totalFiches||'–')}</div><div class="stat-sub">FCFA</div></div>
+      <div class="stat red"><div class="stat-label">Suspensions</div><div class="stat-value">${susp.length}</div><div class="stat-sub">${susp.length?'actives':'aucune'}</div></div>`;
+  }
+
+  const memberAlert = document.getElementById('member-litiges-alert');
+  if (memberAlert) {
+    memberAlert.innerHTML = litEnCours
+      ? `<div class="alert warning" style="margin-bottom:12px"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${litEnCours} réclamation(s)</strong> en attente de traitement par la Commission Juridique</div>`
+      : '';
+  }
+
+  const memberMatchCard = document.getElementById('member-matches-card');
+  if (memberMatchCard) {
+    if (!saison || nbTotal === 0) {
+      const msg = !saison ? 'Aucune saison en cours.' :
+        !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
+        saison.tirageDone ? 'Le calendrier est en cours de préparation.' :
+        'Le tirage au sort sera annoncé prochainement.';
+      memberMatchCard.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">${msg}</div></div>`;
+    } else {
+      const upcoming = allMatches.filter(m => m.statut!=='termine').slice(0,3);
+      const upHtml = upcoming.length ? upcoming.map(m => `
+        <div class="match-card">
+          <div class="match-team">${esc(m.dom)}</div>
+          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
+          <div class="match-team right">${esc(m.ext)}</div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:11px;color:var(--muted)">Poule ${(m.poule||'').toUpperCase()}</div>
+            <div style="font-size:11px;color:var(--muted)">${m.date||'À programmer'}</div>
+          </div></div>`).join('')
+        : '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px">Tous les matchs sont joués.</div>';
+      memberMatchCard.innerHTML = `<div class="card mb">
+        <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+        <div style="padding:8px"><div class="gap" style="gap:6px;padding:8px">${upHtml}</div></div></div>`;
+    }
+  }
+
+  const memberFinance = document.getElementById('member-finance-card');
+  if (memberFinance) {
+    memberFinance.innerHTML = `<div class="card">
+      <div class="card-header"><span class="card-title">Recettes · ${saison?esc(saison.nom):'Saison en cours'}</span></div>
+      <div class="card-body">
+        <div style="margin-bottom:12px">
+          <div class="flex-between" style="margin-bottom:4px">
+            <span style="font-size:12px">Recettes billetterie</span>
+            <span style="font-size:12px;font-weight:600;color:var(--green-d)">${fmt(totalFiches)} FCFA</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:${totalFiches>0?'100':'0'}%;background:var(--green)"></div></div>
+        </div>
+        <div>
+          <div class="flex-between" style="margin-bottom:4px">
+            <span style="font-size:12px">Recettes licences</span>
+            <span style="font-size:12px;font-weight:600;color:var(--blue)">${fmt(totalLicences)} FCFA</span>
+          </div>
+          <div class="progress"><div class="progress-bar" style="width:${totalLicences>0?'100':'0'}%;background:var(--blue)"></div></div>
+        </div>
+      </div></div>`;
+  }
 }
 
 function migrateSaisonLegacy() {
@@ -3734,7 +3744,7 @@ function declarerSaison() {
   logAction('DECLARE_SAISON', { detail: nom + ' · ' + equipes.length + ' équipes' });
 
   renderSaisonPanel();
-  renderSeasonBar();
+  renderSeasonBar(); renderDashboard();
   showToast('Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
 }
 
@@ -3743,7 +3753,7 @@ function cloturerSaison() {
   const saison = getSaison();
   if (saison) { saison.active = false; saveSaison(saison); }
   renderSaisonPanel();
-  renderSeasonBar();
+  renderSeasonBar(); renderDashboard();
   showToast('Saison clôturée.');
 }
 
@@ -3787,7 +3797,7 @@ function supprimerSaison(id) {
   logAction('DELETE_SAISON', { detail: saison.nom });
   showToast('Saison "' + saison.nom + '" supprimée.');
 
-  renderSaisonPanel(); renderSeasonBar();
+  renderSaisonPanel(); renderSeasonBar(); renderDashboard();
   renderFichesList(); renderLitiges(); renderLicencesTable();
   renderDepensesList(); renderFinaleDisplay(); updateCaisse(); renderBilan();
 }
@@ -5484,7 +5494,7 @@ function validateFiche(id) {
   f.history           = f.history || [];
   f.history.push({ action: 'validation', by: me, name: currentUser?.name || '?', poste: currentUser?.poste || '', at: now });
   saveFiches(allFiches);
-  renderFichesList(); updateCaisse();
+  renderFichesList(); updateCaisse(); renderDashboard();
   showToast('Fiche validée par ' + currentUser?.name);
   logAction('VALIDATE_FICHE', { detail: f.journee });
 }
