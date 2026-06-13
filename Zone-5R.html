@@ -3541,7 +3541,7 @@ function renderSeasonBar() {
   const pills = document.getElementById('season-pills');
   if (!bar || !pills) return;
   const saisons = getSaisons();
-  if (!currentUser || saisons.length < 2) { bar.style.display = 'none'; return; }
+  if (!currentUser || saisons.length < 2 || !hasPermission('declare_saison')) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   const selected = getSelectedSaison();
   pills.innerHTML = [...saisons].reverse().map(s => {
