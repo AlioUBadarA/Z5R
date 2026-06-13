@@ -426,6 +426,7 @@
   <div class="subnav">
     <div class="subnav-item active" id="subnav-comp-planning" onclick="showSubSection('competition','comp-planning',this)"><i class="fa-solid fa-calendar"></i> Planning & Matchs</div>
     <div class="subnav-item" id="subnav-comp-classement" onclick="showSubSection('competition','comp-classement',this);renderClassementSection()"><i class="fa-solid fa-trophy"></i> Classements</div>
+    <div class="subnav-item" id="subnav-comp-elim" onclick="showSubSection('competition','comp-eliminations',this);renderBracketSection()" style="display:none"><i class="fa-solid fa-sitemap"></i> Phase éliminatoire</div>
     <div class="subnav-item" id="subnav-comp-joueurs" onclick="showSubSection('competition','comp-joueurs',this)" style="display:none"><i class="fa-solid fa-users"></i> Joueurs & Licences</div>
     <div class="subnav-item" id="subnav-comp-stats" onclick="showSubSection('competition','comp-stats',this)" style="display:none"><i class="fa-solid fa-chart-bar"></i> Vue d'ensemble</div>
   </div>
@@ -467,6 +468,11 @@
       <div id="cls-d" style="display:none"><!-- Généré par JS --></div>
     </div>
   </div><!-- /comp-classement -->
+
+  <!-- SUB : Phase éliminatoire -->
+  <div id="comp-eliminations" class="subsection">
+    <div id="bracket-content"><!-- Généré par renderBracketSection() --></div>
+  </div>
 
   <!-- SUB : Joueurs & Licences -->
   <div id="comp-joueurs" class="subsection">
@@ -926,6 +932,18 @@
               <button class="btn primary" id="btn-ouverture" onclick="declarerOuverte()" style="font-size:12px" disabled><i class="fa-solid fa-rocket"></i> Ouvrir</button>
             </div>
           </div>
+
+          <!-- Étape 5 : Phase éliminatoire -->
+          <div id="step-eliminations" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-l);border-radius:var(--radius-sm);border-left:3px solid var(--gray);opacity:0.5">
+            <span style="font-size:20px" id="step-elim-icon"><i class="fa-solid fa-sitemap"></i></span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600" id="step-elim-title">Étape 5 · Phase éliminatoire</div>
+              <div style="font-size:11px;color:var(--muted)" id="step-elim-desc">Générer le tableau des rencontres éliminatoires</div>
+            </div>
+            <button class="btn primary" id="btn-eliminations" onclick="genererPhaseEliminatoire()" style="font-size:12px" disabled>
+              <i class="fa-solid fa-sitemap"></i> Générer
+            </button>
+          </div>
         </div>
 
         <div class="flex-between">
@@ -955,6 +973,32 @@
             <!-- Rempli dynamiquement par refreshSaisonEquipesSelect() -->
           </select>
           <p style="font-size:11px;color:var(--muted);margin-top:4px">Maintenir Ctrl (PC) ou ⌘ (Mac) pour sélectionner plusieurs équipes</p>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label><i class="fa-solid fa-sitemap"></i> Règles de qualification · Phase éliminatoire</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);margin-bottom:4px;display:block">Qualifiés par poule</label>
+              <select id="saison-nb-qualifs" style="width:100%" onchange="updateFormatPreview()">
+                <option value="1">1er uniquement</option>
+                <option value="2" selected>1er + 2ème</option>
+                <option value="3">1er + 2ème + 3ème</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);margin-bottom:4px;display:block">Meilleurs 3èmes qualifiés</label>
+              <select id="saison-nb-m3" style="width:100%" onchange="updateFormatPreview()">
+                <option value="0" selected>Aucun</option>
+                <option value="1">1 meilleur 3ème</option>
+                <option value="2">2 meilleurs 3èmes</option>
+                <option value="3">3 meilleurs 3èmes</option>
+                <option value="4">4 meilleurs 3èmes</option>
+              </select>
+            </div>
+          </div>
+          <div id="format-preview" style="margin-top:8px;font-size:12px;padding:8px;background:var(--blue-l);border-radius:var(--radius-sm);color:var(--blue)">
+            <i class="fa-solid fa-circle-info"></i> Le format exact (1/4, 1/8…) sera calculé après le tirage. <span id="format-rule-text">Règle actuelle : 2 qualifiés/poule, sans meilleur 3ème.</span>
+          </div>
         </div>
         <div style="display:flex;justify-content:flex-end">
           <button class="btn primary" onclick="declarerSaison()"><i class="fa-solid fa-rocket"></i> Déclarer la saison</button>
@@ -3688,6 +3732,31 @@ function renderSaisonPanel() {
       document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
       if (btn4) { btn4.disabled = true; btn4.textContent = 'Ouverte'; }
     }
+
+    // Étape 5 : Phase éliminatoire (active dès que la compétition est ouverte)
+    const step5 = document.getElementById('step-eliminations');
+    const btn5  = document.getElementById('btn-eliminations');
+    if (step5) {
+      if (saison.declaredOpen) {
+        step5.style.opacity = '1';
+        if (btn5) btn5.disabled = false;
+      }
+      if (saison.eliminatoireGenere) {
+        step5.style.background  = 'var(--green-l)';
+        step5.style.borderColor = 'var(--green)';
+        step5.style.opacity     = '1';
+        document.getElementById('step-elim-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
+        document.getElementById('step-elim-title').textContent = 'Étape 5 · Phase éliminatoire générée';
+        const fmt = getFormatEliminatoire(saison) || 'Phase éliminatoire';
+        const nbQ = saison.nbQualifiesParPoule || 2;
+        const nbM3 = saison.nbMeilleur3eme || 0;
+        document.getElementById('step-elim-desc').textContent = fmt + ' · ' + nbQ + ' qualifié(s)/poule' + (nbM3 ? ' + ' + nbM3 + ' meilleur(s) 3ème' : '');
+        if (btn5) btn5.textContent = 'Refaire';
+      }
+    }
+    // Afficher le subnav bracket si généré
+    const subnavElim = document.getElementById('subnav-comp-elim');
+    if (subnavElim) subnavElim.style.display = saison.eliminatoireGenere ? '' : 'none';
   } else {
     active.style.display = 'none';
     form.style.display   = hasPermission('declare_saison') ? 'block' : 'none';
@@ -3734,9 +3803,11 @@ function declarerSaison() {
   if (!date)          return showToast('Veuillez choisir une date de démarrage.');
   if (equipes.length < 2) return showToast('Sélectionnez au moins 2 équipes.');
 
-  const soldeDepart = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
+  const soldeDepart          = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
+  const nbQualifiesParPoule  = parseInt(document.getElementById('saison-nb-qualifs')?.value)||2;
+  const nbMeilleur3eme       = parseInt(document.getElementById('saison-nb-m3')?.value)||0;
   const id = 'S' + Date.now();
-  const saison = { id, nom, date, equipes, soldeDepart, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
+  const saison = { id, nom, date, equipes, soldeDepart, nbQualifiesParPoule, nbMeilleur3eme, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
   // Clôturer l'éventuelle saison précédente
   getSaisons().filter(s => s.active && s.id !== id).forEach(s => { s.active = false; saveSaison(s); });
   saveSaison(saison);
@@ -5609,6 +5680,7 @@ function switchCompetition(comp) {
   if (btnC) btnC.classList.toggle('comp-active', comp === 'cadets');
   renderCompMatches();
   renderClassementSection();
+  renderBracketSection();
 }
 
 function getMatchesData() {
@@ -5707,6 +5779,16 @@ function _matchCardHtml(m, canLive) {
     </div>`;
 }
 
+function _getQualifMsg() {
+  const saison = getSelectedSaison();
+  const nbQ  = saison?.nbQualifiesParPoule || 2;
+  const nbM3 = saison?.nbMeilleur3eme || 0;
+  const fmt  = saison ? (getFormatEliminatoire(saison) || '') : '';
+  const qualifDesc = nbQ === 1 ? 'Le 1er de chaque poule se qualifie' : nbQ === 2 ? 'Les 2 premiers de chaque poule se qualifient' : 'Les 3 premiers de chaque poule se qualifient';
+  const m3Desc = nbM3 ? ` + ${nbM3} meilleur(s) 3ème` : '';
+  return qualifDesc + m3Desc + (fmt ? ` · Format : ${fmt}` : '');
+}
+
 function renderClassementSection() {
   const matches = getMatchesData();
   const sid     = getSelectedSaison()?.id;
@@ -5747,8 +5829,210 @@ function renderClassementSection() {
     el.innerHTML = `<div class="card"><div style="padding:10px 12px 0;font-size:12px;font-weight:700;color:var(--muted)">${compTitle} · Poule ${p.toUpperCase()}</div><div class="table-wrap"><table>
       <thead><tr><th>#</th><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Diff</th><th>Pts</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">Les 2 premiers de chaque poule se qualifient pour les 1/4 de finale</p>`;
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 4px">${_getQualifMsg()}</p>`;
   });
+}
+
+// ============================================================
+//  PHASE ÉLIMINATOIRE
+// ============================================================
+
+function updateFormatPreview() {
+  const nbQ  = parseInt(document.getElementById('saison-nb-qualifs')?.value) || 2;
+  const nbM3 = parseInt(document.getElementById('saison-nb-m3')?.value) || 0;
+  const el   = document.getElementById('format-rule-text');
+  if (!el) return;
+  const qualifDesc = nbQ === 1 ? '1er de chaque poule' : nbQ === 2 ? '1er + 2ème de chaque poule' : '1er + 2ème + 3ème de chaque poule';
+  const m3Desc = nbM3 ? `, + ${nbM3} meilleur(s) 3ème` : '';
+  el.textContent = `Règle : ${qualifDesc}${m3Desc}.`;
+}
+
+function getFormatEliminatoire(saison) {
+  if (!saison?.poules) return null;
+  const nbPoules = Object.keys(saison.poules).length;
+  const total    = nbPoules * (saison.nbQualifiesParPoule || 2) + (saison.nbMeilleur3eme || 0);
+  if (total <= 2)  return 'Finale';
+  if (total <= 4)  return 'Demi-finale';
+  if (total <= 8)  return '1/4 de finale';
+  if (total <= 16) return '1/8 de finale';
+  return '1/16 de finale';
+}
+
+function calculeClassementPoule(poule, comp, sid) {
+  const matches = getMatchesData();
+  const byPoule = m =>
+    m.poule.toLowerCase() === poule.toLowerCase() &&
+    (m.competition || 'seniors') === comp &&
+    (!sid || (m.saisonId || 'default') === sid);
+  const all  = matches.filter(m => byPoule(m));
+  const done = all.filter(m => m.statut === 'termine');
+  if (!all.length) return [];
+  const teams = {};
+  all.forEach(m => {
+    if (!teams[m.dom]) teams[m.dom] = {j:0,g:0,n:0,p:0,bp:0,bc:0,pts:0};
+    if (!teams[m.ext]) teams[m.ext] = {j:0,g:0,n:0,p:0,bp:0,bc:0,pts:0};
+  });
+  done.forEach(m => {
+    const d = m.score.dom, e = m.score.ext;
+    teams[m.dom].j++; teams[m.dom].bp += d; teams[m.dom].bc += e;
+    teams[m.ext].j++; teams[m.ext].bp += e; teams[m.ext].bc += d;
+    if (d > e)      { teams[m.dom].g++; teams[m.dom].pts += 3; teams[m.ext].p++; }
+    else if (d < e) { teams[m.ext].g++; teams[m.ext].pts += 3; teams[m.dom].p++; }
+    else            { teams[m.dom].n++; teams[m.dom].pts++; teams[m.ext].n++; teams[m.ext].pts++; }
+  });
+  return Object.entries(teams)
+    .sort(([,a],[,b]) => b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp)
+    .map(([name, stats]) => ({ name, poule, ...stats }));
+}
+
+function genererPhaseEliminatoire() {
+  if (!hasPermission('declare_saison')) return;
+  const saison = getSaison();
+  if (!saison?.poules) return showToast('Effectuez le tirage au sort d\'abord.');
+  if (!confirm('Générer la phase éliminatoire pour ' + _currentComp + ' ? Cette action peut être refaite.')) return;
+
+  const nbQ    = saison.nbQualifiesParPoule || 2;
+  const nbM3   = saison.nbMeilleur3eme || 0;
+  const comp   = _currentComp;
+  const sid    = saison.id;
+  const poules = Object.keys(saison.poules);
+
+  // Classements par poule
+  const classements = {};
+  poules.forEach(p => { classements[p] = calculeClassementPoule(p, comp, sid); });
+
+  // Qualifiés directs : rang 0, 1, ... (nbQ-1) de chaque poule
+  // Seeds: poule winners first, then runners-up, etc. (cross-bracket seeding)
+  const qualifies = [];
+  for (let rang = 0; rang < nbQ; rang++) {
+    poules.forEach(p => {
+      const team = classements[p]?.[rang];
+      if (team) qualifies.push({ ...team, rang: rang + 1, meilleur3: false });
+    });
+  }
+
+  // Meilleurs 3èmes
+  if (nbM3 > 0) {
+    const troisemes = poules
+      .map(p => classements[p]?.[2])
+      .filter(Boolean)
+      .sort((a, b) => b.pts - a.pts || (b.bp - b.bc) - (a.bp - a.bc) || b.bp - a.bp || b.g - a.g)
+      .slice(0, nbM3);
+    troisemes.forEach(t => qualifies.push({ ...t, rang: 3, meilleur3: true }));
+  }
+
+  const n      = qualifies.length;
+  const format = getFormatEliminatoire(saison) || 'Phase éliminatoire';
+
+  if (n < 2) return showToast('Pas assez d\'équipes qualifiées. Vérifiez les matchs joués.');
+
+  // Seeding classique : seed 1 vs seed n, seed 2 vs seed n-1, …
+  const matchsElim = [];
+  const half = Math.floor(n / 2);
+  for (let i = 0; i < half; i++) {
+    matchsElim.push({
+      id: 'E_' + comp + '_' + i + '_' + Date.now(),
+      tour: format,
+      competition: comp,
+      saisonId: sid,
+      dom: qualifies[i].name,
+      domInfo: `Poule ${qualifies[i].poule.toUpperCase()} · ${qualifies[i].rang}${qualifies[i].rang===1?'er':'ème'}${qualifies[i].meilleur3?' (M3)':''}`,
+      ext: qualifies[n - 1 - i].name,
+      extInfo: `Poule ${qualifies[n-1-i].poule.toUpperCase()} · ${qualifies[n-1-i].rang}${qualifies[n-1-i].rang===1?'er':'ème'}${qualifies[n-1-i].meilleur3?' (M3)':''}`,
+      label: 'Match ' + (i + 1),
+      statut: 'upcoming',
+      score: { dom: 0, ext: 0 },
+      live: { startedAt: null, halfAt: null, resumedAt: null, endedAt: null, addedTime1: 0, addedTime2: 0, currentHalf: 0 },
+      events: []
+    });
+  }
+
+  saison.matchsEliminatoires = saison.matchsEliminatoires || {};
+  saison.matchsEliminatoires[comp] = matchsElim;
+  saison.eliminatoireGenere = true;
+  saveSaison(saison);
+
+  // Afficher le subnav bracket
+  const subnavElim = document.getElementById('subnav-comp-elim');
+  if (subnavElim) subnavElim.style.display = '';
+
+  renderSaisonPanel();
+  renderBracketSection();
+  showToast(`${format} généré(e) · ${matchsElim.length} rencontres · ${n} équipes qualifiées`);
+  logAction('GENERER_BRACKET', { detail: format + ' · ' + comp + ' · ' + n + ' équipes' });
+  showSubSection('competition', 'comp-eliminations', document.getElementById('subnav-comp-elim'));
+}
+
+function renderBracketSection() {
+  const el = document.getElementById('bracket-content');
+  if (!el) return;
+  const saison = getSelectedSaison();
+  const matchs = saison?.matchsEliminatoires?.[_currentComp] || [];
+  if (!matchs.length) {
+    el.innerHTML = `<div class="alert info"><i class="fa-solid fa-circle-info"></i> La phase éliminatoire n'a pas encore été générée pour ${_currentComp}. Terminez les matchs de poules puis utilisez le bouton "Générer" dans le panneau de gestion.</div>`;
+    return;
+  }
+  const format = matchs[0]?.tour || 'Phase éliminatoire';
+  const canScore = hasPermission('declare_saison');
+  const matchHtml = matchs.map(m => {
+    const scoreHtml = m.statut === 'termine'
+      ? `<div class="score-box">${m.score?.dom??0}</div><div class="match-vs">–</div><div class="score-box">${m.score?.ext??0}</div>`
+      : `<div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div>`;
+    const statusHtml = m.statut === 'termine'
+      ? `<span class="badge green">Joué</span>`
+      : `<span class="badge gray">À jouer</span>`;
+    const scoreBtn = canScore && m.statut !== 'termine'
+      ? `<button class="btn" style="font-size:11px;padding:4px 10px;margin-top:4px" onclick="saisirScoreElim('${m.id}')"><i class="fa-solid fa-pen"></i> Saisir score</button>`
+      : canScore && m.statut === 'termine'
+      ? `<button class="btn" style="font-size:11px;padding:4px 10px;margin-top:4px" onclick="saisirScoreElim('${m.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>`
+      : '';
+    return `<div class="match-card" style="margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;width:60px;flex-shrink:0">${m.label||''}</div>
+      <div style="flex:1;min-width:0">
+        <div class="match-team" style="font-size:13px">${esc(m.dom)}</div>
+        <div style="font-size:10px;color:var(--muted)">${m.domInfo||''}</div>
+      </div>
+      <div class="match-score">${scoreHtml}</div>
+      <div style="flex:1;min-width:0;text-align:right">
+        <div class="match-team right" style="font-size:13px">${esc(m.ext)}</div>
+        <div style="font-size:10px;color:var(--muted);text-align:right">${m.extInfo||''}</div>
+      </div>
+      <div style="flex-shrink:0;text-align:right">${statusHtml}${scoreBtn}</div>
+    </div>`;
+  }).join('');
+
+  const nbJoues = matchs.filter(m => m.statut === 'termine').length;
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-sitemap"></i> ${format}</span>
+        <span class="badge ${nbJoues === matchs.length ? 'green' : 'amber'}">${nbJoues}/${matchs.length} joués</span>
+      </div>
+      <div style="padding:12px">${matchHtml}</div>
+      ${hasPermission('declare_saison') ? `<div style="padding:0 12px 12px;text-align:right"><button class="btn" style="font-size:11px" onclick="genererPhaseEliminatoire()"><i class="fa-solid fa-rotate"></i> Regénérer</button></div>` : ''}
+    </div>`;
+}
+
+function saisirScoreElim(matchId) {
+  const saison = getSaison();
+  const matchs = saison?.matchsEliminatoires?.[_currentComp] || [];
+  const m = matchs.find(x => x.id === matchId);
+  if (!m) return;
+  const domS = prompt(`Score de ${m.dom} :`, m.score?.dom ?? 0);
+  if (domS === null) return;
+  const extS = prompt(`Score de ${m.ext} :`, m.score?.ext ?? 0);
+  if (extS === null) return;
+  const dom = parseInt(domS);
+  const ext = parseInt(extS);
+  if (isNaN(dom) || isNaN(ext) || dom < 0 || ext < 0) return showToast('Scores invalides.');
+  m.score  = { dom, ext };
+  m.statut = 'termine';
+  saison.matchsEliminatoires[_currentComp] = matchs;
+  saveSaison(saison);
+  renderBracketSection();
+  renderDashboard();
+  showToast(`Score enregistré : ${m.dom} ${dom} – ${ext} ${m.ext}`);
+  logAction('SCORE_ELIM', { detail: m.label + ' · ' + m.dom + ' ' + dom + '-' + ext + ' ' + m.ext });
 }
 
 // ============================================================
