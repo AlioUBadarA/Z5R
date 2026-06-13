@@ -1184,6 +1184,15 @@
           <button class="btn primary" onclick="declarerSaison()"><i class="fa-solid fa-rocket"></i> Déclarer la saison</button>
         </div>
       </div>
+
+      <!-- SUPERADMIN : Saisons précédentes -->
+      <div id="saison-historique-view" style="display:none">
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">
+          <i class="fa-solid fa-clock-rotate-left"></i> Saisons précédentes
+        </div>
+        <div id="saison-historique-list"></div>
+      </div>
     </div>
   </div>
 
@@ -3678,6 +3687,30 @@ function renderSaisonPanel() {
     if (h) h.textContent = 'Bureau Zone 5R / 2025';
     if (hasPermission('declare_saison')) refreshSaisonEquipesSelect();
   }
+
+  // Section saisons précédentes (superadmin uniquement)
+  const historiqueView = document.getElementById('saison-historique-view');
+  const historiqueList = document.getElementById('saison-historique-list');
+  if (historiqueView && historiqueList) {
+    const passees = getSaisons().filter(s => !s.active);
+    if (currentUser?.role === 'superadmin' && passees.length) {
+      historiqueView.style.display = 'block';
+      historiqueList.innerHTML = [...passees].reverse().map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
+                    background:var(--gray-l);border-radius:var(--radius-sm);margin-bottom:6px">
+          <div>
+            <span style="font-size:13px;font-weight:600">${s.nom}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">${new Date(s.date).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <button class="btn danger" style="font-size:11px;padding:4px 10px" onclick="supprimerSaison('${s.id}')">
+            <i class="fa-solid fa-trash"></i> Supprimer
+          </button>
+        </div>
+      `).join('');
+    } else {
+      historiqueView.style.display = 'none';
+    }
+  }
 }
 
 function declarerSaison() {
@@ -3712,6 +3745,51 @@ function cloturerSaison() {
   renderSaisonPanel();
   renderSeasonBar();
   showToast('Saison clôturée.');
+}
+
+function supprimerSaison(id) {
+  if (currentUser?.role !== 'superadmin') return;
+  const saisons = getSaisons();
+  const saison = saisons.find(s => s.id === id);
+  if (!saison) return;
+  if (saison.active) return showToast('Clôturez la saison avant de la supprimer.');
+
+  if (!confirm(`Supprimer définitivement la saison "${saison.nom}" ?\n\nToutes les données associées (fiches, litiges, licences, dépenses, finale) seront supprimées. Cette action est irréversible.`)) return;
+
+  saveSaisons(saisons.filter(s => s.id !== id));
+
+  // Supprimer les données liées à cette saison
+  [
+    { key: 'zone5r_fiches',   sync: 'fiches' },
+    { key: 'zone5r_litiges',  sync: 'litiges' },
+    { key: 'zone5r_licences', sync: 'licences' },
+    { key: 'zone5r_depenses', sync: 'depenses' },
+  ].forEach(({ key, sync }) => {
+    try {
+      const data = JSON.parse(localStorage.getItem(key));
+      if (Array.isArray(data)) {
+        const filtered = data.filter(d => (d.saisonId || 'S_legacy') !== id);
+        localStorage.setItem(key, JSON.stringify(filtered));
+        fireSync(sync, filtered);
+      }
+    } catch(e) {}
+  });
+
+  try {
+    const finales = JSON.parse(localStorage.getItem('zone5r_finales') || '[]');
+    const filteredFinales = finales.filter(f => (f.saisonId || 'S_legacy') !== id);
+    localStorage.setItem('zone5r_finales', JSON.stringify(filteredFinales));
+    fireSync('finales', filteredFinales);
+  } catch(e) {}
+
+  if (_selectedSaisonId === id) _selectedSaisonId = null;
+
+  logAction('DELETE_SAISON', { detail: saison.nom });
+  showToast('Saison "' + saison.nom + '" supprimée.');
+
+  renderSaisonPanel(); renderSeasonBar();
+  renderFichesList(); renderLitiges(); renderLicencesTable();
+  renderDepensesList(); renderFinaleDisplay(); updateCaisse(); renderBilan();
 }
 
 // ============================================================
