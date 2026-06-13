@@ -3043,72 +3043,56 @@ function savePlayer() {
 // ============================================================
 //  RECHERCHE DE MATCHS (visiteur)
 // ============================================================
-const ALL_MATCHES = [
-  // ── SENIORS (15h – 19h) ──────────────────────────────────────
-  { competition:'seniors', dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: "Auj. 16h",      score: null,  statut: 'upcoming' },
-  { competition:'seniors', dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: '07/09',          score: '2-0', statut: 'joue'     },
-  { competition:'seniors', dom: 'ASC Kafesse',        ext: 'ASC Baraka',         poule: 'A', date: '07/09',          score: '1-1', statut: 'joue'     },
-  { competition:'seniors', dom: 'ASC Oryx MTG',       ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 16h',   score: null,  statut: 'upcoming' },
-  { competition:'seniors', dom: 'ASC Chicago',        ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 15h',   score: null,  statut: 'upcoming' },
-  { competition:'seniors', dom: 'ASC Baraka',         ext: 'ASC Deggo',          poule: 'B', date: '29/08',          score: '2-1', statut: 'joue'     },
-  { competition:'seniors', dom: 'ASC Médina Plateau', ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 16h',   score: null,  statut: 'upcoming' },
-  { competition:'seniors', dom: 'ASC Santhiaba',      ext: 'ASC Médina Plateau', poule: 'B', date: '08/09',          score: '0-2', statut: 'joue'     },
-  { competition:'seniors', dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 15h',   score: null,  statut: 'upcoming' },
-  // ── CADETS (8h – 13h) — mêmes clubs, horaires matin ────────
-  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: "Auj. 9h",       score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Walidane',       ext: 'ASC Chicago',        poule: 'A', date: '07/09 · 8h',    score: '1-2', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Kafesse',        ext: 'ASC Baraka',         poule: 'A', date: '07/09 · 10h',   score: '0-0', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Oryx MTG',       ext: 'ASC Walidane',       poule: 'A', date: '10/09 · 9h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Chicago',        ext: 'ASC Kafesse',        poule: 'A', date: '12/09 · 9h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Baraka',         ext: 'ASC Deggo',          poule: 'B', date: '29/08 · 8h30',  score: '3-1', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Médina Plateau', ext: 'ASC Baraka',         poule: 'B', date: '11/09 · 9h',    score: null,  statut: 'upcoming' },
-  { competition:'cadets',  dom: 'ASC Santhiaba',      ext: 'ASC Médina Plateau', poule: 'B', date: '08/09 · 8h',    score: '2-1', statut: 'joue'     },
-  { competition:'cadets',  dom: 'ASC Yengoulène',     ext: 'ASC Nafacounda',     poule: 'C', date: '13/09 · 8h',    score: null,  statut: 'upcoming' },
-];
+const ALL_MATCHES = []; // Vide — tout vient de saison.matchs via programmerMatchs()
 
 function searchMatches(query) {
-  const q          = query.trim().toLowerCase();
-  const resultsDiv = document.getElementById('search-results');
-  const resultsBody= document.getElementById('search-results-body');
-  const resultsTitle=document.getElementById('search-results-title');
+  const q           = query.trim().toLowerCase();
+  const resultsDiv  = document.getElementById('search-results');
+  const resultsBody = document.getElementById('search-results-body');
+  const resultsTitle= document.getElementById('search-results-title');
 
   if (!q) { resultsDiv.style.display = 'none'; return; }
 
-  const found = getMatchesData().filter(m =>
+  // Cherche dans la saison sélectionnée (active ou dernière)
+  const saison = getSelectedSaison();
+  const pool   = saison?.matchs || [];
+
+  const found = pool.filter(m =>
     (m.dom||'').toLowerCase().includes(q) ||
     (m.ext||'').toLowerCase().includes(q) ||
-    ('poule ' + (m.poule||'')).toLowerCase().includes(q) ||
-    (m.date||'').toLowerCase().includes(q)
+    ('poule ' + (m.poule||'')).toLowerCase().includes(q)
   );
 
   resultsTitle.textContent = found.length + ' résultat' + (found.length !== 1 ? 's' : '');
 
-  if (found.length === 0) {
+  if (!saison) {
+    resultsBody.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)">Aucune saison déclarée.</div>';
+  } else if (found.length === 0) {
     resultsBody.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)">Aucun match trouvé pour « ' + esc(query) + ' »</div>';
   } else {
     resultsBody.innerHTML = found.map(m => {
-      const isTermine = m.statut === 'termine';
-      if (isTermine) {
+      if (m.joue && m.score && typeof m.score === 'object') {
         return `<div class="match-card">
           <div class="match-team">${esc(m.dom)}</div>
-          <div class="match-score"><div class="score-box">${m.score?.dom??0}</div><div class="match-vs">–</div><div class="score-box">${m.score?.ext??0}</div></div>
+          <div class="match-score"><div class="score-box">${m.score.dom}</div><div class="match-vs">–</div><div class="score-box">${m.score.ext}</div></div>
           <div class="match-team right">${esc(m.ext)}</div>
           <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule ${esc(m.poule)} · ${esc(m.date||'')}</div>
+            <div style="font-size:11px;color:var(--muted)">Poule ${esc((m.poule||'').toUpperCase())}</div>
             <span class="badge green">Joué</span>
           </div>
         </div>`;
-      } else {
-        return `<div class="match-card">
-          <div class="match-team">${esc(m.dom)}</div>
-          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
-          <div class="match-team right">${esc(m.ext)}</div>
-          <div style="flex-shrink:0;text-align:right">
-            <div style="font-size:11px;color:var(--muted)">Poule ${esc(m.poule||'')}</div>
-            <div style="font-size:11px;color:var(--amber);font-weight:600">${esc(m.date||'')}</div>
-          </div>
-        </div>`;
       }
+      const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
+      return `<div class="match-card">
+        <div class="match-team">${esc(m.dom)}</div>
+        <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:11px">VS</div></div>
+        <div class="match-team right">${esc(m.ext)}</div>
+        <div style="flex-shrink:0;text-align:right">
+          <div style="font-size:11px;color:var(--muted)">Poule ${esc((m.poule||'').toUpperCase())}</div>
+          ${m.isReported ? '<span class="badge amber" style="font-size:9px">REPORTÉ</span>' : ''}
+          <div style="font-size:11px;color:var(--muted)">${dateStr || 'Date à définir'}</div>
+        </div>
+      </div>`;
     }).join('');
   }
 
@@ -5741,6 +5725,19 @@ function saveMatchesData(m) {
   fireSync('matches', m);
 }
 
+function _purgeLegacyMatchesData() {
+  // Supprime de zone5r_matches toute entrée qui n'appartient pas à une saison déclarée
+  const validIds = new Set(getSaisons().map(s => s.id));
+  if (validIds.size === 0) {
+    // Aucune saison → vider complètement
+    if (getMatchesData().length > 0) saveMatchesData([]);
+    return;
+  }
+  const matches  = getMatchesData();
+  const cleaned  = matches.filter(m => m.saisonId && validIds.has(m.saisonId));
+  if (cleaned.length !== matches.length) saveMatchesData(cleaned);
+}
+
 function initMatchesData() {
   if (getMatchesData().length > 0) return;
   const saisonId = getSelectedSaison()?.id || 'default';
@@ -6618,7 +6615,7 @@ function _bootApp() {
   if (dirty) saveUsers(users);
   getPlayers();
   getStades();
-  initMatchesData();
+  _purgeLegacyMatchesData();
   renderCompMatches();
   renderClassementSection();
   initTeamTabs();
