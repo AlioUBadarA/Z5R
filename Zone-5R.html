@@ -5790,66 +5790,61 @@ function _updateCompPoulesTabs() {
 }
 
 function renderCompMatches() {
-  const saison   = getSelectedSaison();
-  const sid      = saison?.id;
-  const canLive  = hasPermission('live_score');
-  const canEdit  = hasPermission('declare_saison');
-  const sMatchs  = saison?.matchs || [];
-  const useSchedule = sMatchs.length > 0 && saison?.matchsProgrammes;
-  const poules   = saison?.poules ? Object.keys(saison.poules).sort() : ['a','b','c','d'];
+  const saison  = getSelectedSaison();
+  const canEdit = hasPermission('declare_saison');
+
+  // ── Pas de calendrier → message d'état selon l'avancement ──
+  if (!saison?.matchsProgrammes) {
+    let icon, msg;
+    if (!saison) {
+      icon = 'fa-circle-info';
+      msg  = 'Aucune saison déclarée.';
+    } else if (!saison.tirageDone) {
+      icon = 'fa-dice';
+      msg  = 'Le tirage au sort n\'a pas encore été effectué.';
+    } else {
+      icon = 'fa-calendar-plus';
+      msg  = 'Le calendrier des matchs n\'a pas encore été généré (Étape 3 du panneau Saison).';
+    }
+    const html = `<div class="alert info" style="margin:8px 0"><i class="fa-solid ${icon}"></i> ${msg}</div>`;
+    ['a','b','c','d'].forEach((p, i) => {
+      const el = document.getElementById('poule-' + p);
+      if (el) el.innerHTML = i === 0 ? html : '';
+    });
+    return;
+  }
+
+  // ── Calendrier disponible → source unique : saison.matchs ──
+  const sMatchs = saison.matchs || [];
+  const poules  = Object.keys(saison.poules || {}).sort();
 
   poules.map(p => p.toLowerCase()).forEach(p => {
     const el = document.getElementById('poule-' + p);
     if (!el) return;
-
-    if (useSchedule) {
-      // Source : saison.matchs (calendrier du tirage)
-      const pm = sMatchs
-        .map((m, i) => ({ ...m, _idx: i }))
-        .filter(m => m.poule.toLowerCase() === p)
-        .sort((a, b) => {
-          if (a.joue && !b.joue) return 1;
-          if (!a.joue && b.joue) return -1;
-          if (a.date && b.date) return a.date.localeCompare(b.date);
-          if (a.date) return -1; if (b.date) return 1; return 0;
-        });
-      if (pm.length === 0) {
-        el.innerHTML = `<div class="alert info">Aucun match pour la Poule ${p.toUpperCase()}.</div>`;
-        return;
-      }
-      const teams = saison.poules[p] || [...new Set(pm.flatMap(m => [m.dom, m.ext]))];
-      el.innerHTML = `<div class="card mb">
-        <div class="card-header">
-          <span class="card-title">Poule ${p.toUpperCase()} · <i class="fa-solid fa-futbol"></i> Seniors</span>
-          <span class="badge green">${teams.length} équipes</span>
-        </div>
-        <div style="padding:8px;display:flex;flex-direction:column;gap:6px">
-          ${pm.map(m => _matchScheduleCardCompHtml(m, canEdit)).join('')}
-        </div>
-      </div>`;
-    } else {
-      // Source legacy : zone5r_matches (live scoring)
-      const matches = getMatchesData();
-      const pm = matches.filter(m =>
-        m.poule.toLowerCase() === p &&
-        (m.competition || 'seniors') === _currentComp &&
-        (!sid || (m.saisonId || 'default') === sid)
-      );
-      if (pm.length === 0) {
-        el.innerHTML = `<div class="alert info">Programme Poule ${p.toUpperCase()} en attente.</div>`;
-        return;
-      }
-      const teams = [...new Set(pm.flatMap(m => [m.dom, m.ext]))];
-      el.innerHTML = `<div class="card mb">
-        <div class="card-header">
-          <span class="card-title">Poule ${p.toUpperCase()} · ${_currentComp === 'cadets' ? '<i class="fa-solid fa-star"></i> Cadets' : '<i class="fa-solid fa-futbol"></i> Seniors'}</span>
-          <span class="badge green">${teams.length} équipes</span>
-        </div>
-        <div class="gap" style="padding:12px;gap:6px">
-          ${pm.map(m => _matchCardHtml(m, canLive)).join('')}
-        </div>
-      </div>`;
+    const pm = sMatchs
+      .map((m, i) => ({ ...m, _idx: i }))
+      .filter(m => m.poule.toLowerCase() === p)
+      .sort((a, b) => {
+        if (a.joue && !b.joue) return 1;
+        if (!a.joue && b.joue) return -1;
+        if (a.date && b.date) return a.date.localeCompare(b.date);
+        if (a.date) return -1; if (b.date) return 1; return 0;
+      });
+    if (pm.length === 0) {
+      el.innerHTML = `<div class="alert info">Aucun match pour la Poule ${p.toUpperCase()}.</div>`;
+      return;
     }
+    const teams = saison.poules[p] || saison.poules[p.toUpperCase()] || [...new Set(pm.flatMap(m => [m.dom, m.ext]))];
+    const joues = pm.filter(m => m.joue).length;
+    el.innerHTML = `<div class="card mb">
+      <div class="card-header">
+        <span class="card-title">Poule ${p.toUpperCase()} · <i class="fa-solid fa-futbol"></i> Seniors</span>
+        <span class="badge ${joues === pm.length ? 'green' : 'amber'}">${joues}/${pm.length} joués</span>
+      </div>
+      <div style="padding:8px;display:flex;flex-direction:column;gap:6px">
+        ${pm.map(m => _matchScheduleCardCompHtml(m, canEdit)).join('')}
+      </div>
+    </div>`;
   });
 }
 
