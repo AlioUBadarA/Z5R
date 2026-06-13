@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zone 5R ODGAM – Navetanes Bignona</title>
+<title>Zone 5R / ODGAM de Bignona</title>
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="apple-touch-icon" href="assets/favicon.png">
 <style>
@@ -407,7 +407,7 @@
 <div id="competition" class="section">
   <div class="mb" style="padding-bottom:4px">
     <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-futbol"></i> Compétition</h2>
-    <p style="font-size:12px;color:var(--muted);margin-top:2px">Navetanes 2025 · Zone 5R ODGAM Bignona</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px" id="comp-saison-label">Zone 5R ODGAM Bignona</p>
   </div>
 
   <!-- Sélecteur Cadets / Seniors -->
@@ -5789,6 +5789,14 @@ function _updateCompPoulesTabs() {
 function renderCompMatches() {
   const saison  = getSelectedSaison();
   const canEdit = hasPermission('declare_saison');
+
+  // Mise à jour du sous-titre de la section Compétition
+  const compLabel = document.getElementById('comp-saison-label');
+  if (compLabel) {
+    compLabel.textContent = saison
+      ? saison.nom + ' · Zone 5R ODGAM Bignona'
+      : 'Zone 5R ODGAM Bignona';
+  }
 
   // ── Pas de calendrier → message d'état selon l'avancement ──
   if (!saison?.matchsProgrammes) {
