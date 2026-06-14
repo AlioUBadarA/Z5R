@@ -323,7 +323,7 @@
   .accueil-bureau-avatar img{width:100%;height:100%;object-fit:cover;}
   .accueil-bureau-civ{font-size:9px;color:var(--muted);}
   .accueil-bureau-nom{font-size:11px;font-weight:700;line-height:1.3;}
-  .accueil-bureau-poste{font-size:9px;color:var(--muted);line-height:1.2;}
+  .accueil-bureau-poste{font-size:9px;color:var(--muted);line-height:1.3;}
   /* Bureau declaration form */
   .bureau-form-comm-hdr{background:var(--green-d);color:#fff;font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--radius-sm);margin:14px 0 8px;}
   .bureau-form-row{display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;align-items:start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
@@ -3237,7 +3237,7 @@ function renderBureauSection() {
         html += `<div class="bureau-card">
           ${isDem ? '<div class="bureau-dem-badge">Démissionnaire</div>' : ''}
           <div class="bureau-avatar">${m.photo
-            ? `<img src="${m.photo}" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
+            ? `<img src="${m.photo}" loading="eager" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
             : ini}</div>
           <div class="bureau-civilite">${m.civilite||''}</div>
           <div class="bureau-nom">${fullNom}</div>
@@ -3320,14 +3320,13 @@ function renderAccueilBureau() {
     if (!m?.nom) return '';
     const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
     const nom = ((m.prenom||'') + ' ' + m.nom).trim();
-    const sp  = p.poste.length > 38 ? p.poste.slice(0,36) + '…' : p.poste;
     return `<div class="accueil-bureau-card">
       <div class="accueil-bureau-avatar">${m.photo
-        ? `<img src="${m.photo}" onerror="this.parentNode.textContent='${ini}'">`
+        ? `<img src="${m.photo}" loading="eager" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
         : ini}</div>
       <div class="accueil-bureau-civ">${m.civilite||''}</div>
       <div class="accueil-bureau-nom">${nom}</div>
-      <div class="accueil-bureau-poste">${sp}</div>
+      <div class="accueil-bureau-poste">${p.poste}</div>
     </div>`;
   };
 
