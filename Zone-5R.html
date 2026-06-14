@@ -3307,15 +3307,17 @@ function renderAccueilBureau() {
     if (mEl) mEl.style.display = 'none';
     return;
   }
-  const mb     = bureau.membres;
-  const filled = POSTES_BUREAU.filter(p => mb[p.id]?.nom);
-  if (!filled.length) {
+  const mb = bureau.membres;
+  const hasAny = POSTES_BUREAU.some(p => mb[p.id]?.nom);
+  if (!hasAny) {
     if (vEl) vEl.style.display = 'none';
     if (mEl) mEl.style.display = 'none';
     return;
   }
-  const mkCards = filled.map(p => {
+
+  const mkCard = p => {
     const m   = mb[p.id];
+    if (!m?.nom) return '';
     const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
     const nom = ((m.prenom||'') + ' ' + m.nom).trim();
     const sp  = p.poste.length > 38 ? p.poste.slice(0,36) + '…' : p.poste;
@@ -3327,12 +3329,26 @@ function renderAccueilBureau() {
       <div class="accueil-bureau-nom">${nom}</div>
       <div class="accueil-bureau-poste">${sp}</div>
     </div>`;
-  }).join('');
+  };
+
+  // Construire le corps groupé par commission
+  const commissions = [...new Set(POSTES_BUREAU.map(p => p.commission))];
+  let body = '';
+  commissions.forEach(comm => {
+    const cards = POSTES_BUREAU.filter(p => p.commission === comm).map(mkCard).join('');
+    if (!cards.trim()) return;
+    body += `
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                  color:var(--muted);padding:10px 12px 4px;border-top:1px solid var(--border);margin-top:4px">
+        ${comm}
+      </div>
+      <div style="padding:0 12px 12px"><div class="accueil-bureau-grid">${cards}</div></div>`;
+  });
 
   const annee = bureau.mandat?.annee || '';
   const inner = (title) => `<div class="card mb">
     <div class="card-header"><span class="card-title"><i class="fa-solid fa-users"></i> ${title}</span></div>
-    <div style="padding:12px"><div class="accueil-bureau-grid">${mkCards}</div></div>
+    ${body}
   </div>`;
 
   if (vEl) { vEl.style.display = 'block'; vEl.innerHTML = inner(`Équipe dirigeante · Bureau ${annee}`); }
