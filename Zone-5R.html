@@ -7249,8 +7249,58 @@ function _liveRenderEvents(match) {
 // ============================================================
 //  INIT
 // ============================================================
+function _migrateBureau2025() {
+  if (getBureauData()) return; // Bureau déjà déclaré — ne rien écraser
+  const mk = (civ, prenom, nom, user) => ({
+    civilite:civ, prenom, nom, photo:'', asc:'', contact:'', email:'', statut:'actif', username:user
+  });
+  const membres = {
+    president: mk('M.', 'Djiby Diouf',        'DIATTA',    'djiby.diatta'     ),
+    vp1:       mk('M.', 'Aliou Badara Sadia', 'SAGNA',     'aliou.sagna'      ),
+    vp2:       mk('M.', 'Mamadou Lamine',     'SANÉ',      'mamadou.sane'     ),
+    vp3:       mk('M.', 'Abdoulaye',          'DIÉMÉ',     'abdoulaye.dieme'  ),
+    vp4:       mk('M.', 'Moustapha',          'SAMBOU',    'moustapha.sambou' ),
+    sg:        mk('M.', 'Boubacar',           'CAMARA',    'boubacar.camara'  ),
+    sga:       mk('M.', 'Aliou',              'SAGNA',     'papis.sagna'      ),
+    sadm:      mk('M.', 'Nouha',              'COLY',      'nouha.coly'       ),
+    pres_fin:  mk('M.', 'Ibrahima',           'DIEME',     'ibrahima.dieme'   ),
+    tg:        mk('M.', 'El Habib Pierre',    'SANÉ',      'habib.sane'       ),
+    tga:       mk('M.', 'Souleymane',         'DIENG',     'agnile.dieng'     ),
+    comp_pdt:  mk('M.', 'Sidiky',             'DOUMBIA',   'sidiky.doumbia'   ),
+    comp_m1:   mk('M.', 'Abdoulaye',          'SANE',      'abdoulaye.sane'   ),
+    comp_m2:   mk('M.', 'Oumar',              'SOW',       'oumar.sow'        ),
+    jur_pdt:   mk('M.', 'Fodé',              'GOUDIABY',  'fode.goudiaby'    ),
+    jur_m1:    mk('M.', 'Mouhamadou',         'COLY',      'mouhamadou.coly'  ),
+    jur_m2:    mk('M.', 'Souleymane',         'DIENG',     'souleymane.dieng' ),
+    jur_m3:    mk('M.', 'Djibril',            'BADJI',     'djibril.badji'    ),
+    ff_pdt:    mk('Mme','Fatou',              'BIAYE',     'fatou.biaye'      ),
+    ff_vp:     mk('Mme','Fayolle',            'BA',        'fayolle.ba'       ),
+    pc_pdt:    mk('M.', 'Abdou',              'GOUDIABY',  'abdou.goudiaby'   ),
+    pc_vp:     mk('M.', 'Ibrahima',           'BA',        'ibrahima.ba'      ),
+    org_pdt:   mk('M.', 'Ousmane',            'DIBA',      'ousmane.diba'     ),
+    org_m1:    mk('M.', 'Marwane',            'DIEME',     'marwane.dieme'    ),
+    org_m2:    mk('M.', 'Mamadou Migual',     'DIEDHIOU',  'migual.diedhiou'  ),
+    org_m3:    mk('M.', 'Sahid',              'COLY',      'sahid.coly'       ),
+    comm_pdt:  mk('M.', 'Cheikh S.',          'DIATTA',    'cheikh.diatta'    ),
+    comm_vp:   mk('M.', 'Balla',              'KANDE',     'balla.kande'      ),
+    jeunesse:  mk('Mme','Aïcha',             'DIOP',      'aicha.diop'       ),
+    cac1:      mk('Mme','Aïcha',             'MBAYE',     'aicha.mbaye'      ),
+    cac2:      mk('M.', 'Idrissa',            'DIALLO',    'idrissa.diallo'   ),
+  };
+  const bureau = {
+    mandat: { debut:'2025-01-01', fin:'2028-12-31', annee:'2025',
+              declare_par:'Migration auto', declare_le: new Date().toISOString() },
+    membres,
+  };
+  localStorage.setItem('zone5r_bureau', JSON.stringify(bureau));
+  fireSync('bureau', bureau);
+  console.log('[BUREAU] Migration 2025 — ' + Object.keys(membres).length + ' membres pré-chargés.');
+}
+
 function _bootApp() {
   migrateSaisonLegacy();
+  // Pré-remplir le bureau 2025 si aucun bureau n'existe encore
+  _migrateBureau2025();
   // Charger le bureau depuis localStorage et mettre à jour BUREAU_MEMBERS dynamiquement
   _refreshBureauMembers();
   // Assurer que les profils bureau sont présents (sans mot de passe — géré par Firebase Auth)
