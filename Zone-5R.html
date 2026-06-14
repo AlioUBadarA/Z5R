@@ -302,6 +302,32 @@
   .dot-y{background:#f59e0b} .dot-r{background:#ef4444} .dot-g{background:#22c55e}
   .rank-medal{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;color:#fff}
   .rank-medal.gold{background:#f59e0b} .rank-medal.silver{background:#9ca3af} .rank-medal.bronze{background:#b45309}
+
+  /* ── BUREAU MEMBRE CARDS ─────────────────────────────── */
+  .bureau-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+  .bureau-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-bottom:16px;}
+  .bureau-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:14px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;position:relative;box-shadow:var(--shadow);}
+  .bureau-avatar{width:62px;height:62px;border-radius:50%;overflow:hidden;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--green-d);flex-shrink:0;}
+  .bureau-avatar img{width:100%;height:100%;object-fit:cover;}
+  .bureau-civilite{font-size:10px;color:var(--muted);}
+  .bureau-nom{font-size:12px;font-weight:700;line-height:1.3;}
+  .bureau-poste-label{font-size:10px;color:var(--muted);line-height:1.3;}
+  .bureau-asc,.bureau-contact{font-size:10px;color:var(--blue);}
+  .bureau-dem-badge{position:absolute;top:5px;right:5px;background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;}
+  .bureau-edit-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;margin-top:4px;width:100%;transition:color .15s,border-color .15s;}
+  .bureau-edit-btn:hover{color:var(--green);border-color:var(--green);}
+  /* Accueil bureau */
+  .accueil-bureau-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+  .accueil-bureau-card{background:var(--card);border-radius:var(--radius-sm);border:1px solid var(--border);padding:10px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;box-shadow:var(--shadow);}
+  .accueil-bureau-avatar{width:46px;height:46px;border-radius:50%;overflow:hidden;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--green-d);}
+  .accueil-bureau-avatar img{width:100%;height:100%;object-fit:cover;}
+  .accueil-bureau-civ{font-size:9px;color:var(--muted);}
+  .accueil-bureau-nom{font-size:11px;font-weight:700;line-height:1.3;}
+  .accueil-bureau-poste{font-size:9px;color:var(--muted);line-height:1.2;}
+  /* Bureau declaration form */
+  .bureau-form-comm-hdr{background:var(--green-d);color:#fff;font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--radius-sm);margin:14px 0 8px;}
+  .bureau-form-row{display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;align-items:start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  @media(max-width:600px){.bureau-form-row{grid-template-columns:1fr;} .bureau-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}}
 </style>
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -385,6 +411,9 @@
     <!-- Fiches de recettes publiées -->
     <div id="dashboard-fiches-card" class="mb"></div>
 
+    <!-- Bureau Zone 5R (rendu dynamique) -->
+    <div id="accueil-bureau-visiteur" style="display:none;margin-bottom:16px"></div>
+
   </div><!-- /visitor-view -->
 
   <!-- ── VUE MEMBRE ── -->
@@ -399,6 +428,8 @@
     <div id="member-matches-card" class="mb"></div>
     <!-- Finances (dynamiques) -->
     <div id="member-finance-card"></div>
+    <!-- Bureau Zone 5R (rendu dynamique) -->
+    <div id="accueil-bureau-membre" style="display:none;margin-top:14px"></div>
   </div><!-- /member-view -->
 
 </div><!-- /dashboard -->
@@ -764,98 +795,34 @@
 
   <!-- SUB : Bureau & Membres -->
   <div id="adm-bureau" class="subsection active">
-    <div class="card mb">
-      <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
+
+    <!-- Mandat en cours (masqué si aucun bureau déclaré) -->
+    <div id="bureau-mandat-card" class="card mb" style="display:none">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-id-card"></i> Bureau en exercice</span>
+        <div id="bureau-mandat-actions" style="display:none;gap:8px" class="flex-between"></div>
+      </div>
+      <div id="bureau-mandat-body" class="card-body" style="font-size:13px;color:var(--muted)">Chargement…</div>
+    </div>
+
+    <!-- Aucun bureau déclaré (SuperAdmin uniquement) -->
+    <div id="bureau-declare-card" class="card mb" style="display:none">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-pen-to-square"></i> Déclarer le bureau</span></div>
       <div class="card-body">
-        <div class="role-grid">
-          <div class="role-card" style="border-color:var(--purple)">
-            <div class="role-name">Super Admin</div>
-            <div class="role-pos">Aliou Badara Sadia SAGNA</div>
-            <div class="role-perms">
-              <span class="badge purple">Accès total</span>
-              <span class="badge purple">Gestion MDP</span>
-            </div>
-          </div>
-          <div class="role-card" style="border-color:var(--amber)">
-            <div class="role-name">Président</div>
-            <div class="role-pos">Djiby Diouf DIATTA</div>
-            <div class="role-perms">
-              <span class="badge amber">Accès total</span>
-              <span class="badge green">Valider dépenses</span>
-              <span class="badge red">Rejeter dépenses</span>
-            </div>
-          </div>
-          <div class="role-card">
-            <div class="role-name">Secrétaire Général</div>
-            <div class="role-pos">Boubacar CAMARA</div>
-            <div class="role-perms">
-              <span class="badge blue">Résultats</span>
-              <span class="badge blue">Calendrier</span>
-              <span class="badge amber">Demander dépense</span>
-            </div>
-          </div>
-          <div class="role-card" style="border-color:var(--amber)">
-            <div class="role-name">Trésorier Général</div>
-            <div class="role-pos">El Habib Pierre SANÉ</div>
-            <div class="role-perms">
-              <span class="badge amber">Finances</span>
-              <span class="badge amber">Rapports</span>
-              <span class="badge blue">Décaissement</span>
-              <span class="badge amber">Demander dépense</span>
-            </div>
-          </div>
-          <div class="role-card">
-            <div class="role-name">Commission Compétitions</div>
-            <div class="role-pos">Sidiky DOUMBIA (Pdt)</div>
-            <div class="role-perms">
-              <span class="badge green">Scores</span>
-              <span class="badge green">Cartons</span>
-              <span class="badge amber">Demander dépense</span>
-            </div>
-          </div>
-          <div class="role-card" style="border-color:var(--red)">
-            <div class="role-name">Commission Juridique</div>
-            <div class="role-pos">Fodé GOUDIABY (Pdt)</div>
-            <div class="role-perms">
-              <span class="badge red">Réclamations</span>
-              <span class="badge red">Sanctions</span>
-              <span class="badge amber">Demander dépense</span>
-            </div>
-          </div>
-          <div class="role-card" style="border-color:var(--gray)">
-            <div class="role-name">Public / Supporters</div>
-            <div class="role-pos">Consultation uniquement</div>
-            <div class="role-perms">
-              <span class="badge gray">Résultats</span>
-              <span class="badge gray">Classements</span>
-              <span class="badge gray">Fiches recettes</span>
-            </div>
-          </div>
-        </div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Aucun bureau déclaré pour cette zone. En tant que Super Admin, déclarez le bureau avec tous ses membres.</p>
+        <button class="btn primary" onclick="openBureauDeclarationModal()"><i class="fa-solid fa-plus"></i> Déclarer le bureau Zone 5R</button>
       </div>
     </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">Membres du Bureau</span></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nom</th><th>Poste</th><th>Accès</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Aliou Badara Sadia SAGNA</strong></td><td>1er VP Marketing / Super Admin</td><td><span class="badge purple">Super Admin</span></td></tr>
-            <tr><td><strong>Djiby Diouf DIATTA</strong></td><td>Président Zone 5R</td><td><span class="badge amber">Admin</span></td></tr>
-            <tr><td>Boubacar CAMARA</td><td>Secrétaire Général</td><td><span class="badge blue">Secrétaire</span></td></tr>
-            <tr><td>Aliou SAGNA (Papis)</td><td>SG Adjoint</td><td><span class="badge blue">Secrétaire</span></td></tr>
-            <tr><td>El Habib Pierre SANÉ</td><td>Trésorier Général</td><td><span class="badge amber">Trésorier</span></td></tr>
-            <tr><td>Souleymane DIENG (Agnile)</td><td>Trésorier Adjoint</td><td><span class="badge amber">Trésorier</span></td></tr>
-            <tr><td>Ibrahima DIEME</td><td>Président Commission Finances</td><td><span class="badge amber">Finances</span></td></tr>
-            <tr><td>Sidiky DOUMBIA</td><td>Commission des Sports (Pdt)</td><td><span class="badge green">Compétitions</span></td></tr>
-            <tr><td>Fodé GOUDIABY</td><td>Commission Juridique (Pdt)</td><td><span class="badge red">Juridique</span></td></tr>
-            <tr><td>Cheikh S. DIATTA</td><td>Commission Communication (Pdt)</td><td><span class="badge blue">Communication</span></td></tr>
-            <tr><td>Aïcha MBAYE</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
-            <tr><td>Idrissa DIALLO</td><td>Commissaire aux Comptes</td><td><span class="badge gray">Audit</span></td></tr>
-          </tbody>
-        </table>
-      </div>
+
+    <!-- Membres groupés par commission (rendu dynamique) -->
+    <div id="bureau-membres-display"></div>
+
+    <!-- Droits d'accès par rôle (rendu dynamique) -->
+    <div class="card mt" id="bureau-droits-card">
+      <div class="card-header"><span class="card-title">Droits d'accès par rôle</span></div>
+      <div class="card-body"><div id="bureau-droits-body" class="role-grid"></div></div>
     </div>
+
   </div>
 
   <!-- SUB : Gestion (Saison, Stades, Équipes) -->
@@ -1997,7 +1964,7 @@ async function forceSyncAllToFirebase() {
   const btns = document.querySelectorAll('[onclick*="forceSyncAllToFirebase"]');
   btns.forEach(b => { b.disabled = true; b.textContent = '⏳ Sync en cours…'; });
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
-                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
+                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches','bureau'];
   let ok = 0, fail = 0;
   for (const key of keys) {
     const raw = localStorage.getItem('zone5r_' + key);
@@ -2047,7 +2014,7 @@ async function initFirebase() {
   }
 
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
-                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches'];
+                 'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches','bureau'];
   await Promise.all(keys.map(k => fireLoad(k)));
 
   // Listeners temps réel — localStorage mis à jour immédiatement, rendu après _appReady
@@ -2155,6 +2122,14 @@ async function initFirebase() {
       }
     }
   });
+  _db.collection(_COL).doc('bureau').onSnapshot(snap => {
+    if (!snap.exists) return;
+    localStorage.setItem('zone5r_bureau', JSON.stringify(snap.data().data));
+    _refreshBureauMembers();
+    if (!_appReady) return;
+    renderBureauSection();
+    renderAccueilBureau();
+  });
 }
 
 // ============================================================
@@ -2167,9 +2142,53 @@ const DEFAULT_USERS = {
   'test.visiteur': { role: 'visiteur',   name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
 };
 
+// ── Postes officiels du bureau (structure PDF) ───────────────
+const POSTES_BUREAU = [
+  // Bureau Exécutif
+  { id:'president', commission:'Bureau Exécutif', poste:'Président de la Zone 5R', role:'admin', genre:'M' },
+  { id:'vp1',  commission:'Bureau Exécutif', poste:'1er Vice-Président chargé du Marketing et du Sponsoring', role:'secretaire', genre:'M' },
+  { id:'vp2',  commission:'Bureau Exécutif', poste:'2ème Vice-Président chargé des activités Socio-éducatives et Culturelles', role:'secretaire', genre:'M' },
+  { id:'vp3',  commission:'Bureau Exécutif', poste:"3ème Vice-Président chargé de l'hygiène, de l'environnement et de la Santé", role:'secretaire', genre:'M' },
+  { id:'vp4',  commission:'Bureau Exécutif', poste:'4ème Vice-Président chargé de la Formation et de la Massification', role:'secretaire', genre:'M' },
+  { id:'sg',   commission:'Bureau Exécutif', poste:'Secrétaire Général', role:'secretaire', genre:'M' },
+  { id:'sga',  commission:'Bureau Exécutif', poste:'Secrétaire Général Adjoint', role:'secretaire', genre:'M' },
+  { id:'sadm', commission:'Bureau Exécutif', poste:'Secrétaire Administratif', role:'secretaire', genre:'M' },
+  { id:'pres_fin', commission:'Bureau Exécutif', poste:'Président de la Commission des Finances', role:'finances', genre:'M' },
+  { id:'tg',   commission:'Bureau Exécutif', poste:'Trésorier Général', role:'tresorier', genre:'M' },
+  { id:'tga',  commission:'Bureau Exécutif', poste:'Trésorier Général Adjoint', role:'tresorier', genre:'M' },
+  // Commission Compétitions, Arbitres, Fair-Play et Médical
+  { id:'comp_pdt', commission:'Commission chargée des Compétitions, des Arbitres, du Fair-Play et du Médical', poste:'Président', role:'competitions', genre:'M' },
+  { id:'comp_m1',  commission:'Commission chargée des Compétitions, des Arbitres, du Fair-Play et du Médical', poste:'Membre', role:'competitions', genre:'M' },
+  { id:'comp_m2',  commission:'Commission chargée des Compétitions, des Arbitres, du Fair-Play et du Médical', poste:'Membre', role:'competitions', genre:'M' },
+  // Commission Juridique
+  { id:'jur_pdt', commission:'Commission Juridique', poste:'Président', role:'juridique', genre:'M' },
+  { id:'jur_m1',  commission:'Commission Juridique', poste:'Membre', role:'juridique', genre:'M' },
+  { id:'jur_m2',  commission:'Commission Juridique', poste:'Membre', role:'juridique', genre:'M' },
+  { id:'jur_m3',  commission:'Commission Juridique', poste:'Membre', role:'juridique', genre:'M' },
+  // Commission Promotion Football Féminin et Leadership Féminin
+  { id:'ff_pdt', commission:'Commission chargée de la Promotion du Football Féminin et du Leadership Féminin', poste:'Présidente', role:'secretaire', genre:'F' },
+  { id:'ff_vp',  commission:'Commission chargée de la Promotion du Football Féminin et du Leadership Féminin', poste:'Vice-Présidente', role:'secretaire', genre:'F' },
+  // Commission Développement Petite Catégorie
+  { id:'pc_pdt', commission:'Commission du Développement de la Petite Catégorie', poste:'Président', role:'secretaire', genre:'M' },
+  { id:'pc_vp',  commission:'Commission du Développement de la Petite Catégorie', poste:'Vice-Président', role:'secretaire', genre:'M' },
+  // Commission d'Organisation
+  { id:'org_pdt', commission:"Commission d'Organisation", poste:'Président', role:'secretaire', genre:'M' },
+  { id:'org_m1',  commission:"Commission d'Organisation", poste:'Membre', role:'secretaire', genre:'M' },
+  { id:'org_m2',  commission:"Commission d'Organisation", poste:'Membre', role:'secretaire', genre:'M' },
+  { id:'org_m3',  commission:"Commission d'Organisation", poste:'Membre', role:'secretaire', genre:'M' },
+  // Commission Communication
+  { id:'comm_pdt', commission:'Commission chargée de la Communication', poste:'Président', role:'communication', genre:'M' },
+  { id:'comm_vp',  commission:'Commission chargée de la Communication', poste:'Vice-Président', role:'communication', genre:'M' },
+  // Présidente chargée de la Jeunesse
+  { id:'jeunesse', commission:'Présidente chargée de la Jeunesse', poste:'Présidente chargée de la Jeunesse', role:'secretaire', genre:'F' },
+  // Commissaires aux Comptes
+  { id:'cac1', commission:'Commissaires aux Comptes', poste:'Commissaire aux Comptes', role:'audit', genre:'M' },
+  { id:'cac2', commission:'Commissaires aux Comptes', poste:'Commissaire aux Comptes', role:'audit', genre:'M' },
+];
+
 // Membres du bureau — profils uniquement, aucun mot de passe dans le code
 // Les comptes Firebase Auth sont créés via _createFbAccount() avec un MDP temporaire généré
-const BUREAU_MEMBERS = [
+let BUREAU_MEMBERS = [
   { username: 'djiby.diatta',    role: 'admin',         name: 'Djiby Diouf DIATTA',      poste: 'Président Zone 5R'          },
   { username: 'boubacar.camara', role: 'secretaire',    name: 'Boubacar CAMARA',          poste: 'Secrétaire Général'         },
   { username: 'papis.sagna',     role: 'secretaire',    name: 'Aliou SAGNA (Papis)',      poste: 'SG Adjoint'                 },
@@ -2371,6 +2390,8 @@ function updateUI() {
     renderLitiges();
     renderSeasonBar();
     renderDashboard();
+    renderBureauSection();
+    renderAccueilBureau();
   } else {
     badge.textContent = 'Visiteur';
     badge.className   = 'role-badge visitor';
@@ -2387,6 +2408,7 @@ function updateUI() {
     renderDashboard();
 
     document.getElementById('login-error')?.classList.remove('show');
+    renderAccueilBureau();
   }
 }
 
@@ -3104,6 +3126,419 @@ function searchMatches(query) {
 function clearSearch() {
   document.getElementById('search-input').value = '';
   document.getElementById('search-results').style.display = 'none';
+}
+
+// ============================================================
+//  BUREAU ZONE 5R — Gestion dynamique (SuperAdmin)
+// ============================================================
+
+function getBureauData() {
+  try {
+    const raw = localStorage.getItem('zone5r_bureau');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function _genUsername(prenom, nom) {
+  const clean = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase().replace(/\s+/g,'.').replace(/[^a-z0-9.]/g,'');
+  return clean((prenom||'').trim().split(/\s+/)[0]) + '.' + clean((nom||'').trim().split(/\s+/)[0]);
+}
+
+function _buildBureauMembersFromData(bureau) {
+  if (!bureau || !bureau.membres) return [];
+  return POSTES_BUREAU.map(p => {
+    const m = bureau.membres[p.id];
+    if (!m || !m.nom) return null;
+    const username = m.username || _genUsername(m.prenom||'', m.nom);
+    return { username, role: p.role, name: ((m.prenom||'') + ' ' + m.nom).trim(), poste: p.poste };
+  }).filter(Boolean);
+}
+
+function _refreshBureauMembers() {
+  const bureau = getBureauData();
+  if (bureau) {
+    const dynamic = _buildBureauMembersFromData(bureau);
+    if (dynamic.length > 0) BUREAU_MEMBERS = dynamic;
+  }
+}
+
+// ── Rendu de la section Bureau (onglet Administration) ────────
+
+function renderBureauSection() {
+  if (!currentUser) return;
+  const bureau  = getBureauData();
+  const isSA    = currentUser.role === 'superadmin';
+
+  const mandatCard  = document.getElementById('bureau-mandat-card');
+  const mandatBody  = document.getElementById('bureau-mandat-body');
+  const mandatActs  = document.getElementById('bureau-mandat-actions');
+  const declareCard = document.getElementById('bureau-declare-card');
+  const membresDiv  = document.getElementById('bureau-membres-display');
+
+  if (!bureau) {
+    if (mandatCard)  mandatCard.style.display  = 'none';
+    if (declareCard) declareCard.style.display  = isSA ? 'block' : 'none';
+    if (membresDiv)  membresDiv.innerHTML = '';
+    _renderBureauDroits(null);
+    return;
+  }
+
+  if (mandatCard)  mandatCard.style.display  = 'block';
+  if (declareCard) declareCard.style.display  = 'none';
+
+  const { mandat = {}, membres = {} } = bureau;
+  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('fr-FR') : '—';
+  const mStatus = () => {
+    if (!mandat.fin) return '';
+    const diff = Math.floor((new Date(mandat.fin) - new Date()) / 86400000);
+    if (diff < 0)   return '<span class="badge red" style="margin-left:8px">Mandat expiré</span>';
+    if (diff < 180) return `<span class="badge amber" style="margin-left:8px">Expire dans ${diff} j</span>`;
+    return '<span class="badge green" style="margin-left:8px">Valide</span>';
+  };
+
+  if (mandatBody) mandatBody.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+      <div><div style="font-size:11px;color:var(--muted)">Mandat</div><div style="font-weight:700;font-size:16px">${mandat.annee||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Début</div><div style="font-weight:600">${fmtDate(mandat.debut)}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Fin (4 ans)</div><div style="font-weight:600">${fmtDate(mandat.fin)}</div></div>
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted)">Déclaré par</div><div style="font-weight:600">${mandat.declare_par||'—'}</div></div>
+      ${mStatus()}
+    </div>`;
+
+  if (mandatActs) {
+    mandatActs.style.display = isSA ? 'flex' : 'none';
+    if (isSA) mandatActs.innerHTML = `
+      <button class="btn" style="font-size:12px" onclick="openBureauDeclarationModal()"><i class="fa-solid fa-pen"></i> Modifier</button>
+      <button class="btn primary" style="font-size:12px" onclick="renewBureauMandat()"><i class="fa-solid fa-arrows-rotate"></i> Renouveler le mandat</button>`;
+  }
+
+  if (membresDiv) {
+    const commissions = [...new Set(POSTES_BUREAU.map(p => p.commission))];
+    let html = '';
+    commissions.forEach(comm => {
+      const postes = POSTES_BUREAU.filter(p => p.commission === comm);
+      const hasAny = postes.some(p => membres[p.id]?.nom);
+      if (!hasAny && !isSA) return;
+      html += `<div class="bureau-section-title"><i class="fa-solid fa-users" style="margin-right:5px"></i>${comm}</div><div class="bureau-grid">`;
+      postes.forEach(p => {
+        const m = membres[p.id];
+        if (!m?.nom) {
+          if (isSA) html += `<div class="bureau-card" style="border-style:dashed;opacity:.6">
+            <div class="bureau-avatar" style="font-size:22px;color:var(--muted)"><i class="fa-solid fa-user-plus"></i></div>
+            <div class="bureau-poste-label" style="margin-top:4px">${p.poste}</div>
+            <button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-plus"></i> Assigner</button>
+          </div>`;
+          return;
+        }
+        const ini    = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
+        const fullNom= ((m.prenom||'') + ' ' + m.nom).trim();
+        const isDem  = m.statut === 'démissionnaire';
+        html += `<div class="bureau-card">
+          ${isDem ? '<div class="bureau-dem-badge">Démissionnaire</div>' : ''}
+          <div class="bureau-avatar">${m.photo
+            ? `<img src="${m.photo}" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
+            : ini}</div>
+          <div class="bureau-civilite">${m.civilite||''}</div>
+          <div class="bureau-nom">${fullNom}</div>
+          <div class="bureau-poste-label">${p.poste}</div>
+          ${m.asc     ? `<div class="bureau-asc"><i class="fa-solid fa-shield-halved" style="font-size:9px"></i> ${m.asc}</div>` : ''}
+          ${m.contact ? `<div class="bureau-contact"><i class="fa-solid fa-phone" style="font-size:9px"></i> ${m.contact}</div>` : ''}
+          ${isSA ? `<button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    membresDiv.innerHTML = html || '<p style="color:var(--muted);font-size:13px;padding:16px 0">Aucun membre déclaré pour ce bureau.</p>';
+  }
+  _renderBureauDroits(bureau);
+}
+
+function _renderBureauDroits(bureau) {
+  const body = document.getElementById('bureau-droits-body');
+  if (!body) return;
+  const mb  = bureau?.membres || {};
+  const get = ids => {
+    for (const id of ids) {
+      const m = mb[id];
+      if (m?.nom) return ((m.prenom||'') + ' ' + m.nom).trim();
+    }
+    return 'À définir';
+  };
+  body.innerHTML = `
+    <div class="role-card" style="border-color:var(--purple)">
+      <div class="role-name">Super Admin</div><div class="role-pos">Aliou Badara Sadia SAGNA</div>
+      <div class="role-perms"><span class="badge purple">Accès total</span><span class="badge purple">Gestion MDP</span></div>
+    </div>
+    <div class="role-card" style="border-color:var(--amber)">
+      <div class="role-name">Président</div><div class="role-pos">${get(['president'])}</div>
+      <div class="role-perms"><span class="badge amber">Accès total</span><span class="badge green">Valider dépenses</span><span class="badge red">Rejeter dépenses</span></div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Secrétaire Général</div><div class="role-pos">${get(['sg'])}</div>
+      <div class="role-perms"><span class="badge blue">Résultats</span><span class="badge blue">Calendrier</span><span class="badge amber">Demander dépense</span></div>
+    </div>
+    <div class="role-card" style="border-color:var(--amber)">
+      <div class="role-name">Trésorier Général</div><div class="role-pos">${get(['tg'])}</div>
+      <div class="role-perms"><span class="badge amber">Finances</span><span class="badge amber">Rapports</span><span class="badge blue">Décaissement</span></div>
+    </div>
+    <div class="role-card">
+      <div class="role-name">Commission Compétitions</div><div class="role-pos">${get(['comp_pdt'])} (Pdt)</div>
+      <div class="role-perms"><span class="badge green">Scores</span><span class="badge green">Cartons</span><span class="badge amber">Demander dépense</span></div>
+    </div>
+    <div class="role-card" style="border-color:var(--red)">
+      <div class="role-name">Commission Juridique</div><div class="role-pos">${get(['jur_pdt'])} (Pdt)</div>
+      <div class="role-perms"><span class="badge red">Réclamations</span><span class="badge red">Sanctions</span><span class="badge amber">Demander dépense</span></div>
+    </div>
+    <div class="role-card" style="border-color:var(--gray)">
+      <div class="role-name">Public / Supporters</div><div class="role-pos">Consultation uniquement</div>
+      <div class="role-perms"><span class="badge gray">Résultats</span><span class="badge gray">Classements</span><span class="badge gray">Fiches recettes</span></div>
+    </div>`;
+}
+
+// ── Rendu bureau dans l'Accueil (visiteur + membre) ──────────
+
+function renderAccueilBureau() {
+  const bureau = getBureauData();
+  const vEl    = document.getElementById('accueil-bureau-visiteur');
+  const mEl    = document.getElementById('accueil-bureau-membre');
+  if (!bureau?.membres) {
+    if (vEl) vEl.style.display = 'none';
+    if (mEl) mEl.style.display = 'none';
+    return;
+  }
+  const mb     = bureau.membres;
+  const filled = POSTES_BUREAU.filter(p => mb[p.id]?.nom);
+  if (!filled.length) {
+    if (vEl) vEl.style.display = 'none';
+    if (mEl) mEl.style.display = 'none';
+    return;
+  }
+  const mkCards = filled.map(p => {
+    const m   = mb[p.id];
+    const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
+    const nom = ((m.prenom||'') + ' ' + m.nom).trim();
+    const sp  = p.poste.length > 38 ? p.poste.slice(0,36) + '…' : p.poste;
+    return `<div class="accueil-bureau-card">
+      <div class="accueil-bureau-avatar">${m.photo
+        ? `<img src="${m.photo}" onerror="this.parentNode.textContent='${ini}'">`
+        : ini}</div>
+      <div class="accueil-bureau-civ">${m.civilite||''}</div>
+      <div class="accueil-bureau-nom">${nom}</div>
+      <div class="accueil-bureau-poste">${sp}</div>
+    </div>`;
+  }).join('');
+
+  const annee = bureau.mandat?.annee || '';
+  const inner = (title) => `<div class="card mb">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-users"></i> ${title}</span></div>
+    <div style="padding:12px"><div class="accueil-bureau-grid">${mkCards}</div></div>
+  </div>`;
+
+  if (vEl) { vEl.style.display = 'block'; vEl.innerHTML = inner(`Équipe dirigeante · Bureau ${annee}`); }
+  if (mEl) { mEl.style.display = 'block'; mEl.innerHTML = inner(`Bureau Zone 5R · Mandat ${annee}`); }
+}
+
+// ── Modal : Déclaration du bureau ────────────────────────────
+
+function openBureauDeclarationModal() {
+  const bureau = getBureauData();
+  const mb     = bureau?.membres || {};
+  const today  = new Date().toISOString().slice(0,10);
+  const allASC = [...new Set([...ALL_TEAMS, ...Object.keys(getTeams())])].sort();
+
+  const civOpts = sel => ['M.','Mme','Dr.','Prof.'].map(c =>
+    `<option value="${c}"${sel===c?' selected':''}>${c}</option>`).join('');
+  const ascOpts = sel => `<option value="">— ASC d'origine (opt.) —</option>` +
+    allASC.map(t => `<option value="${t}"${sel===t?' selected':''}>${t}</option>`).join('');
+
+  const commissions = [...new Set(POSTES_BUREAU.map(p => p.commission))];
+  let html = '';
+  commissions.forEach(comm => {
+    const postes = POSTES_BUREAU.filter(p => p.commission === comm);
+    html += `<div class="bureau-form-comm-hdr"><i class="fa-solid fa-users"></i> ${comm}</div>`;
+    postes.forEach(p => {
+      const m = mb[p.id] || {};
+      html += `<div class="bureau-form-row" data-id="${p.id}">
+        <div style="font-size:10px;font-weight:600;color:var(--text);padding-top:4px;line-height:1.4">${p.poste}</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <select class="bm-civ" style="font-size:12px">${civOpts(m.civilite || (p.genre==='F'?'Mme':'M.'))}</select>
+          <input class="bm-prenom" type="text" placeholder="Prénom(s)" value="${m.prenom||''}" style="font-size:12px">
+          <input class="bm-nom"    type="text" placeholder="NOM *"     value="${m.nom||''}"    style="font-size:12px">
+          <input class="bm-photo"  type="url"  placeholder="URL photo (opt.)" value="${m.photo||''}" style="font-size:12px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <select class="bm-asc" style="font-size:12px">${ascOpts(m.asc||'')}</select>
+          <input class="bm-contact" type="tel"   placeholder="Contact (opt.)" value="${m.contact||''}" style="font-size:12px">
+          <input class="bm-email"   type="email" placeholder="Email (opt.)"   value="${m.email||''}"   style="font-size:12px">
+        </div>
+      </div>`;
+    });
+  });
+
+  document.getElementById('bureau-decl-debut').value = bureau?.mandat?.debut || today;
+  document.getElementById('bureau-decl-annee').value = bureau?.mandat?.annee || String(new Date().getFullYear());
+  _updateBureauFinDate();
+  document.getElementById('bureau-decl-form-body').innerHTML = html;
+  document.getElementById('bureau-decl-error').classList.remove('show');
+  openModal('modal-bureau-declaration');
+}
+
+function _updateBureauFinDate() {
+  const debut = document.getElementById('bureau-decl-debut')?.value;
+  const finEl = document.getElementById('bureau-decl-fin-display');
+  if (!debut || !finEl) return;
+  const d = new Date(debut);
+  d.setFullYear(d.getFullYear() + 4);
+  d.setDate(d.getDate() - 1);
+  finEl.textContent = d.toLocaleDateString('fr-FR');
+}
+
+function saveBureauDeclaration() {
+  const debut = document.getElementById('bureau-decl-debut').value;
+  const annee = document.getElementById('bureau-decl-annee').value.trim();
+  const errEl = document.getElementById('bureau-decl-error');
+  if (!debut || !annee) {
+    errEl.textContent = 'Année et date de début obligatoires.';
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+
+  const d = new Date(debut);
+  d.setFullYear(d.getFullYear() + 4);
+  d.setDate(d.getDate() - 1);
+  const fin = d.toISOString().slice(0,10);
+
+  const membres = {};
+  document.querySelectorAll('#bureau-decl-form-body .bureau-form-row').forEach(row => {
+    const id     = row.dataset.id;
+    const prenom = row.querySelector('.bm-prenom').value.trim();
+    const nom    = row.querySelector('.bm-nom').value.trim();
+    if (!nom) return;
+    membres[id] = {
+      civilite: row.querySelector('.bm-civ').value,
+      prenom, nom,
+      photo:   row.querySelector('.bm-photo').value.trim(),
+      asc:     row.querySelector('.bm-asc').value,
+      contact: row.querySelector('.bm-contact').value.trim(),
+      email:   row.querySelector('.bm-email').value.trim(),
+      statut:  'actif',
+      username: _genUsername(prenom, nom),
+    };
+  });
+
+  const bureau = {
+    mandat: { debut, fin, annee, declare_par: currentUser.name, declare_le: new Date().toISOString() },
+    membres,
+  };
+  localStorage.setItem('zone5r_bureau', JSON.stringify(bureau));
+  fireSync('bureau', bureau);
+  _refreshBureauMembers();
+  closeModal('modal-bureau-declaration');
+  renderBureauSection();
+  renderAccueilBureau();
+  renderMembersTable();
+  logAction('BUREAU_SAVED', { detail: 'Bureau ' + annee + ' · ' + Object.keys(membres).length + ' membres' });
+  showToast('Bureau ' + annee + ' enregistré — ' + Object.keys(membres).length + ' membre(s).');
+}
+
+function renewBureauMandat() {
+  if (!confirm('Renouveler le mandat : un nouveau mandat sera créé à partir d\'aujourd\'hui.\nLes membres actuels seront pré-remplis. Continuer ?')) return;
+  openBureauDeclarationModal();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('bureau-decl-debut').value = today;
+  document.getElementById('bureau-decl-annee').value = String(new Date().getFullYear());
+  _updateBureauFinDate();
+}
+
+// ── Modal : Modifier un membre ───────────────────────────────
+
+let _editingPosteId = null;
+
+function openMemberEditModal(posteId) {
+  _editingPosteId = posteId;
+  const p      = POSTES_BUREAU.find(x => x.id === posteId);
+  if (!p) return;
+  const bureau = getBureauData();
+  const m      = bureau?.membres?.[posteId] || {};
+  const allASC = [...new Set([...ALL_TEAMS, ...Object.keys(getTeams())])].sort();
+
+  document.getElementById('mem-edit-title').textContent = p.poste;
+  document.getElementById('mem-edit-comm').textContent  = p.commission;
+  document.getElementById('mem-edit-civ').value     = m.civilite || (p.genre==='F' ? 'Mme' : 'M.');
+  document.getElementById('mem-edit-prenom').value  = m.prenom   || '';
+  document.getElementById('mem-edit-nom').value     = m.nom      || '';
+  document.getElementById('mem-edit-photo').value   = m.photo    || '';
+  document.getElementById('mem-edit-contact').value = m.contact  || '';
+  document.getElementById('mem-edit-email').value   = m.email    || '';
+  document.getElementById('mem-edit-statut').value  = m.statut   || 'actif';
+  document.getElementById('mem-edit-asc').innerHTML =
+    `<option value="">— ASC d'origine (opt.) —</option>` +
+    allASC.map(t => `<option value="${t}"${m.asc===t?' selected':''}>${t}</option>`).join('');
+  document.getElementById('mem-edit-error').classList.remove('show');
+  _toggleResignSection();
+  openModal('modal-member-edit');
+}
+
+function _toggleResignSection() {
+  const v = document.getElementById('mem-edit-statut')?.value;
+  const s = document.getElementById('mem-edit-resign-section');
+  if (s) s.style.display = v === 'démissionnaire' ? 'block' : 'none';
+}
+
+function saveMemberEdit() {
+  const prenom = document.getElementById('mem-edit-prenom').value.trim();
+  const nom    = document.getElementById('mem-edit-nom').value.trim();
+  const errEl  = document.getElementById('mem-edit-error');
+  if (!nom) { errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const bureau = getBureauData() || { mandat: {}, membres: {} };
+  if (!bureau.membres) bureau.membres = {};
+
+  const statut  = document.getElementById('mem-edit-statut').value;
+  const current = bureau.membres[_editingPosteId] || {};
+
+  bureau.membres[_editingPosteId] = {
+    civilite: document.getElementById('mem-edit-civ').value,
+    prenom, nom,
+    photo:   document.getElementById('mem-edit-photo').value.trim(),
+    asc:     document.getElementById('mem-edit-asc').value,
+    contact: document.getElementById('mem-edit-contact').value.trim(),
+    email:   document.getElementById('mem-edit-email').value.trim(),
+    statut,
+    username: current.username || _genUsername(prenom, nom),
+  };
+
+  if (statut === 'démissionnaire') {
+    const rPrenom = document.getElementById('mem-edit-r-prenom').value.trim();
+    const rNom    = document.getElementById('mem-edit-r-nom').value.trim();
+    if (rNom) {
+      // Archiver l'ancien membre (conservé dans bureau.membres sous une clé historique)
+      const archKey = '_old_' + _editingPosteId + '_' + Date.now().toString(36);
+      bureau.membres[archKey] = { ...bureau.membres[_editingPosteId], _archive: true, _poste: _editingPosteId };
+      // Remplaçant
+      bureau.membres[_editingPosteId] = {
+        civilite: document.getElementById('mem-edit-r-civ').value,
+        prenom: rPrenom, nom: rNom,
+        photo: '', asc: '', contact: '', email: '',
+        statut: 'actif',
+        username: _genUsername(rPrenom, rNom),
+      };
+    }
+  }
+
+  localStorage.setItem('zone5r_bureau', JSON.stringify(bureau));
+  fireSync('bureau', bureau);
+  _refreshBureauMembers();
+  closeModal('modal-member-edit');
+  renderBureauSection();
+  renderAccueilBureau();
+  renderMembersTable();
+  const pLabel = POSTES_BUREAU.find(p => p.id === _editingPosteId)?.poste || '';
+  logAction('BUREAU_MEMBER_UPDATED', { detail: nom + ' — ' + pLabel });
+  showToast('Membre mis à jour avec succès.');
 }
 
 // ============================================================
@@ -6816,6 +7251,8 @@ function _liveRenderEvents(match) {
 // ============================================================
 function _bootApp() {
   migrateSaisonLegacy();
+  // Charger le bureau depuis localStorage et mettre à jour BUREAU_MEMBERS dynamiquement
+  _refreshBureauMembers();
   // Assurer que les profils bureau sont présents (sans mot de passe — géré par Firebase Auth)
   const users = getUsers();
   let dirty = false;
@@ -6918,6 +7355,97 @@ initFirebase()
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn" onclick="closeModal('modal-fiche-edit')">Annuler</button>
       <button class="btn primary" onclick="saveFicheEdit()"><i class="fa-solid fa-check"></i> Enregistrer la modification</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Déclaration du Bureau Zone 5R (SuperAdmin) -->
+<div id="modal-bureau-declaration" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:700px;width:95vw">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-building-columns"></i> Bureau Zone 5R · Déclaration / Renouvellement</span>
+      <button class="close-btn" onclick="closeModal('modal-bureau-declaration')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <!-- Mandat -->
+    <div style="background:var(--blue-l);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Année / Mandat <span style="color:var(--red)">*</span></label>
+        <input type="text" id="bureau-decl-annee" placeholder="Ex : 2025" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Date de début <span style="color:var(--red)">*</span></label>
+        <input type="date" id="bureau-decl-debut" oninput="_updateBureauFinDate()" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Fin (auto · 4 ans)</label>
+        <div id="bureau-decl-fin-display" style="font-weight:700;font-size:14px;padding:8px 0;color:var(--green-d)">—</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      <i class="fa-solid fa-circle-info"></i> Remplissez <strong>au minimum</strong> le NOM pour chaque poste. Les champs photo, ASC, contact et email sont facultatifs.
+    </p>
+    <!-- Corps du formulaire (rempli dynamiquement) -->
+    <div id="bureau-decl-form-body" style="max-height:52vh;overflow-y:auto;padding-right:6px"></div>
+    <div class="error-msg" id="bureau-decl-error">Année et date de début obligatoires.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+      <button class="btn" onclick="closeModal('modal-bureau-declaration')">Annuler</button>
+      <button class="btn primary" onclick="saveBureauDeclaration()"><i class="fa-solid fa-check"></i> Enregistrer le bureau</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Modifier un membre du bureau -->
+<div id="modal-member-edit" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-user-pen"></i> Modifier le membre</span>
+      <button class="close-btn" onclick="closeModal('modal-member-edit')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;background:var(--blue-l);padding:8px 10px;border-radius:var(--radius-sm)">
+      <strong id="mem-edit-title"></strong><br><span id="mem-edit-comm" style="opacity:.8"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div class="form-group" style="margin:0">
+        <label>Civilité</label>
+        <select id="mem-edit-civ">
+          <option value="M.">M.</option><option value="Mme">Mme</option>
+          <option value="Dr.">Dr.</option><option value="Prof.">Prof.</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0"><label>Prénom(s)</label><input type="text" id="mem-edit-prenom" placeholder="Prénom(s)"></div>
+      <div class="form-group" style="margin:0"><label>NOM <span style="color:var(--red)">*</span></label><input type="text" id="mem-edit-nom" placeholder="NOM"></div>
+    </div>
+    <div class="form-group"><label>Photo (URL)</label><input type="url" id="mem-edit-photo" placeholder="https://… (facultatif)"></div>
+    <div class="form-group"><label>ASC d'origine</label><select id="mem-edit-asc"></select></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group" style="margin:0"><label>Contact</label><input type="tel" id="mem-edit-contact" placeholder="+221 77 …"></div>
+      <div class="form-group" style="margin:0"><label>Email</label><input type="email" id="mem-edit-email" placeholder="email@…"></div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label>Statut</label>
+      <select id="mem-edit-statut" onchange="_toggleResignSection()">
+        <option value="actif">Actif(ve)</option>
+        <option value="démissionnaire">Démissionnaire</option>
+      </select>
+    </div>
+    <!-- Section remplacement (si démission) -->
+    <div id="mem-edit-resign-section" style="display:none;background:var(--red-l);border:1px solid var(--red);border-radius:var(--radius-sm);padding:12px;margin-top:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px">
+        <i class="fa-solid fa-triangle-exclamation"></i> Remplacement — nouveau titulaire du poste
+      </div>
+      <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:11px">Civilité</label>
+          <select id="mem-edit-r-civ"><option value="M.">M.</option><option value="Mme">Mme</option><option value="Dr.">Dr.</option></select>
+        </div>
+        <div class="form-group" style="margin:0"><label style="font-size:11px">Prénom(s)</label><input type="text" id="mem-edit-r-prenom" placeholder="Prénom(s)"></div>
+        <div class="form-group" style="margin:0"><label style="font-size:11px">NOM</label><input type="text" id="mem-edit-r-nom" placeholder="NOM du remplaçant"></div>
+      </div>
+    </div>
+    <div class="error-msg" id="mem-edit-error">Le NOM est obligatoire.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" onclick="closeModal('modal-member-edit')">Annuler</button>
+      <button class="btn primary" onclick="saveMemberEdit()"><i class="fa-solid fa-check"></i> Enregistrer</button>
     </div>
   </div>
 </div>
