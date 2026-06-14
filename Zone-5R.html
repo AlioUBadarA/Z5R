@@ -307,6 +307,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<!-- SheetJS pour export Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -3984,39 +3986,129 @@ function supprimerSaison(id) {
 function exporterSaison(id) {
   const saisons = getSaisons();
   const saison  = saisons.find(s => s.id === id);
-  if (!saison) return showToast('Saison introuvable.', 'error');
-  if (saison.active) return showToast('Clôturez la saison avant de l\'exporter.', 'error');
+  if (!saison) return showToast('Saison introuvable.');
+  if (saison.active) return showToast('Clôturez la saison avant de l\'exporter.');
+  if (typeof XLSX === 'undefined') return showToast('Bibliothèque Excel non chargée. Vérifiez votre connexion.');
 
-  // Collecte toutes les données liées à cette saison
-  const fiches   = (() => { try { return JSON.parse(localStorage.getItem('zone5r_fiches')   || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
-  const litiges  = (() => { try { return JSON.parse(localStorage.getItem('zone5r_litiges')  || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const wb = XLSX.utils.book_new();
+
+  // ── Feuille 1 : Saison (infos générales) ──────────────────────
+  const infoRows = [
+    ['Champ', 'Valeur'],
+    ['Nom',           saison.nom],
+    ['Date de début', saison.date ? new Date(saison.date).toLocaleDateString('fr-FR') : ''],
+    ['Statut',        saison.active ? 'Active' : 'Clôturée'],
+    ['Déclarée par',  saison.declaredBy || ''],
+    ['Déclarée le',   saison.declaredAt ? new Date(saison.declaredAt).toLocaleDateString('fr-FR') : ''],
+    ['Équipes',       (saison.equipes || []).join(', ')],
+    ['Nb qualifiés/poule', saison.nbQualifiesParPoule || ''],
+    ['Solde de départ (FCFA)', saison.soldeDepart || 0],
+    ['Tirage effectué', saison.tirageDone ? 'Oui' : 'Non'],
+    ['Calendrier généré', saison.matchsProgrammes ? 'Oui' : 'Non'],
+    ['Phase éliminatoire', saison.eliminatoireGenere ? 'Oui' : 'Non'],
+    ['Exporté le',    new Date().toLocaleDateString('fr-FR')],
+    ['Exporté par',   currentUser?.name || ''],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(infoRows), 'Saison');
+
+  // ── Feuille 2 : Matchs ─────────────────────────────────────────
+  const matchs = saison.matchs || [];
+  const matchRows = [['Poule','Domicile','Extérieur','Score Dom','Score Ext','Joué','Date','Heure','Reporté','Raison report']];
+  matchs.forEach(m => {
+    matchRows.push([
+      (m.poule || '').toUpperCase(),
+      m.dom  || '',
+      m.ext  || '',
+      m.score ? m.score.dom : '',
+      m.score ? m.score.ext : '',
+      m.joue  ? 'Oui' : 'Non',
+      m.date  ? new Date(m.date).toLocaleDateString('fr-FR') : '',
+      m.heure || '',
+      m.isReported ? 'Oui' : 'Non',
+      m.reportRaison || '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(matchRows), 'Matchs');
+
+  // ── Feuille 3 : Fiches ─────────────────────────────────────────
+  const fiches = (() => { try { return JSON.parse(localStorage.getItem('zone5r_fiches') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const ficheRows = [['Joueur','Équipe','Type','Date','Match','Note']];
+  fiches.forEach(f => {
+    ficheRows.push([
+      f.joueur || '',
+      f.equipe || '',
+      f.type   || '',
+      f.date   ? new Date(f.date).toLocaleDateString('fr-FR') : '',
+      f.match  || '',
+      f.note   || '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ficheRows), 'Fiches');
+
+  // ── Feuille 4 : Licences ───────────────────────────────────────
   const licences = (() => { try { return JSON.parse(localStorage.getItem('zone5r_licences') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const licRows = [['Joueur','Équipe','Numéro licence','Date']];
+  licences.forEach(l => {
+    licRows.push([
+      l.joueur  || l.nom  || '',
+      l.equipe  || '',
+      l.numero  || l.numLicence || '',
+      l.date    ? new Date(l.date).toLocaleDateString('fr-FR') : '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(licRows), 'Licences');
+
+  // ── Feuille 5 : Dépenses ───────────────────────────────────────
   const depenses = (() => { try { return JSON.parse(localStorage.getItem('zone5r_depenses') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
-  const finales  = (() => { try { return JSON.parse(localStorage.getItem('zone5r_finales')  || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const depRows = [['Date','Libellé','Montant (FCFA)','Catégorie','Par']];
+  depenses.forEach(d => {
+    depRows.push([
+      d.date      ? new Date(d.date).toLocaleDateString('fr-FR') : '',
+      d.libelle   || d.label || '',
+      d.montant   || d.amount || 0,
+      d.categorie || d.category || '',
+      d.par       || d.by || '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depRows), 'Dépenses');
 
-  const payload = {
-    exportVersion: 1,
-    exportedAt: new Date().toISOString(),
-    exportedBy: currentUser?.name || 'inconnu',
-    saison,
-    fiches,
-    litiges,
-    licences,
-    depenses,
-    finales,
-  };
+  // ── Feuille 6 : Litiges ────────────────────────────────────────
+  const litiges = (() => { try { return JSON.parse(localStorage.getItem('zone5r_litiges') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const litigeRows = [['Date','Équipe plaignante','Équipe adverse','Objet','Statut','Décision']];
+  litiges.forEach(l => {
+    litigeRows.push([
+      l.date          ? new Date(l.date).toLocaleDateString('fr-FR') : '',
+      l.equipe        || l.plaignant || '',
+      l.equipeAdverse || l.adverse  || '',
+      l.objet         || l.sujet    || '',
+      l.statut        || '',
+      l.decision      || '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(litigeRows), 'Litiges');
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
+  // ── Feuille 7 : Finale ─────────────────────────────────────────
+  const finales = (() => { try { return JSON.parse(localStorage.getItem('zone5r_finales') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+  const finaleRows = [['Tour','Équipe 1','Équipe 2','Score 1','Score 2','Vainqueur','Date']];
+  finales.forEach(f => {
+    finaleRows.push([
+      f.tour      || f.round || '',
+      f.equipe1   || f.dom   || '',
+      f.equipe2   || f.ext   || '',
+      f.score1    ?? (f.score?.dom ?? ''),
+      f.score2    ?? (f.score?.ext ?? ''),
+      f.vainqueur || '',
+      f.date      ? new Date(f.date).toLocaleDateString('fr-FR') : '',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(finaleRows), 'Finale');
+
+  // ── Génération du fichier ──────────────────────────────────────
   const slug = saison.nom.replace(/[^a-zA-Z0-9_\-]/g, '_');
-  a.href     = url;
-  a.download = `Zone5R_${slug}_${id}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  XLSX.writeFile(wb, `Zone5R_${slug}.xlsx`);
 
   logAction('EXPORT_SAISON', { detail: saison.nom });
-  showToast('Export de « ' + saison.nom + ' » téléchargé.');
+  showToast('Export Excel de « ' + saison.nom + ' » téléchargé.');
 }
 
 // ============================================================
