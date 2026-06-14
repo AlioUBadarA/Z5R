@@ -3471,6 +3471,52 @@ function renewBureauMandat() {
 
 let _editingPosteId = null;
 
+/* ── Photo upload helpers ── */
+function _compressPhoto(file, maxPx) {
+  return new Promise(resolve => {
+    maxPx = maxPx || 150;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width  * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width  = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.80));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function _setPhotoPreview(src) {
+  const el = document.getElementById('mem-edit-photo-preview');
+  if (!el) return;
+  if (src) {
+    el.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    el.innerHTML = '<i class="fa-solid fa-user" style="font-size:22px;color:var(--green-d)"></i>';
+  }
+}
+
+function _onPhotoFileChange(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  _compressPhoto(file).then(function(b64) {
+    document.getElementById('mem-edit-photo').value = b64;
+    _setPhotoPreview(b64);
+  });
+}
+
+function _onPhotoUrlChange(url) {
+  _setPhotoPreview(url || '');
+}
+
 function openMemberEditModal(posteId) {
   _editingPosteId = posteId;
   const p      = POSTES_BUREAU.find(x => x.id === posteId);
@@ -3492,6 +3538,10 @@ function openMemberEditModal(posteId) {
     `<option value="">— ASC d'origine (opt.) —</option>` +
     allASC.map(t => `<option value="${t}"${m.asc===t?' selected':''}>${t}</option>`).join('');
   document.getElementById('mem-edit-error').classList.remove('show');
+  _setPhotoPreview(m.photo || '');
+  /* reset file input so same file can be re-selected */
+  const fi = document.getElementById('mem-edit-photo-file');
+  if (fi) fi.value = '';
   _toggleResignSection();
   openModal('modal-member-edit');
 }
@@ -7480,7 +7530,25 @@ initFirebase()
       <div class="form-group" style="margin:0"><label>Prénom(s)</label><input type="text" id="mem-edit-prenom" placeholder="Prénom(s)"></div>
       <div class="form-group" style="margin:0"><label>NOM <span style="color:var(--red)">*</span></label><input type="text" id="mem-edit-nom" placeholder="NOM"></div>
     </div>
-    <div class="form-group"><label>Photo (URL)</label><input type="url" id="mem-edit-photo" placeholder="https://… (facultatif)"></div>
+    <div class="form-group">
+      <label>Photo</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div id="mem-edit-photo-preview" style="width:54px;height:54px;border-radius:50%;background:var(--green-l);
+          display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;
+          color:var(--green-d);overflow:hidden;flex-shrink:0;border:2px solid var(--border)"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;
+            background:var(--green-l);border:1px dashed var(--green);border-radius:var(--radius-sm);
+            padding:8px 12px;font-size:12px;font-weight:600;color:var(--green-d);margin:0">
+            <i class="fa-solid fa-upload"></i> Choisir une photo
+            <input type="file" id="mem-edit-photo-file" accept="image/*"
+              onchange="_onPhotoFileChange(this)" style="display:none">
+          </label>
+          <input type="url" id="mem-edit-photo" placeholder="ou coller une URL" style="font-size:12px"
+            oninput="_onPhotoUrlChange(this.value)">
+        </div>
+      </div>
+    </div>
     <div class="form-group"><label>ASC d'origine</label><select id="mem-edit-asc"></select></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group" style="margin:0"><label>Contact</label><input type="tel" id="mem-edit-contact" placeholder="+221 77 …"></div>
