@@ -4070,7 +4070,7 @@ function exporterSaison(id) {
       d.par       || d.by || '',
     ]);
   });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depRows), 'Dépenses');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depRows), 'Finance');
 
   // ── Feuille 6 : Litiges ────────────────────────────────────────
   const litiges = (() => { try { return JSON.parse(localStorage.getItem('zone5r_litiges') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
