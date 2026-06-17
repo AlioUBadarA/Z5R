@@ -2687,6 +2687,7 @@ const PERM_DEFAULTS = {
   manage_accounts:     r => CAN_MANAGE_ACCOUNTS.includes(r),
   declare_saison:      r => ['superadmin','admin'].includes(r),
   view_audit:          r => r === 'superadmin',
+  view_all_cards:      r => ['superadmin','admin'].includes(r),
 };
 
 const PERM_LABELS = {
@@ -2703,6 +2704,7 @@ const PERM_LABELS = {
   manage_accounts:     'Gérer comptes',
   declare_saison:      'Déclarer saison',
   view_audit:          'Voir historique',
+  view_all_cards:      'Voir toutes les cartes',
 };
 
 // Groupes pour l'affichage du panel
@@ -2711,7 +2713,7 @@ const PERM_GROUPS = [
   { label:'<i class="fa-solid fa-futbol"></i> Compétition',        perms:['live_score','edit_score'] },
   { label:'<i class="fa-solid fa-scale-balanced"></i> Litiges',            perms:['add_litige'] },
   { label:'<i class="fa-solid fa-coins"></i> Finances',           perms:['create_fiche','add_depense','validate_president','decaisser_depense'] },
-  { label:'<i class="fa-solid fa-gear"></i> Administration',     perms:['manage_accounts','declare_saison','view_audit'] },
+  { label:'<i class="fa-solid fa-gear"></i> Administration',     perms:['manage_accounts','declare_saison','view_audit','view_all_cards'] },
 ];
 
 function hasPermission(perm) {
@@ -3688,7 +3690,7 @@ function saveMemberEdit() {
 let _carteTplActive = 'classic';
 
 function openCartesMembresModal() {
-  if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+  if (!hasPermission('view_all_cards')) {
     showToast('Réservé au Super Admin et au Président.');
     return;
   }
@@ -3785,6 +3787,10 @@ function _carteCardHtml(m, p, mandat, extraClass) {
 }
 
 function printCartesMembres() {
+  if (!hasPermission('view_all_cards')) {
+    showToast('Réservé au Super Admin et au Président.');
+    return;
+  }
   const bureau = getBureauData();
   if (!bureau) return;
   const mb = bureau.membres || {};
@@ -3843,7 +3849,7 @@ function renderMaCarteSection() {
   const allZone = document.getElementById('toutes-cartes-zone');
   if (!zone || !currentUser) return;
 
-  const canSeeAll = currentUser.role === 'superadmin' || currentUser.role === 'admin';
+  const canSeeAll = hasPermission('view_all_cards');
   if (allZone) allZone.style.display = canSeeAll ? 'block' : 'none';
 
   const bureau = getBureauData();
