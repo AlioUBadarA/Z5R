@@ -328,6 +328,59 @@
   .bureau-form-comm-hdr{background:var(--green-d);color:#fff;font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--radius-sm);margin:14px 0 8px;}
   .bureau-form-row{display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;align-items:start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
   @media(max-width:600px){.bureau-form-row{grid-template-columns:1fr;} .bureau-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}}
+  /* Cartes de membre */
+  .cartes-membres-list{max-height:30vh;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;margin-bottom:14px;}
+  .carte-mb-row{display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:12px;border-bottom:1px solid var(--border);}
+  .carte-mb-row:last-child{border-bottom:none;}
+  .carte-mb-row input[type="checkbox"]{width:auto;flex-shrink:0;}
+  .carte-mb-avatar{width:26px;height:26px;border-radius:50%;overflow:hidden;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green-d);flex-shrink:0;}
+  .carte-mb-avatar img{width:100%;height:100%;object-fit:cover;}
+  .carte-mb-name{font-weight:600;}
+  .carte-mb-poste{color:var(--muted);font-size:10.5px;}
+  .carte-tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .carte-tpl-opt{border:2px solid var(--border);border-radius:var(--radius-sm);padding:8px;cursor:pointer;text-align:center;transition:border-color .15s;}
+  .carte-tpl-opt.active{border-color:var(--green);background:var(--green-l);}
+  .carte-tpl-swatch{width:100%;height:48px;border-radius:5px;margin-bottom:6px;position:relative;overflow:hidden;}
+  .carte-tpl-swatch .sw-top{height:40%;}
+  .carte-tpl-swatch .sw-dot{position:absolute;left:6px;bottom:6px;width:14px;height:14px;border-radius:50%;}
+  .carte-tpl-label{font-size:11px;font-weight:700;}
+  /* Affichage écran de la carte individuelle ("Carte de membre") */
+  .carte-display{width:340px;height:214px;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:var(--shadow);margin:0 auto;}
+  .carte-display .c-top{height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 14px;}
+  .carte-display .c-logo{width:32px;height:32px;border-radius:50%;background:#fff;object-fit:contain;flex-shrink:0;}
+  .carte-display .c-zone{font-size:16px;font-weight:800;letter-spacing:.03em;}
+  .carte-display .c-tag{font-size:8px;text-transform:uppercase;letter-spacing:.03em;}
+  .carte-display .c-body{flex:1;display:flex;align-items:center;gap:12px;padding:8px 14px;}
+  .carte-display .c-photo{width:72px;height:72px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--green-l);
+    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--green-d);}
+  .carte-display .c-photo img{width:100%;height:100%;object-fit:cover;}
+  .carte-display .c-info{flex:1;min-width:0;}
+  .carte-display .c-civ{font-size:9px;opacity:.8;}
+  .carte-display .c-nom{font-size:14px;font-weight:800;text-transform:uppercase;line-height:1.2;margin:2px 0;}
+  .carte-display .c-poste{font-size:9.5px;line-height:1.3;}
+  .carte-display .c-asc{font-size:9px;margin-top:4px;}
+  .carte-display .c-foot{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;font-size:8px;font-weight:600;}
+  .carte-display.tpl-classic{background:#fff;border:1px solid #ccc;}
+  .carte-display.tpl-classic .c-top{background:#085041;color:#fff;}
+  .carte-display.tpl-classic .c-tag{color:rgba(255,255,255,.75);}
+  .carte-display.tpl-classic .c-photo{border:2px solid #1D9E75;}
+  .carte-display.tpl-classic .c-nom{color:#085041;}
+  .carte-display.tpl-classic .c-foot{background:#E1F5EE;color:#085041;border-top:1px solid #1D9E75;}
+  .carte-display.tpl-dark{background:linear-gradient(135deg,#0d1f1a,#1a1a18);border:1px solid #000;color:#f1efe8;}
+  .carte-display.tpl-dark .c-top{background:transparent;color:#fff;border-bottom:1px solid #BA7517;}
+  .carte-display.tpl-dark .c-tag{color:#BA7517;}
+  .carte-display.tpl-dark .c-photo{border:2px solid #BA7517;}
+  .carte-display.tpl-dark .c-nom{color:#fff;}
+  .carte-display.tpl-dark .c-poste,.carte-display.tpl-dark .c-asc{color:#d9d6cc;}
+  .carte-display.tpl-dark .c-foot{background:rgba(255,255,255,.06);color:#BA7517;border-top:1px solid #BA7517;}
+  .carte-display.tpl-minimal{background:#fff;border:2px solid #1D9E75;}
+  .carte-display.tpl-minimal .c-top{background:#fff;color:#085041;border-bottom:1px solid #ddd;}
+  .carte-display.tpl-minimal .c-tag{color:#6b6a65;}
+  .carte-display.tpl-minimal .c-photo{border:2px solid #ddd;}
+  .carte-display.tpl-minimal .c-nom{color:#1a1a18;}
+  .carte-display.tpl-minimal .c-foot{background:#fff;color:#6b6a65;border-top:1px solid #ddd;}
 </style>
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -362,6 +415,7 @@
   <div class="nav-item member-only" data-section="tresorerie" onclick="showSection('tresorerie')"><i class="fa-solid fa-coins"></i> Trésorerie</div>
   <div class="nav-item member-only" data-section="cartons" onclick="showSection('cartons')"><i class="fa-solid fa-scale-balanced"></i> Juridique</div>
   <div class="nav-item member-only" data-section="bureau" onclick="showSection('bureau')"><i class="fa-solid fa-building-columns"></i> Administration</div>
+  <div class="nav-item member-only" data-section="carte-membre" onclick="showSection('carte-membre')"><i class="fa-solid fa-id-card-clip"></i> Carte de membre</div>
 </nav>
 
 <!-- Barre sélecteur de saison -->
@@ -1061,6 +1115,28 @@
   </div><!-- /adm-historique -->
 
 </div><!-- /bureau section -->
+
+<!-- ============================
+     CARTE DE MEMBRE
+     ============================ -->
+<div id="carte-membre" class="section">
+  <div class="mb" style="padding-bottom:2px">
+    <h2 style="font-size:18px;font-weight:700"><i class="fa-solid fa-id-card-clip"></i> Carte de membre</h2>
+    <p style="font-size:12px;color:var(--muted);margin-top:2px">Votre carte de membre du Bureau Zone 5R</p>
+  </div>
+
+  <div id="ma-carte-zone"></div>
+
+  <div id="toutes-cartes-zone" style="display:none;margin-top:24px">
+    <div class="card">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-users"></i> Cartes de tous les membres du Bureau</span></div>
+      <div class="card-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Réservé au Super Admin et au Président : consultez et imprimez les cartes de l'ensemble du Bureau.</p>
+        <button class="btn primary" onclick="openCartesMembresModal()"><i class="fa-solid fa-id-card-clip"></i> Voir toutes les cartes</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /carte-membre section -->
 
 <!-- ============================
      MODALS
@@ -2428,6 +2504,7 @@ function showSection(id) {
     renderClassementSection();
   }
   if (id === 'dashboard') renderDashboard();
+  if (id === 'carte-membre') renderMaCarteSection();
 }
 
 // Sous-navigation interne aux sections
@@ -3604,6 +3681,183 @@ function saveMemberEdit() {
   const pLabel = POSTES_BUREAU.find(p => p.id === _editingPosteId)?.poste || '';
   logAction('BUREAU_MEMBER_UPDATED', { detail: nom + ' — ' + pLabel });
   showToast('Membre mis à jour avec succès.');
+}
+
+// ── Cartes de membre du Bureau (génération + impression) ─────
+
+let _carteTplActive = 'classic';
+
+function openCartesMembresModal() {
+  if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+    showToast('Réservé au Super Admin et au Président.');
+    return;
+  }
+  const bureau = getBureauData();
+  const mb = bureau?.membres || {};
+  const list = document.getElementById('cartes-membres-list');
+  if (list) {
+    const rows = POSTES_BUREAU
+      .map(p => ({ p, m: mb[p.id] }))
+      .filter(x => x.m?.nom && x.m.statut !== 'démissionnaire')
+      .map(({ p, m }) => {
+        const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
+        const nom = ((m.prenom||'') + ' ' + m.nom).trim();
+        return `<label class="carte-mb-row">
+          <input type="checkbox" class="carte-mb-check" value="${p.id}" checked>
+          <div class="carte-mb-avatar">${m.photo ? `<img src="${m.photo}">` : ini}</div>
+          <div style="flex:1">
+            <div class="carte-mb-name">${nom}</div>
+            <div class="carte-mb-poste">${p.poste}</div>
+          </div>
+        </label>`;
+      });
+    list.innerHTML = rows.join('') || '<p style="color:var(--muted);font-size:12px">Aucun membre actif à imprimer.</p>';
+  }
+  _selectCarteTemplate('classic');
+  openModal('modal-cartes-membres');
+}
+
+function _cartesSelectAll(checked) {
+  document.querySelectorAll('.carte-mb-check').forEach(cb => cb.checked = checked);
+}
+
+function _selectCarteTemplate(tpl) {
+  _carteTplActive = tpl;
+  document.querySelectorAll('.carte-tpl-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.tpl === tpl);
+  });
+}
+
+function _carteTemplateCSS(tpl) {
+  const skins = {
+    classic: `
+      .carte{background:#fff;border:1px solid #ccc;}
+      .c-top{background:#085041;color:#fff;}
+      .c-tag{color:rgba(255,255,255,.75);}
+      .c-photo{border:2px solid #1D9E75;}
+      .c-nom{color:#085041;}
+      .c-foot{background:#E1F5EE;color:#085041;border-top:1px solid #1D9E75;}`,
+    dark: `
+      .carte{background:linear-gradient(135deg,#0d1f1a,#1a1a18);border:1px solid #000;color:#f1efe8;}
+      .c-top{background:transparent;color:#fff;border-bottom:1px solid #BA7517;}
+      .c-tag{color:#BA7517;}
+      .c-photo{border:2px solid #BA7517;}
+      .c-nom{color:#fff;}
+      .c-poste,.c-asc{color:#d9d6cc;}
+      .c-foot{background:rgba(255,255,255,.06);color:#BA7517;border-top:1px solid #BA7517;}`,
+    minimal: `
+      .carte{background:#fff;border:2px solid #1D9E75;}
+      .c-top{background:#fff;color:#085041;border-bottom:1px solid #ddd;}
+      .c-tag{color:#6b6a65;}
+      .c-photo{border:2px solid #ddd;}
+      .c-nom{color:#1a1a18;}
+      .c-foot{background:#fff;color:#6b6a65;border-top:1px solid #ddd;}`,
+  };
+  return skins[tpl] || skins.classic;
+}
+
+function _carteCardHtml(m, p, mandat, extraClass) {
+  const ini    = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
+  const nom    = ((m.prenom||'') + ' ' + m.nom).trim();
+  const fmt    = iso => iso ? new Date(iso).toLocaleDateString('fr-FR') : '—';
+  return `<div class="carte${extraClass ? ' ' + extraClass : ''}">
+    <div class="c-top">
+      <img class="c-logo" src="assets/logo.png">
+      <div class="c-org">
+        <div class="c-zone">ZONE 5R</div>
+        <div class="c-tag">ODGAM BIGNONA · CARTE DE MEMBRE</div>
+      </div>
+    </div>
+    <div class="c-body">
+      <div class="c-photo">${m.photo ? `<img src="${m.photo}">` : ini}</div>
+      <div class="c-info">
+        <div class="c-civ">${m.civilite||''}</div>
+        <div class="c-nom">${nom}</div>
+        <div class="c-poste">${p.poste}</div>
+        ${m.asc ? `<div class="c-asc">ASC d'origine : ${m.asc}</div>` : ''}
+      </div>
+    </div>
+    <div class="c-foot">
+      <div>Mandat ${mandat.annee||''} · jusqu'au ${fmt(mandat.fin)}</div>
+      <div>N° ${p.id.toUpperCase()}</div>
+    </div>
+  </div>`;
+}
+
+function printCartesMembres() {
+  const bureau = getBureauData();
+  if (!bureau) return;
+  const mb = bureau.membres || {};
+  const ids = [...document.querySelectorAll('.carte-mb-check:checked')].map(cb => cb.value);
+  if (!ids.length) { showToast('Sélectionnez au moins un membre.'); return; }
+
+  const cards = ids
+    .map(id => ({ p: POSTES_BUREAU.find(x => x.id === id), m: mb[id] }))
+    .filter(x => x.p && x.m?.nom)
+    .map(({ p, m }) => _carteCardHtml(m, p, bureau.mandat || {}))
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<title>Cartes de membre · Zone 5R</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif}
+  .grid{display:grid;grid-template-columns:repeat(2,85.6mm);gap:6mm;justify-content:center}
+  .carte{width:85.6mm;height:54mm;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column;break-inside:avoid;page-break-inside:avoid}
+  .c-top{height:13mm;flex-shrink:0;display:flex;align-items:center;gap:2.5mm;padding:0 3mm}
+  .c-logo{width:8mm;height:8mm;border-radius:50%;background:#fff;object-fit:contain;flex-shrink:0}
+  .c-zone{font-size:4mm;font-weight:800;letter-spacing:.03em}
+  .c-tag{font-size:2mm;text-transform:uppercase;letter-spacing:.03em}
+  .c-body{flex:1;display:flex;align-items:center;gap:3mm;padding:2mm 3mm}
+  .c-photo{width:18mm;height:18mm;border-radius:50%;overflow:hidden;flex-shrink:0;background:#E1F5EE;
+    display:flex;align-items:center;justify-content:center;font-size:6mm;font-weight:700;color:#085041}
+  .c-photo img{width:100%;height:100%;object-fit:cover}
+  .c-info{flex:1;min-width:0}
+  .c-civ{font-size:2.2mm;opacity:.8}
+  .c-nom{font-size:3.6mm;font-weight:800;text-transform:uppercase;line-height:1.2;margin:.5mm 0}
+  .c-poste{font-size:2.3mm;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .c-asc{font-size:2.1mm;margin-top:1mm}
+  .c-foot{height:7mm;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 3mm;font-size:2mm;font-weight:600}
+  ${_carteTemplateCSS(_carteTplActive)}
+  @page{size:A4 portrait;margin:10mm}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head>
+<body>
+<div class="grid">${cards}</div>
+<script>window.onload = function(){ window.print(); };<\/script>
+<\/body><\/html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=1000');
+  win.document.write(html);
+  win.document.close();
+  logAction('BUREAU_CARTES_IMPRIMEES', { detail: ids.length + ' carte(s) · modèle ' + _carteTplActive });
+}
+
+// ── Onglet "Carte de membre" — affichage individuel ───────────
+
+function renderMaCarteSection() {
+  const zone = document.getElementById('ma-carte-zone');
+  const allZone = document.getElementById('toutes-cartes-zone');
+  if (!zone || !currentUser) return;
+
+  const canSeeAll = currentUser.role === 'superadmin' || currentUser.role === 'admin';
+  if (allZone) allZone.style.display = canSeeAll ? 'block' : 'none';
+
+  const bureau = getBureauData();
+  const mb = bureau?.membres || {};
+  const entry = POSTES_BUREAU
+    .map(p => ({ p, m: mb[p.id] }))
+    .find(x => x.m?.username && x.m.username === currentUser.username);
+
+  if (!entry) {
+    zone.innerHTML = `<p style="color:var(--muted);font-size:13px">Aucune carte trouvée pour votre profil. Contactez le Super Admin si vous êtes membre du Bureau.</p>`;
+    return;
+  }
+
+  zone.innerHTML = _carteCardHtml(entry.m, entry.p, bureau.mandat || {}, 'carte-display tpl-classic');
 }
 
 // ============================================================
@@ -7579,6 +7833,58 @@ initFirebase()
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn" onclick="closeModal('modal-member-edit')">Annuler</button>
       <button class="btn primary" onclick="saveMemberEdit()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cartes de membre du Bureau -->
+<div id="modal-cartes-membres" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" style="max-width:560px;width:95vw">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fa-solid fa-id-card-clip"></i> Cartes de membre du Bureau</span>
+      <button class="close-btn" onclick="closeModal('modal-cartes-membres')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      <i class="fa-solid fa-circle-info"></i> Choisissez les membres et un modèle, puis imprimez. Format carte standard (85,6 × 54 mm), plusieurs cartes par page A4.
+    </p>
+
+    <div class="flex-between" style="margin-bottom:6px">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted)">Membres</span>
+      <span style="font-size:11px">
+        <a href="#" onclick="event.preventDefault();_cartesSelectAll(true)">Tout cocher</a> ·
+        <a href="#" onclick="event.preventDefault();_cartesSelectAll(false)">Tout décocher</a>
+      </span>
+    </div>
+    <div class="cartes-membres-list" id="cartes-membres-list"></div>
+
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Modèle de carte</div>
+    <div class="carte-tpl-grid">
+      <div class="carte-tpl-opt" data-tpl="classic" onclick="_selectCarteTemplate('classic')">
+        <div class="carte-tpl-swatch" style="background:#fff">
+          <div class="sw-top" style="background:#085041"></div>
+          <div class="sw-dot" style="background:#1D9E75"></div>
+        </div>
+        <div class="carte-tpl-label">Classique</div>
+      </div>
+      <div class="carte-tpl-opt" data-tpl="dark" onclick="_selectCarteTemplate('dark')">
+        <div class="carte-tpl-swatch" style="background:linear-gradient(135deg,#0d1f1a,#1a1a18)">
+          <div class="sw-top" style="background:transparent;border-bottom:2px solid #BA7517"></div>
+          <div class="sw-dot" style="background:#BA7517"></div>
+        </div>
+        <div class="carte-tpl-label">Moderne sombre</div>
+      </div>
+      <div class="carte-tpl-opt" data-tpl="minimal" onclick="_selectCarteTemplate('minimal')">
+        <div class="carte-tpl-swatch" style="background:#fff;border:1px solid #1D9E75">
+          <div class="sw-top" style="background:#fff;border-bottom:1px solid #ddd"></div>
+          <div class="sw-dot" style="background:#ddd"></div>
+        </div>
+        <div class="carte-tpl-label">Minimaliste</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;padding-top:12px;border-top:1px solid var(--border)">
+      <button class="btn" onclick="closeModal('modal-cartes-membres')">Annuler</button>
+      <button class="btn primary" onclick="printCartesMembres()"><i class="fa-solid fa-print"></i> Imprimer les cartes</button>
     </div>
   </div>
 </div>
