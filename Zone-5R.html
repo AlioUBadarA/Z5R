@@ -359,6 +359,7 @@
   .carte-display .c-civ{font-size:9px;opacity:.8;}
   .carte-display .c-nom{font-size:14px;font-weight:800;text-transform:uppercase;line-height:1.2;margin:2px 0;}
   .carte-display .c-poste{font-size:9.5px;line-height:1.3;}
+  .carte-display .c-commission{font-size:8px;line-height:1.25;margin-top:2px;color:rgba(0,0,0,.55);}
   .carte-display .c-asc{font-size:9px;margin-top:4px;}
   .carte-display .c-foot{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
     padding:0 14px;font-size:8px;font-weight:600;}
@@ -3776,7 +3777,7 @@ function _carteTemplateCSS(tpl) {
       .c-tag{${s.tag}}
       .c-photo{${s.photo}}
       .c-nom{${s.nom}}
-      ${s.poste ? `.c-poste,.c-asc{${s.poste}}` : ''}
+      ${s.poste ? `.c-poste,.c-commission,.c-asc{${s.poste}}` : ''}
       .c-foot{${s.foot}}`;
 }
 
@@ -3789,7 +3790,7 @@ function _carteTemplateCSS(tpl) {
     .carte-display.tpl-${tpl} .c-tag{${s.tag}}
     .carte-display.tpl-${tpl} .c-photo{${s.photo}}
     .carte-display.tpl-${tpl} .c-nom{${s.nom}}
-    ${s.poste ? `.carte-display.tpl-${tpl} .c-poste,.carte-display.tpl-${tpl} .c-asc{${s.poste}}` : ''}
+    ${s.poste ? `.carte-display.tpl-${tpl} .c-poste,.carte-display.tpl-${tpl} .c-commission,.carte-display.tpl-${tpl} .c-asc{${s.poste}}` : ''}
     .carte-display.tpl-${tpl} .c-foot{${s.foot}}`).join('\n');
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
@@ -3814,6 +3815,7 @@ function _carteCardHtml(m, p, mandat, extraClass) {
         <div class="c-civ">${m.civilite||''}</div>
         <div class="c-nom">${nom}</div>
         <div class="c-poste">${p.poste}</div>
+        <div class="c-commission">${p.commission}</div>
         ${m.asc ? `<div class="c-asc">ASC d'origine : ${m.asc}</div>` : ''}
       </div>
     </div>
@@ -3862,6 +3864,7 @@ function printCartesMembres() {
   .c-civ{font-size:2.2mm;opacity:.8}
   .c-nom{font-size:3.6mm;font-weight:800;text-transform:uppercase;line-height:1.2;margin:.5mm 0}
   .c-poste{font-size:2.3mm;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .c-commission{font-size:1.9mm;line-height:1.2;margin-top:.5mm;color:rgba(0,0,0,.55);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .c-asc{font-size:2.1mm;margin-top:1mm}
   .c-foot{height:7mm;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
     padding:0 3mm;font-size:2mm;font-weight:600}
