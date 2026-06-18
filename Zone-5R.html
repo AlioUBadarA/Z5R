@@ -1054,6 +1054,7 @@
       <span class="card-title"><i class="fa-solid fa-key"></i> Gestion des accès membres</span>
       <div style="display:flex;gap:8px">
         <button class="btn" style="font-size:12px" onclick="createAllBureauAccounts()"><i class="fa-solid fa-rocket"></i> Activer tous</button>
+        <button class="btn" style="font-size:12px" onclick="recreateAllBureauAccounts()" title="Pour les comptes déjà actifs dont le mot de passe a été perdu (bug corrigé) — génère un nouvel identifiant + mot de passe pour chacun"><i class="fa-solid fa-rotate"></i> Recréer tous les comptes</button>
         <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
       </div>
     </div>
@@ -3929,7 +3930,9 @@ function renderMembersTable() {
       <td>${active ? code(m.username) : ''}</td>
       <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         ${active
-          ? `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Actif</span>${actionBtns(m.username, m.name)}`
+          ? `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Actif</span>${actionBtns(m.username, m.name)}
+             <button class="btn" style="font-size:11px;padding:3px 8px" title="Nouvel identifiant + nouveau mot de passe (si l'ancien ne fonctionne plus)"
+               onclick="recreateBureauAccount('${m.username}')"><i class="fa-solid fa-rotate"></i></button>`
           : `<button class="btn primary" style="font-size:11px;padding:3px 10px"
                onclick="createBureauAccount(${i})">Créer accès</button>`}
       </td>
@@ -3990,6 +3993,67 @@ function createAllBureauAccounts() {
     renderMembersTable();
     _showCredentialsModal(creds);
   });
+}
+
+// Recrée un (ou plusieurs) compte(s) Bureau sous un NOUVEL identifiant. Nécessaire car
+// Firebase Auth refuse de changer le mot de passe d'un compte existant depuis le client
+// (pas de droits Admin côté navigateur) — un identifiant inédit contourne le blocage en
+// créant un compte Firebase Auth réellement neuf, avec un mot de passe garanti fonctionnel.
+function _recreateBureauAccounts(posteIds) {
+  const bureau = getBureauData();
+  if (!bureau || !bureau.membres) return;
+  const users = getUsers();
+  const reserved = new Set();
+
+  const creds = posteIds.map(id => {
+    const m = bureau.membres[id];
+    const p = POSTES_BUREAU.find(x => x.id === id);
+    const oldUsername = m.username;
+    let n = 2, candidate = oldUsername + n;
+    while (users[candidate] || reserved.has(candidate)) { n++; candidate = oldUsername + n; }
+    reserved.add(candidate);
+    return { id, oldUsername, newUsername: candidate, pwd: _genTempPwd(),
+      role: p?.role, poste: p?.poste, name: _memberFullName(m) };
+  });
+
+  creds.forEach(c => {
+    delete users[c.oldUsername];
+    users[c.newUsername] = { role: c.role, name: c.name, poste: c.poste };
+    bureau.membres[c.id].username = c.newUsername;
+  });
+  saveUsers(users);
+  localStorage.setItem('zone5r_bureau', JSON.stringify(bureau));
+  fireSync('bureau', bureau);
+  _refreshBureauMembers();
+
+  Promise.all(creds.map(c => _createFbAccount(c.newUsername, c.pwd))).then(() => {
+    renderMembersTable();
+    renderBureauSection();
+    renderAccueilBureau();
+    logAction('BUREAU_ACCOUNTS_RECREATED', { detail: creds.map(c => c.name + ' (' + c.oldUsername + ' → ' + c.newUsername + ')').join(', ') });
+    _showCredentialsModal(creds.map(c => ({ name: c.name, username: c.newUsername, pwd: c.pwd })));
+  });
+}
+
+function recreateBureauAccount(oldUsername) {
+  const bureau = getBureauData();
+  const entry = Object.entries(bureau?.membres || {}).find(([, m]) => m?.username === oldUsername);
+  if (!entry) { showToast('Membre introuvable.'); return; }
+  const [id, m] = entry;
+  if (!confirm(`Recréer le compte de ${_memberFullName(m)} avec un nouvel identifiant et un nouveau mot de passe ?\nL'ancien identifiant "${oldUsername}" ne fonctionnera plus.`)) return;
+  _recreateBureauAccounts([id]);
+}
+
+function recreateAllBureauAccounts() {
+  const bureau = getBureauData();
+  if (!bureau || !bureau.membres) { showToast('Aucun bureau déclaré.'); return; }
+  const users = getUsers();
+  const ids = Object.entries(bureau.membres)
+    .filter(([, m]) => m?.username && users[m.username] && !m._archive)
+    .map(([id]) => id);
+  if (!ids.length) { showToast('Aucun compte actif à recréer.'); return; }
+  if (!confirm(`Recréer ${ids.length} compte(s) Bureau avec un nouvel identifiant et un nouveau mot de passe chacun ?\nLes anciens identifiants ne fonctionneront plus.`)) return;
+  _recreateBureauAccounts(ids);
 }
 
 // Affiche les identifiants générés dans une modal persistante (pas un toast qui
