@@ -362,25 +362,8 @@
   .carte-display .c-asc{font-size:9px;margin-top:4px;}
   .carte-display .c-foot{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
     padding:0 14px;font-size:8px;font-weight:600;}
-  .carte-display.tpl-classic{background:#fff;border:1px solid #ccc;}
-  .carte-display.tpl-classic .c-top{background:#085041;color:#fff;}
-  .carte-display.tpl-classic .c-tag{color:rgba(255,255,255,.75);}
-  .carte-display.tpl-classic .c-photo{border:2px solid #1D9E75;}
-  .carte-display.tpl-classic .c-nom{color:#085041;}
-  .carte-display.tpl-classic .c-foot{background:#E1F5EE;color:#085041;border-top:1px solid #1D9E75;}
-  .carte-display.tpl-dark{background:linear-gradient(135deg,#0d1f1a,#1a1a18);border:1px solid #000;color:#f1efe8;}
-  .carte-display.tpl-dark .c-top{background:transparent;color:#fff;border-bottom:1px solid #BA7517;}
-  .carte-display.tpl-dark .c-tag{color:#BA7517;}
-  .carte-display.tpl-dark .c-photo{border:2px solid #BA7517;}
-  .carte-display.tpl-dark .c-nom{color:#fff;}
-  .carte-display.tpl-dark .c-poste,.carte-display.tpl-dark .c-asc{color:#d9d6cc;}
-  .carte-display.tpl-dark .c-foot{background:rgba(255,255,255,.06);color:#BA7517;border-top:1px solid #BA7517;}
-  .carte-display.tpl-minimal{background:#fff;border:2px solid #1D9E75;}
-  .carte-display.tpl-minimal .c-top{background:#fff;color:#085041;border-bottom:1px solid #ddd;}
-  .carte-display.tpl-minimal .c-tag{color:#6b6a65;}
-  .carte-display.tpl-minimal .c-photo{border:2px solid #ddd;}
-  .carte-display.tpl-minimal .c-nom{color:#1a1a18;}
-  .carte-display.tpl-minimal .c-foot{background:#fff;color:#6b6a65;border-top:1px solid #ddd;}
+  /* Couleurs des 3 modèles (.tpl-classic/.tpl-dark/.tpl-minimal) injectées dynamiquement
+     depuis CARTE_SKINS — voir _injectCarteScreenCSS() — pour rester en phase avec le CSS d'impression. */
 </style>
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -3224,13 +3207,36 @@ function _genUsername(prenom, nom) {
   return clean((prenom||'').trim().split(/\s+/)[0]) + '.' + clean((nom||'').trim().split(/\s+/)[0]);
 }
 
+// Évite que deux membres (ex: même prénom + nom) se retrouvent avec le même
+// username — sinon le second devient introuvable (compte, carte de membre…).
+function _ensureUniqueUsername(base, membres, excludeKeys) {
+  const exclude = new Set(excludeKeys || []);
+  const taken = new Set(
+    Object.entries(membres || {})
+      .filter(([k]) => !exclude.has(k))
+      .map(([, m]) => m?.username)
+      .filter(Boolean)
+  );
+  let candidate = base, n = 2;
+  while (taken.has(candidate)) { candidate = base + n; n++; }
+  return candidate;
+}
+
+function _memberInitials(m) {
+  return ((m.prenom||'').charAt(0) + (m.nom||'').charAt(0)).toUpperCase();
+}
+
+function _memberFullName(m) {
+  return ((m.prenom||'') + ' ' + (m.nom||'')).trim();
+}
+
 function _buildBureauMembersFromData(bureau) {
   if (!bureau || !bureau.membres) return [];
   return POSTES_BUREAU.map(p => {
     const m = bureau.membres[p.id];
     if (!m || !m.nom) return null;
     const username = m.username || _genUsername(m.prenom||'', m.nom);
-    return { username, role: p.role, name: ((m.prenom||'') + ' ' + m.nom).trim(), poste: p.poste };
+    return { username, role: p.role, name: _memberFullName(m), poste: p.poste };
   }).filter(Boolean);
 }
 
@@ -3310,8 +3316,8 @@ function renderBureauSection() {
           </div>`;
           return;
         }
-        const ini    = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
-        const fullNom= ((m.prenom||'') + ' ' + m.nom).trim();
+        const ini    = _memberInitials(m);
+        const fullNom= _memberFullName(m);
         const isDem  = m.statut === 'démissionnaire';
         html += `<div class="bureau-card">
           ${isDem ? '<div class="bureau-dem-badge">Démissionnaire</div>' : ''}
@@ -3340,7 +3346,7 @@ function _renderBureauDroits(bureau) {
   const get = ids => {
     for (const id of ids) {
       const m = mb[id];
-      if (m?.nom) return ((m.prenom||'') + ' ' + m.nom).trim();
+      if (m?.nom) return _memberFullName(m);
     }
     return 'À définir';
   };
@@ -3397,8 +3403,8 @@ function renderAccueilBureau() {
   const mkCard = p => {
     const m   = mb[p.id];
     if (!m?.nom) return '';
-    const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
-    const nom = ((m.prenom||'') + ' ' + m.nom).trim();
+    const ini = _memberInitials(m);
+    const nom = _memberFullName(m);
     return `<div class="accueil-bureau-card">
       <div class="accueil-bureau-avatar">${m.photo
         ? `<img src="${m.photo}" loading="eager" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
@@ -3518,7 +3524,7 @@ function saveBureauDeclaration() {
       contact: row.querySelector('.bm-contact').value.trim(),
       email:   row.querySelector('.bm-email').value.trim(),
       statut:  'actif',
-      username: _genUsername(prenom, nom),
+      username: _ensureUniqueUsername(_genUsername(prenom, nom), membres),
     };
   });
 
@@ -3652,7 +3658,7 @@ function saveMemberEdit() {
     contact: document.getElementById('mem-edit-contact').value.trim(),
     email:   document.getElementById('mem-edit-email').value.trim(),
     statut,
-    username: current.username || _genUsername(prenom, nom),
+    username: current.username || _ensureUniqueUsername(_genUsername(prenom, nom), bureau.membres, [_editingPosteId]),
   };
 
   if (statut === 'démissionnaire') {
@@ -3668,7 +3674,7 @@ function saveMemberEdit() {
         prenom: rPrenom, nom: rNom,
         photo: '', asc: '', contact: '', email: '',
         statut: 'actif',
-        username: _genUsername(rPrenom, rNom),
+        username: _ensureUniqueUsername(_genUsername(rPrenom, rNom), bureau.membres, [_editingPosteId]),
       };
     }
   }
@@ -3702,8 +3708,8 @@ function openCartesMembresModal() {
       .map(p => ({ p, m: mb[p.id] }))
       .filter(x => x.m?.nom && x.m.statut !== 'démissionnaire')
       .map(({ p, m }) => {
-        const ini = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
-        const nom = ((m.prenom||'') + ' ' + m.nom).trim();
+        const ini = _memberInitials(m);
+        const nom = _memberFullName(m);
         return `<label class="carte-mb-row">
           <input type="checkbox" class="carte-mb-check" value="${p.id}" checked>
           <div class="carte-mb-avatar">${m.photo ? `<img src="${m.photo}">` : ini}</div>
@@ -3730,37 +3736,69 @@ function _selectCarteTemplate(tpl) {
   });
 }
 
+// Source unique des 3 modèles de carte — alimente à la fois le CSS d'impression
+// (_carteTemplateCSS) et le CSS d'affichage écran (.carte-display, injecté plus bas).
+const CARTE_SKINS = {
+  classic: {
+    card:  'background:#fff;border:1px solid #ccc;',
+    top:   'background:#085041;color:#fff;',
+    tag:   'color:rgba(255,255,255,.75);',
+    photo: 'border:2px solid #1D9E75;',
+    nom:   'color:#085041;',
+    poste: '',
+    foot:  'background:#E1F5EE;color:#085041;border-top:1px solid #1D9E75;',
+  },
+  dark: {
+    card:  'background:linear-gradient(135deg,#0d1f1a,#1a1a18);border:1px solid #000;color:#f1efe8;',
+    top:   'background:transparent;color:#fff;border-bottom:1px solid #BA7517;',
+    tag:   'color:#BA7517;',
+    photo: 'border:2px solid #BA7517;',
+    nom:   'color:#fff;',
+    poste: 'color:#d9d6cc;',
+    foot:  'background:rgba(255,255,255,.06);color:#BA7517;border-top:1px solid #BA7517;',
+  },
+  minimal: {
+    card:  'background:#fff;border:2px solid #1D9E75;',
+    top:   'background:#fff;color:#085041;border-bottom:1px solid #ddd;',
+    tag:   'color:#6b6a65;',
+    photo: 'border:2px solid #ddd;',
+    nom:   'color:#1a1a18;',
+    poste: '',
+    foot:  'background:#fff;color:#6b6a65;border-top:1px solid #ddd;',
+  },
+};
+
 function _carteTemplateCSS(tpl) {
-  const skins = {
-    classic: `
-      .carte{background:#fff;border:1px solid #ccc;}
-      .c-top{background:#085041;color:#fff;}
-      .c-tag{color:rgba(255,255,255,.75);}
-      .c-photo{border:2px solid #1D9E75;}
-      .c-nom{color:#085041;}
-      .c-foot{background:#E1F5EE;color:#085041;border-top:1px solid #1D9E75;}`,
-    dark: `
-      .carte{background:linear-gradient(135deg,#0d1f1a,#1a1a18);border:1px solid #000;color:#f1efe8;}
-      .c-top{background:transparent;color:#fff;border-bottom:1px solid #BA7517;}
-      .c-tag{color:#BA7517;}
-      .c-photo{border:2px solid #BA7517;}
-      .c-nom{color:#fff;}
-      .c-poste,.c-asc{color:#d9d6cc;}
-      .c-foot{background:rgba(255,255,255,.06);color:#BA7517;border-top:1px solid #BA7517;}`,
-    minimal: `
-      .carte{background:#fff;border:2px solid #1D9E75;}
-      .c-top{background:#fff;color:#085041;border-bottom:1px solid #ddd;}
-      .c-tag{color:#6b6a65;}
-      .c-photo{border:2px solid #ddd;}
-      .c-nom{color:#1a1a18;}
-      .c-foot{background:#fff;color:#6b6a65;border-top:1px solid #ddd;}`,
-  };
-  return skins[tpl] || skins.classic;
+  const s = CARTE_SKINS[tpl] || CARTE_SKINS.classic;
+  return `
+      .carte{${s.card}}
+      .c-top{${s.top}}
+      .c-tag{${s.tag}}
+      .c-photo{${s.photo}}
+      .c-nom{${s.nom}}
+      ${s.poste ? `.c-poste,.c-asc{${s.poste}}` : ''}
+      .c-foot{${s.foot}}`;
 }
 
+// Génère l'équivalent écran (.carte-display.tpl-X) à partir des mêmes CARTE_SKINS,
+// injecté une seule fois dans <head> pour éviter une copie CSS statique parallèle.
+(function _injectCarteScreenCSS() {
+  const css = Object.entries(CARTE_SKINS).map(([tpl, s]) => `
+    .carte-display.tpl-${tpl}{${s.card}}
+    .carte-display.tpl-${tpl} .c-top{${s.top}}
+    .carte-display.tpl-${tpl} .c-tag{${s.tag}}
+    .carte-display.tpl-${tpl} .c-photo{${s.photo}}
+    .carte-display.tpl-${tpl} .c-nom{${s.nom}}
+    ${s.poste ? `.carte-display.tpl-${tpl} .c-poste,.carte-display.tpl-${tpl} .c-asc{${s.poste}}` : ''}
+    .carte-display.tpl-${tpl} .c-foot{${s.foot}}`).join('\n');
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+})();
+
 function _carteCardHtml(m, p, mandat, extraClass) {
-  const ini    = ((m.prenom||'').charAt(0) + m.nom.charAt(0)).toUpperCase();
-  const nom    = ((m.prenom||'') + ' ' + m.nom).trim();
+  const ini    = _memberInitials(m);
+  const nom    = _memberFullName(m);
   const fmt    = iso => iso ? new Date(iso).toLocaleDateString('fr-FR') : '—';
   return `<div class="carte${extraClass ? ' ' + extraClass : ''}">
     <div class="c-top">
