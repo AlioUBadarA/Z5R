@@ -3975,7 +3975,7 @@ function createBureauAccount(index) {
   saveUsers(users);
   _createFbAccount(m.username, tmpPwd).then(() => {
     renderMembersTable();
-    showToast(m.name.split(' ')[0] + ' · identifiant : ' + m.username + ' · MDP provisoire : ' + tmpPwd);
+    _showCredentialsModal([{ name: m.name, username: m.username, pwd: tmpPwd }]);
   });
 }
 
@@ -3983,12 +3983,58 @@ function createAllBureauAccounts() {
   const users = getUsers();
   const toCreate = BUREAU_MEMBERS.filter(m => !users[m.username]);
   if (toCreate.length === 0) { showToast('Tous les comptes bureau sont déjà actifs.'); return; }
-  toCreate.forEach(m => { users[m.username] = { role: m.role, name: m.name, poste: m.poste }; });
+  const creds = toCreate.map(m => ({ name: m.name, username: m.username, role: m.role, poste: m.poste, pwd: _genTempPwd() }));
+  creds.forEach(c => { users[c.username] = { role: c.role, name: c.name, poste: c.poste }; });
   saveUsers(users);
-  Promise.all(toCreate.map(m => _createFbAccount(m.username, _genTempPwd()))).then(() => {
+  Promise.all(creds.map(c => _createFbAccount(c.username, c.pwd))).then(() => {
     renderMembersTable();
-    showToast(toCreate.length + ' compte(s) activé(s) sur Firebase.');
+    _showCredentialsModal(creds);
   });
+}
+
+// Affiche les identifiants générés dans une modal persistante (pas un toast qui
+// disparaît) — le mot de passe n'est connu qu'à cet instant, il faut le transmettre
+// au membre avant de fermer cette fenêtre.
+function _showCredentialsModal(creds) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'creds-modal-overlay';
+  const rows = creds.map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;
+                padding:8px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:700;font-size:13px">${esc(c.name)}</div>
+        <div style="font-size:12px;color:var(--muted)">Identifiant : <code>${esc(c.username)}</code></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <code style="font-size:13px;background:var(--green-l);color:var(--green-d);
+              padding:4px 8px;border-radius:6px;font-weight:700">${esc(c.pwd)}</code>
+        <button class="btn" style="font-size:11px;padding:4px 8px"
+          onclick="navigator.clipboard.writeText('${esc(c.username)} / ${esc(c.pwd)}');showToast('Copié.')">
+          <i class="fa-solid fa-copy"></i>
+        </button>
+      </div>
+    </div>`).join('');
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <span><i class="fa-solid fa-key"></i> Identifiants générés (${creds.length})</span>
+        <button class="close-btn" onclick="document.getElementById('creds-modal-overlay').remove()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--red);margin-bottom:10px">
+          <i class="fa-solid fa-triangle-exclamation"></i> Ces mots de passe ne seront plus jamais affichés —
+          transmettez-les aux membres concernés avant de fermer cette fenêtre.
+        </p>
+        <div style="max-height:50vh;overflow-y:auto">${rows}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn primary" onclick="document.getElementById('creds-modal-overlay').remove()">J'ai noté, fermer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function openChangePasswordModal(username, name) {
