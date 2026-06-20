@@ -2065,7 +2065,7 @@ async function fireLoad(key) {
   }
 }
 
-async function initFirebase() {
+async function _initAnonymousAuth() {
   // Authentification anonyme — garantit un token valide pour toutes les lectures/écritures
   try {
     await firebase.auth().signInAnonymously();
@@ -2073,18 +2073,26 @@ async function initFirebase() {
   } catch(e) {
     console.warn('[AUTH] échec auth anonyme (vérifier Firebase Console → Authentication → Méthodes de connexion → Anonyme)', e.code, e.message);
   }
+}
 
+async function _loadInitialCollections() {
   const keys = ['users','players','saison','saisons','teams','fiches','stades',
                  'suspensions','litiges','finale','finales','licences','depenses','auditlog','matches','bureau'];
   await Promise.all(keys.map(k => fireLoad(k)));
+}
 
-  // Listeners temps réel — localStorage mis à jour immédiatement, rendu après _appReady
+// Listeners temps réel — localStorage mis à jour immédiatement, rendu après _appReady
+
+function _listenPlayers() {
   _db.collection(_COL).doc('players').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_players', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     initTeamTabs(); renderLicencesTable();
   });
+}
+
+function _listenSaison() {
   _db.collection(_COL).doc('saison').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_saison', JSON.stringify(snap.data().data));
@@ -2092,6 +2100,9 @@ async function initFirebase() {
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
     updateUI();
   });
+}
+
+function _listenSaisons() {
   _db.collection(_COL).doc('saisons').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_saisons', JSON.stringify(snap.data().data));
@@ -2099,24 +2110,36 @@ async function initFirebase() {
     renderSeasonBar(); renderDashboard();
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderSaisonPanel();
   });
+}
+
+function _listenFinales() {
   _db.collection(_COL).doc('finales').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_finales', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderFinaleDisplay(); updateCaisse(); renderBilan();
   });
+}
+
+function _listenSuspensions() {
   _db.collection(_COL).doc('suspensions').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_suspensions', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderSuspensions();
   });
+}
+
+function _listenLitiges() {
   _db.collection(_COL).doc('litiges').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_litiges', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderLitiges();
   });
+}
+
+function _listenTeams() {
   _db.collection(_COL).doc('teams').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_teams', JSON.stringify(snap.data().data));
@@ -2124,30 +2147,45 @@ async function initFirebase() {
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderEquipesPanel();
     refreshSaisonEquipesSelect();
   });
+}
+
+function _listenFiches() {
   _db.collection(_COL).doc('fiches').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_fiches', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderFichesList(); renderDashboard();
   });
+}
+
+function _listenLicences() {
   _db.collection(_COL).doc('licences').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_licences', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderLicencesTable();
   });
+}
+
+function _listenDepenses() {
   _db.collection(_COL).doc('depenses').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_depenses', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderDepensesList(); updateCaisse(); renderBilan();
   });
+}
+
+function _listenFinale() {
   _db.collection(_COL).doc('finale').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_finale', JSON.stringify(snap.data().data));
     if (!_appReady) return;
     renderFinaleDisplay(); updateCaisse(); renderBilan();
   });
+}
+
+function _listenUsers() {
   _db.collection(_COL).doc('users').onSnapshot(snap => {
     if (!snap.exists) return;
     // Stocker les profils depuis Firestore — aucun mot de passe ne doit figurer ici
@@ -2158,6 +2196,9 @@ async function initFirebase() {
     if (!_appReady) return;
     if (currentUser && CAN_MANAGE_ACCOUNTS.includes(currentUser.role)) renderMembersTable();
   });
+}
+
+function _listenAuditlog() {
   _db.collection(_COL).doc('auditlog').onSnapshot(snap => {
     if (!snap.exists) return;
     const raw = snap.data().data || [];
@@ -2166,6 +2207,9 @@ async function initFirebase() {
     if (!_appReady) return;
     if (currentUser?.role === 'superadmin') renderAuditPanel();
   });
+}
+
+function _listenMatches() {
   _db.collection(_COL).doc('matches').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem(MATCH_KEY, JSON.stringify(snap.data().data));
@@ -2183,6 +2227,9 @@ async function initFirebase() {
       }
     }
   });
+}
+
+function _listenBureau() {
   _db.collection(_COL).doc('bureau').onSnapshot(snap => {
     if (!snap.exists) return;
     localStorage.setItem('zone5r_bureau', JSON.stringify(snap.data().data));
@@ -2191,6 +2238,26 @@ async function initFirebase() {
     renderBureauSection();
     renderAccueilBureau();
   });
+}
+
+async function initFirebase() {
+  await _initAnonymousAuth();
+  await _loadInitialCollections();
+  _listenPlayers();
+  _listenSaison();
+  _listenSaisons();
+  _listenFinales();
+  _listenSuspensions();
+  _listenLitiges();
+  _listenTeams();
+  _listenFiches();
+  _listenLicences();
+  _listenDepenses();
+  _listenFinale();
+  _listenUsers();
+  _listenAuditlog();
+  _listenMatches();
+  _listenBureau();
 }
 
 // ============================================================
@@ -2328,6 +2395,147 @@ function toggleAuth() {
 // ============================================================
 //  MISE À JOUR DE L'INTERFACE
 // ============================================================
+function _updateUIMemberHeader(badge, authBtn, subtitle) {
+  const rc = ROLE_CONFIG[currentUser.role] || { label: 'Membre', cls: 'gray' };
+  badge.textContent = rc.label;
+  badge.className   = 'role-badge ' + rc.cls;
+  const firstName   = currentUser.name.split(' ')[0];
+  authBtn.textContent = firstName + ' · Déco.';
+  if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name + (currentUser.poste ? ' · ' + currentUser.poste : '');
+}
+
+function _updateUIMemberNav(memberNavItems, memberActions, visitorView, memberView) {
+  // FIX: display explicite pour surcharger le CSS .member-only { display:none }
+  memberNavItems.forEach(n => n.style.display = 'block');
+
+  // Onglets Joueurs (dans Compétition) et carte Litiges : réservés aux membres autorisés
+  const canSeePlayersLitiges = hasPermission('see_players_litiges');
+  const litigesCard      = document.getElementById('litiges-card');
+  const litigesSubnavTab = document.getElementById('subnav-jur-litiges');
+  const compJoueursTab   = document.getElementById('subnav-comp-joueurs');
+  const compStatsTab     = document.getElementById('subnav-comp-stats');
+  if (litigesCard)      litigesCard.style.display      = canSeePlayersLitiges ? '' : 'none';
+  if (litigesSubnavTab) litigesSubnavTab.style.display = canSeePlayersLitiges ? '' : 'none';
+  if (compJoueursTab)   compJoueursTab.style.display   = canSeePlayersLitiges ? '' : 'none';
+  if (compStatsTab)     compStatsTab.style.display     = canSeePlayersLitiges ? '' : 'none';
+  // Si l'utilisateur est sur comp-joueurs/comp-stats sans accès, revenir au planning
+  if (!canSeePlayersLitiges) {
+    const compSection = document.getElementById('competition');
+    const joueurs = document.getElementById('comp-joueurs');
+    const stats   = document.getElementById('comp-stats');
+    if (compSection && compSection.classList.contains('active')) {
+      if ((joueurs && joueurs.classList.contains('active')) ||
+          (stats   && stats.classList.contains('active'))) {
+        showSubSection('competition','comp-planning',document.getElementById('subnav-comp-planning'));
+      }
+    }
+  }
+
+  // Le rôle visiteur peut consulter mais ne peut pas modifier
+  const isReadOnly = currentUser.role === 'visiteur';
+  memberActions.forEach(b => b.style.display = isReadOnly ? 'none' : '');
+  visitorView.style.display = 'none';
+  memberView.style.display  = 'block';
+}
+
+function _updateUIMemberButtons() {
+  // Bouton Live Match : Commission compétitions, juridique, admin, superadmin
+  const canLive = hasPermission('live_score');
+  const btnLiveNew = document.getElementById('btn-live-new');
+  if (btnLiveNew) btnLiveNew.style.display = canLive ? '' : 'none';
+  renderCompMatches(); // refresh boutons "Démarrer/En direct" selon permission
+
+  // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
+  const btnAddJoueur = document.getElementById('btn-add-joueur');
+  if (btnAddJoueur) {
+    btnAddJoueur.style.display = hasPermission('add_player') ? '' : 'none';
+  }
+
+  // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
+  const btnAddFiche = document.getElementById('btn-add-fiche');
+  if (btnAddFiche) {
+    btnAddFiche.style.display = hasPermission('create_fiche') ? '' : 'none';
+  }
+
+  // Bouton Litige : réservé Commission Juridique
+  const btnLitige = document.getElementById('btn-add-litige');
+  if (btnLitige) {
+    btnLitige.style.display = hasPermission('add_litige') ? '' : 'none';
+  }
+}
+
+function _updateUIMemberAdminPanels(adminPanel) {
+  // Panneaux réservés Admin/SuperAdmin
+  const saisonPanel  = document.getElementById('saison-panel');
+  const equipesPanel = document.getElementById('equipes-panel');
+  const stadesPanel = document.getElementById('stades-panel');
+  if (hasPermission('manage_accounts')) {
+    adminPanel.style.display = 'block';
+    renderMembersTable();
+    if (saisonPanel)  { saisonPanel.style.display  = 'block'; renderSaisonPanel(); }
+    if (equipesPanel) { equipesPanel.style.display = 'block'; renderEquipesPanel(); }
+    if (stadesPanel)  { stadesPanel.style.display  = 'block'; renderStadesPanel(); }
+  } else {
+    adminPanel.style.display = 'none';
+    if (saisonPanel)  saisonPanel.style.display  = 'none';
+    if (equipesPanel) equipesPanel.style.display = 'none';
+    if (stadesPanel)  stadesPanel.style.display  = 'none';
+  }
+
+  // Panneaux superadmin : audit + gestion permissions
+  const auditPanel   = document.getElementById('audit-panel');
+  const permsPanel   = document.getElementById('permissions-panel');
+  const canAudit     = hasPermission('view_audit');
+  const isSuperAdmin = currentUser.role === 'superadmin';
+  if (auditPanel)  { auditPanel.style.display  = canAudit ? 'block' : 'none'; if (canAudit) renderAuditPanel(); }
+  if (permsPanel)  { permsPanel.style.display  = isSuperAdmin ? 'block' : 'none'; if (isSuperAdmin) renderPermissionsPanel(); }
+
+  // Sous-onglets Administration : visibilité selon rôle
+  const isAdmin = hasPermission('manage_accounts');
+  const _st = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+  const _sh = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+  if (isAdmin)     { _st('subnav-adm-gestion'); _st('subnav-adm-acces'); } else { _sh('subnav-adm-gestion'); _sh('subnav-adm-acces'); }
+  if (isSuperAdmin){ _st('subnav-adm-autorisations'); } else { _sh('subnav-adm-autorisations'); }
+  if (canAudit)    { _st('subnav-adm-historique');    } else { _sh('subnav-adm-historique');    }
+
+  // Panneau synchronisation Firebase : superadmin seulement
+  const syncPanel = document.getElementById('sync-panel');
+  if (syncPanel) syncPanel.style.display = isSuperAdmin ? 'block' : 'none';
+  _updateSyncIndicator();
+}
+
+function _updateUIMemberRefresh() {
+  // Onglet Bilan → recalcul à l'ouverture
+  renderBilan();
+  updateCaisse();
+  renderDepensesList();
+  renderSuspensions();
+  renderLitiges();
+  renderSeasonBar();
+  renderDashboard();
+  renderBureauSection();
+  renderAccueilBureau();
+}
+
+function _updateUIVisitor(badge, authBtn, subtitle, memberNavItems, memberActions, visitorView, memberView, adminPanel) {
+  badge.textContent = 'Visiteur';
+  badge.className   = 'role-badge visitor';
+  authBtn.textContent = 'Connexion';
+  if (subtitle) subtitle.textContent = 'Le Renouveau des Navetanes';
+
+  memberNavItems.forEach(n => n.style.display = 'none');
+  memberActions.forEach(b => b.style.display = 'none');
+  visitorView.style.display = 'block';
+  memberView.style.display  = 'none';
+  adminPanel.style.display  = 'none';
+  const sbLogout = document.getElementById('season-bar');
+  if (sbLogout) sbLogout.style.display = 'none';
+  renderDashboard();
+
+  document.getElementById('login-error')?.classList.remove('show');
+  renderAccueilBureau();
+}
+
 function updateUI() {
   const badge   = document.getElementById('user-role-badge');
   const authBtn = document.getElementById('header-auth-btn');
@@ -2342,134 +2550,13 @@ function updateUI() {
   const subtitle = document.getElementById('header-subtitle');
 
   if (currentUser) {
-    const rc = ROLE_CONFIG[currentUser.role] || { label: 'Membre', cls: 'gray' };
-    badge.textContent = rc.label;
-    badge.className   = 'role-badge ' + rc.cls;
-    const firstName   = currentUser.name.split(' ')[0];
-    authBtn.textContent = firstName + ' · Déco.';
-    if (subtitle) subtitle.textContent = 'Bienvenu, ' + currentUser.name + (currentUser.poste ? ' · ' + currentUser.poste : '');
-
-    // FIX: display explicite pour surcharger le CSS .member-only { display:none }
-    memberNavItems.forEach(n => n.style.display = 'block');
-
-    // Onglets Joueurs (dans Compétition) et carte Litiges : réservés aux membres autorisés
-    const canSeePlayersLitiges = hasPermission('see_players_litiges');
-    const litigesCard      = document.getElementById('litiges-card');
-    const litigesSubnavTab = document.getElementById('subnav-jur-litiges');
-    const compJoueursTab   = document.getElementById('subnav-comp-joueurs');
-    const compStatsTab     = document.getElementById('subnav-comp-stats');
-    if (litigesCard)      litigesCard.style.display      = canSeePlayersLitiges ? '' : 'none';
-    if (litigesSubnavTab) litigesSubnavTab.style.display = canSeePlayersLitiges ? '' : 'none';
-    if (compJoueursTab)   compJoueursTab.style.display   = canSeePlayersLitiges ? '' : 'none';
-    if (compStatsTab)     compStatsTab.style.display     = canSeePlayersLitiges ? '' : 'none';
-    // Si l'utilisateur est sur comp-joueurs/comp-stats sans accès, revenir au planning
-    if (!canSeePlayersLitiges) {
-      const compSection = document.getElementById('competition');
-      const joueurs = document.getElementById('comp-joueurs');
-      const stats   = document.getElementById('comp-stats');
-      if (compSection && compSection.classList.contains('active')) {
-        if ((joueurs && joueurs.classList.contains('active')) ||
-            (stats   && stats.classList.contains('active'))) {
-          showSubSection('competition','comp-planning',document.getElementById('subnav-comp-planning'));
-        }
-      }
-    }
-
-    // Le rôle visiteur peut consulter mais ne peut pas modifier
-    const isReadOnly = currentUser.role === 'visiteur';
-    memberActions.forEach(b => b.style.display = isReadOnly ? 'none' : '');
-    visitorView.style.display = 'none';
-    memberView.style.display  = 'block';
-
-    // Bouton Live Match : Commission compétitions, juridique, admin, superadmin
-    const canLive = hasPermission('live_score');
-    const btnLiveNew = document.getElementById('btn-live-new');
-    if (btnLiveNew) btnLiveNew.style.display = canLive ? '' : 'none';
-    renderCompMatches(); // refresh boutons "Démarrer/En direct" selon permission
-
-    // Bouton "Ajouter joueur" : tous les membres du bureau peuvent en ajouter
-    const btnAddJoueur = document.getElementById('btn-add-joueur');
-    if (btnAddJoueur) {
-      btnAddJoueur.style.display = hasPermission('add_player') ? '' : 'none';
-    }
-
-    // Bouton "Nouvelle fiche journée" : réservé à Aliou SAGNA, El Habib SANÉ, Souleymane DIENG
-    const btnAddFiche = document.getElementById('btn-add-fiche');
-    if (btnAddFiche) {
-      btnAddFiche.style.display = hasPermission('create_fiche') ? '' : 'none';
-    }
-
-    // Panneaux réservés Admin/SuperAdmin
-    const saisonPanel  = document.getElementById('saison-panel');
-    const equipesPanel = document.getElementById('equipes-panel');
-    const stadesPanel = document.getElementById('stades-panel');
-    if (hasPermission('manage_accounts')) {
-      adminPanel.style.display = 'block';
-      renderMembersTable();
-      if (saisonPanel)  { saisonPanel.style.display  = 'block'; renderSaisonPanel(); }
-      if (equipesPanel) { equipesPanel.style.display = 'block'; renderEquipesPanel(); }
-      if (stadesPanel)  { stadesPanel.style.display  = 'block'; renderStadesPanel(); }
-    } else {
-      adminPanel.style.display = 'none';
-      if (saisonPanel)  saisonPanel.style.display  = 'none';
-      if (equipesPanel) equipesPanel.style.display = 'none';
-      if (stadesPanel)  stadesPanel.style.display  = 'none';
-    }
-
-    // Panneaux superadmin : audit + gestion permissions
-    const auditPanel   = document.getElementById('audit-panel');
-    const permsPanel   = document.getElementById('permissions-panel');
-    const canAudit     = hasPermission('view_audit');
-    const isSuperAdmin = currentUser.role === 'superadmin';
-    if (auditPanel)  { auditPanel.style.display  = canAudit ? 'block' : 'none'; if (canAudit) renderAuditPanel(); }
-    if (permsPanel)  { permsPanel.style.display  = isSuperAdmin ? 'block' : 'none'; if (isSuperAdmin) renderPermissionsPanel(); }
-
-    // Sous-onglets Administration : visibilité selon rôle
-    const isAdmin = hasPermission('manage_accounts');
-    const _st = id => { const el = document.getElementById(id); if (el) el.style.display = ''; };
-    const _sh = id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
-    if (isAdmin)     { _st('subnav-adm-gestion'); _st('subnav-adm-acces'); } else { _sh('subnav-adm-gestion'); _sh('subnav-adm-acces'); }
-    if (isSuperAdmin){ _st('subnav-adm-autorisations'); } else { _sh('subnav-adm-autorisations'); }
-    if (canAudit)    { _st('subnav-adm-historique');    } else { _sh('subnav-adm-historique');    }
-
-    // Panneau synchronisation Firebase : superadmin seulement
-    const syncPanel = document.getElementById('sync-panel');
-    if (syncPanel) syncPanel.style.display = isSuperAdmin ? 'block' : 'none';
-    _updateSyncIndicator();
-
-    // Bouton Litige : réservé Commission Juridique
-    const btnLitige = document.getElementById('btn-add-litige');
-    if (btnLitige) {
-      btnLitige.style.display = hasPermission('add_litige') ? '' : 'none';
-    }
-
-    // Onglet Bilan → recalcul à l'ouverture
-    renderBilan();
-    updateCaisse();
-    renderDepensesList();
-    renderSuspensions();
-    renderLitiges();
-    renderSeasonBar();
-    renderDashboard();
-    renderBureauSection();
-    renderAccueilBureau();
+    _updateUIMemberHeader(badge, authBtn, subtitle);
+    _updateUIMemberNav(memberNavItems, memberActions, visitorView, memberView);
+    _updateUIMemberButtons();
+    _updateUIMemberAdminPanels(adminPanel);
+    _updateUIMemberRefresh();
   } else {
-    badge.textContent = 'Visiteur';
-    badge.className   = 'role-badge visitor';
-    authBtn.textContent = 'Connexion';
-    if (subtitle) subtitle.textContent = 'Le Renouveau des Navetanes';
-
-    memberNavItems.forEach(n => n.style.display = 'none');
-    memberActions.forEach(b => b.style.display = 'none');
-    visitorView.style.display = 'block';
-    memberView.style.display  = 'none';
-    adminPanel.style.display  = 'none';
-    const sbLogout = document.getElementById('season-bar');
-    if (sbLogout) sbLogout.style.display = 'none';
-    renderDashboard();
-
-    document.getElementById('login-error')?.classList.remove('show');
-    renderAccueilBureau();
+    _updateUIVisitor(badge, authBtn, subtitle, memberNavItems, memberActions, visitorView, memberView, adminPanel);
   }
 }
 
@@ -2732,6 +2819,80 @@ function setPermission(username, perm, value) {
                   : 'Permission retirée à ' + users[username].name.split(' ')[0] + '.');
 }
 
+function _permissionsTableHeadHtml(allPerms) {
+  // ── En-tête ligne 1 : groupes ──────────────────────────────
+  const thGroups = PERM_GROUPS.map(g =>
+    `<th colspan="${g.perms.length}" style="text-align:center;font-size:11px;background:var(--gray-l);border-bottom:1px solid var(--border);padding:5px 4px;white-space:nowrap">${g.label}</th>`
+  ).join('');
+
+  // ── En-tête ligne 2 : noms des permissions ─────────────────
+  const thPerms = allPerms.map(p =>
+    `<th style="font-size:10px;text-align:center;min-width:72px;padding:4px 3px;color:var(--muted);font-weight:600">${PERM_LABELS[p]}</th>`
+  ).join('');
+
+  return `<thead>
+    <tr>
+      <th rowspan="2" style="vertical-align:middle;min-width:140px">Membre</th>
+      <th rowspan="2" style="vertical-align:middle">Rôle</th>
+      ${thGroups}
+    </tr>
+    <tr>${thPerms}</tr>
+  </thead>`;
+}
+
+function _permissionsAllMembers(users) {
+  return [
+    ...BUREAU_MEMBERS,
+    ...Object.entries(DEFAULT_USERS)
+      .filter(([u,d]) => d.role !== 'visiteur' && u !== 'test.admin')
+      .map(([username,d]) => ({ username, ...d }))
+  ].filter(m => users[m.username]);
+}
+
+function _permissionCellHtml(m, p, ud, overrides, isSelf) {
+  if (isSelf || ud.role === 'superadmin')
+    return `<td style="text-align:center;font-size:16px"><i class="fa-solid fa-check"></i></td>`;
+
+  const roleGrant   = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](ud.role) : false;
+  const hasOverride = p in overrides;
+  const effective   = hasOverride ? overrides[p] : roleGrant;
+  const star        = hasOverride
+    ? `<span style="font-size:9px;color:var(--amber);font-weight:700;display:block;line-height:1" title="Override individuel actif">★</span>`
+    : '';
+  if (effective) {
+    return `<td style="text-align:center;padding:3px">
+      ${star}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)"><i class="fa-solid fa-check"></i></span>
+    </td>`;
+  }
+  return `<td style="text-align:center;padding:3px">
+    ${star}<span style="font-size:16px;cursor:pointer;opacity:0.3" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)"><i class="fa-solid fa-lock"></i></span>
+  </td>`;
+}
+
+function _permissionRowHtml(m, users, allPerms, roleCls) {
+  const ud        = users[m.username] || {};
+  const overrides = ud.permissions || {};
+  const isSelf    = m.username === currentUser?.username;
+  const roleBadge = `<span class="badge ${roleCls[ud.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[ud.role]?.label||ud.role}</span>`;
+
+  const cells = allPerms.map(p => _permissionCellHtml(m, p, ud, overrides, isSelf)).join('');
+
+  return `<tr>
+    <td style="white-space:nowrap"><strong style="font-size:12px">${ud.name||m.name}</strong></td>
+    <td style="white-space:nowrap">${roleBadge}</td>
+    ${cells}
+  </tr>`;
+}
+
+function _permissionsLegendHtml() {
+  return `<div style="font-size:11px;color:var(--muted);padding:8px 14px 10px;display:flex;gap:16px;flex-wrap:wrap">
+    <span><i class="fa-solid fa-check"></i> = accès accordé</span>
+    <span><i class="fa-solid fa-lock"></i> = accès refusé</span>
+    <span><span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)</span>
+    <span style="margin-left:auto">Cliquer pour modifier</span>
+  </div>`;
+}
+
 function renderPermissionsPanel() {
   const body = document.getElementById('permissions-body');
   if (!body) return;
@@ -2744,76 +2905,14 @@ function renderPermissionsPanel() {
                     secretaire:'blue', competitions:'green', juridique:'red',
                     finances:'amber', audit:'gray', communication:'blue' };
 
-  // ── En-tête ligne 1 : groupes ──────────────────────────────
-  const thGroups = PERM_GROUPS.map(g =>
-    `<th colspan="${g.perms.length}" style="text-align:center;font-size:11px;background:var(--gray-l);border-bottom:1px solid var(--border);padding:5px 4px;white-space:nowrap">${g.label}</th>`
-  ).join('');
+  const allMembers = _permissionsAllMembers(users);
+  const rows = allMembers.map(m => _permissionRowHtml(m, users, allPerms, roleCls)).join('');
 
-  // ── En-tête ligne 2 : noms des permissions ─────────────────
-  const thPerms = allPerms.map(p =>
-    `<th style="font-size:10px;text-align:center;min-width:72px;padding:4px 3px;color:var(--muted);font-weight:600">${PERM_LABELS[p]}</th>`
-  ).join('');
-
-  let html = `<div class="table-wrap"><table>
-    <thead>
-      <tr>
-        <th rowspan="2" style="vertical-align:middle;min-width:140px">Membre</th>
-        <th rowspan="2" style="vertical-align:middle">Rôle</th>
-        ${thGroups}
-      </tr>
-      <tr>${thPerms}</tr>
-    </thead>
-    <tbody>`;
-
-  const allMembers = [
-    ...BUREAU_MEMBERS,
-    ...Object.entries(DEFAULT_USERS)
-      .filter(([u,d]) => d.role !== 'visiteur' && u !== 'test.admin')
-      .map(([username,d]) => ({ username, ...d }))
-  ].filter(m => users[m.username]);
-
-  allMembers.forEach(m => {
-    const ud        = users[m.username] || {};
-    const overrides = ud.permissions || {};
-    const isSelf    = m.username === currentUser?.username;
-    const roleBadge = `<span class="badge ${roleCls[ud.role]||'gray'}" style="font-size:10px">${ROLE_CONFIG[ud.role]?.label||ud.role}</span>`;
-
-    const cells = allPerms.map(p => {
-      if (isSelf || ud.role === 'superadmin')
-        return `<td style="text-align:center;font-size:16px"><i class="fa-solid fa-check"></i></td>`;
-
-      const roleGrant    = PERM_DEFAULTS[p] ? PERM_DEFAULTS[p](ud.role) : false;
-      const hasOverride  = p in overrides;
-      const effective    = hasOverride ? overrides[p] : roleGrant;
-      const star         = hasOverride
-        ? `<span style="font-size:9px;color:var(--amber);font-weight:700;display:block;line-height:1" title="Override individuel actif">★</span>`
-        : '';
-      if (effective) {
-        return `<td style="text-align:center;padding:3px">
-          ${star}<span style="font-size:16px;cursor:pointer" title="Retirer la permission" onclick="setPermission('${m.username}','${p}',false)"><i class="fa-solid fa-check"></i></span>
-        </td>`;
-      } else {
-        return `<td style="text-align:center;padding:3px">
-          ${star}<span style="font-size:16px;cursor:pointer;opacity:0.3" title="Accorder la permission" onclick="setPermission('${m.username}','${p}',true)"><i class="fa-solid fa-lock"></i></span>
-        </td>`;
-      }
-    }).join('');
-
-    html += `<tr>
-      <td style="white-space:nowrap"><strong style="font-size:12px">${ud.name||m.name}</strong></td>
-      <td style="white-space:nowrap">${roleBadge}</td>
-      ${cells}
-    </tr>`;
-  });
-
-  html += `</tbody></table></div>
-  <div style="font-size:11px;color:var(--muted);padding:8px 14px 10px;display:flex;gap:16px;flex-wrap:wrap">
-    <span><i class="fa-solid fa-check"></i> = accès accordé</span>
-    <span><i class="fa-solid fa-lock"></i> = accès refusé</span>
-    <span><span style="color:var(--amber);font-weight:700">★</span> = override individuel (diffère du rôle par défaut)</span>
-    <span style="margin-left:auto">Cliquer pour modifier</span>
-  </div>`;
-  body.innerHTML = html;
+  body.innerHTML = `<div class="table-wrap"><table>
+    ${_permissionsTableHeadHtml(allPerms)}
+    <tbody>${rows}</tbody>
+  </table></div>
+  ${_permissionsLegendHtml()}`;
 }
 
 // ============================================================
@@ -3252,6 +3351,69 @@ function _refreshBureauMembers() {
 
 // ── Rendu de la section Bureau (onglet Administration) ────────
 
+function _renderBureauMandatBody(mandatBody, mandat, fmtDate, mStatus) {
+  if (!mandatBody) return;
+  mandatBody.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+      <div><div style="font-size:11px;color:var(--muted)">Mandat</div><div style="font-weight:700;font-size:16px">${mandat.annee||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Début</div><div style="font-weight:600">${fmtDate(mandat.debut)}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Fin (4 ans)</div><div style="font-weight:600">${fmtDate(mandat.fin)}</div></div>
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted)">Déclaré par</div><div style="font-weight:600">${mandat.declare_par||'—'}</div></div>
+      ${mStatus()}
+    </div>`;
+}
+
+function _renderBureauMandatActions(mandatActs, isSA) {
+  if (!mandatActs) return;
+  mandatActs.style.display = isSA ? 'flex' : 'none';
+  if (isSA) mandatActs.innerHTML = `
+    <button class="btn" style="font-size:12px" onclick="openBureauDeclarationModal()"><i class="fa-solid fa-pen"></i> Modifier</button>
+    <button class="btn primary" style="font-size:12px" onclick="renewBureauMandat()"><i class="fa-solid fa-arrows-rotate"></i> Renouveler le mandat</button>`;
+}
+
+function _bureauMemberCardHtml(p, m, isSA) {
+  if (!m?.nom) {
+    if (!isSA) return '';
+    return `<div class="bureau-card" style="border-style:dashed;opacity:.6">
+      <div class="bureau-avatar" style="font-size:22px;color:var(--muted)"><i class="fa-solid fa-user-plus"></i></div>
+      <div class="bureau-poste-label" style="margin-top:4px">${p.poste}</div>
+      <button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-plus"></i> Assigner</button>
+    </div>`;
+  }
+  const ini     = _memberInitials(m);
+  const fullNom = _memberFullName(m);
+  const isDem   = m.statut === 'démissionnaire';
+  return `<div class="bureau-card">
+    ${isDem ? '<div class="bureau-dem-badge">Démissionnaire</div>' : ''}
+    <div class="bureau-avatar">${m.photo
+      ? `<img src="${m.photo}" loading="eager" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
+      : ini}</div>
+    <div class="bureau-civilite">${m.civilite||''}</div>
+    <div class="bureau-nom">${fullNom}</div>
+    <div class="bureau-poste-label">${p.poste}</div>
+    ${m.asc     ? `<div class="bureau-asc"><i class="fa-solid fa-shield-halved" style="font-size:9px"></i> ${m.asc}</div>` : ''}
+    ${m.contact ? `<div class="bureau-contact"><i class="fa-solid fa-phone" style="font-size:9px"></i> ${m.contact}</div>` : ''}
+    ${isSA ? `<button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
+  </div>`;
+}
+
+function _renderBureauMembresDiv(membresDiv, membres, isSA) {
+  if (!membresDiv) return;
+  const commissions = [...new Set(POSTES_BUREAU.map(p => p.commission))];
+  let html = '';
+  commissions.forEach(comm => {
+    const postes = POSTES_BUREAU.filter(p => p.commission === comm);
+    const hasAny = postes.some(p => membres[p.id]?.nom);
+    if (!hasAny && !isSA) return;
+    html += `<div class="bureau-section-title"><i class="fa-solid fa-users" style="margin-right:5px"></i>${comm}</div><div class="bureau-grid">`;
+    postes.forEach(p => {
+      html += _bureauMemberCardHtml(p, membres[p.id], isSA);
+    });
+    html += `</div>`;
+  });
+  membresDiv.innerHTML = html || '<p style="color:var(--muted);font-size:13px;padding:16px 0">Aucun membre déclaré pour ce bureau.</p>';
+}
+
 function renderBureauSection() {
   if (!currentUser) return;
   const bureau  = getBureauData();
@@ -3284,60 +3446,9 @@ function renderBureauSection() {
     return '<span class="badge green" style="margin-left:8px">Valide</span>';
   };
 
-  if (mandatBody) mandatBody.innerHTML = `
-    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
-      <div><div style="font-size:11px;color:var(--muted)">Mandat</div><div style="font-weight:700;font-size:16px">${mandat.annee||'—'}</div></div>
-      <div><div style="font-size:11px;color:var(--muted)">Début</div><div style="font-weight:600">${fmtDate(mandat.debut)}</div></div>
-      <div><div style="font-size:11px;color:var(--muted)">Fin (4 ans)</div><div style="font-weight:600">${fmtDate(mandat.fin)}</div></div>
-      <div style="flex:1"><div style="font-size:11px;color:var(--muted)">Déclaré par</div><div style="font-weight:600">${mandat.declare_par||'—'}</div></div>
-      ${mStatus()}
-    </div>`;
-
-  if (mandatActs) {
-    mandatActs.style.display = isSA ? 'flex' : 'none';
-    if (isSA) mandatActs.innerHTML = `
-      <button class="btn" style="font-size:12px" onclick="openBureauDeclarationModal()"><i class="fa-solid fa-pen"></i> Modifier</button>
-      <button class="btn primary" style="font-size:12px" onclick="renewBureauMandat()"><i class="fa-solid fa-arrows-rotate"></i> Renouveler le mandat</button>`;
-  }
-
-  if (membresDiv) {
-    const commissions = [...new Set(POSTES_BUREAU.map(p => p.commission))];
-    let html = '';
-    commissions.forEach(comm => {
-      const postes = POSTES_BUREAU.filter(p => p.commission === comm);
-      const hasAny = postes.some(p => membres[p.id]?.nom);
-      if (!hasAny && !isSA) return;
-      html += `<div class="bureau-section-title"><i class="fa-solid fa-users" style="margin-right:5px"></i>${comm}</div><div class="bureau-grid">`;
-      postes.forEach(p => {
-        const m = membres[p.id];
-        if (!m?.nom) {
-          if (isSA) html += `<div class="bureau-card" style="border-style:dashed;opacity:.6">
-            <div class="bureau-avatar" style="font-size:22px;color:var(--muted)"><i class="fa-solid fa-user-plus"></i></div>
-            <div class="bureau-poste-label" style="margin-top:4px">${p.poste}</div>
-            <button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-plus"></i> Assigner</button>
-          </div>`;
-          return;
-        }
-        const ini    = _memberInitials(m);
-        const fullNom= _memberFullName(m);
-        const isDem  = m.statut === 'démissionnaire';
-        html += `<div class="bureau-card">
-          ${isDem ? '<div class="bureau-dem-badge">Démissionnaire</div>' : ''}
-          <div class="bureau-avatar">${m.photo
-            ? `<img src="${m.photo}" loading="eager" onerror="this.style.display='none';this.parentNode.textContent='${ini}'">`
-            : ini}</div>
-          <div class="bureau-civilite">${m.civilite||''}</div>
-          <div class="bureau-nom">${fullNom}</div>
-          <div class="bureau-poste-label">${p.poste}</div>
-          ${m.asc     ? `<div class="bureau-asc"><i class="fa-solid fa-shield-halved" style="font-size:9px"></i> ${m.asc}</div>` : ''}
-          ${m.contact ? `<div class="bureau-contact"><i class="fa-solid fa-phone" style="font-size:9px"></i> ${m.contact}</div>` : ''}
-          ${isSA ? `<button class="bureau-edit-btn" onclick="openMemberEditModal('${p.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
-        </div>`;
-      });
-      html += `</div>`;
-    });
-    membresDiv.innerHTML = html || '<p style="color:var(--muted);font-size:13px;padding:16px 0">Aucun membre déclaré pour ce bureau.</p>';
-  }
+  _renderBureauMandatBody(mandatBody, mandat, fmtDate, mStatus);
+  _renderBureauMandatActions(mandatActs, isSA);
+  _renderBureauMembresDiv(membresDiv, membres, isSA);
   _renderBureauDroits(bureau);
 }
 
@@ -4289,7 +4400,7 @@ function renderSeasonBar() {
   }).join('');
 }
 
-function renderDashboard() {
+function _computeDashboardContext() {
   const saison   = getSelectedSaison();
   const sid      = saison?.id;
   const fmt      = n => (n||0).toLocaleString('fr-FR');
@@ -4339,230 +4450,267 @@ function renderDashboard() {
     statusBadge = '<span class="badge gray">Clôturée</span>';
   }
 
-  // ── VUE VISITEUR ────────────────────────────────────────────
+  return {
+    saison, sid, fmt, dateFR, now, dateDebut, isStarted,
+    allMatches, nbTotal, nbJoues, fichesValidees, totalFiches, totalLicences,
+    nbEquipes, nbPoules, susp, litEnCours, statusText, statusBadge,
+  };
+}
 
+// ── VUE VISITEUR ────────────────────────────────────────────
+
+function _renderDashboardVisitorHero(ctx) {
+  const { saison, statusText } = ctx;
   const heroTitle = document.getElementById('dashboard-hero-title');
   const heroSub   = document.getElementById('dashboard-hero-sub');
   if (heroTitle) heroTitle.textContent = saison ? saison.nom : 'Zone 5R · Navetanes Bignona';
   if (heroSub)   heroSub.textContent   = saison
     ? 'Zone 5R / ODGAM de Bignona · ' + statusText
     : 'Zone 5R / ODGAM de Bignona';
+}
 
-  // Stats visiteur
+function _renderDashboardVisitorStats(ctx) {
+  const { nbEquipes, nbPoules, nbJoues, nbTotal, saison } = ctx;
   const dashStats = document.getElementById('dashboard-stats');
-  if (dashStats) {
-    dashStats.innerHTML = `
-      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules ? nbPoules+' poules' : 'Tirage à venir'}</div></div>
-      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal ? 'sur '+nbTotal+' prévus' : 'Programme à venir'}</div></div>
-      <div class="stat blue"><div class="stat-label">Saison</div><div class="stat-value">${saison ? new Date(saison.date).getFullYear() : '–'}</div><div class="stat-sub">${saison?.active ? 'Active' : (saison ? 'Clôturée' : '–')}</div></div>`;
-  }
+  if (!dashStats) return;
+  dashStats.innerHTML = `
+    <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules ? nbPoules+' poules' : 'Tirage à venir'}</div></div>
+    <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal ? 'sur '+nbTotal+' prévus' : 'Programme à venir'}</div></div>
+    <div class="stat blue"><div class="stat-label">Saison</div><div class="stat-value">${saison ? new Date(saison.date).getFullYear() : '–'}</div><div class="stat-sub">${saison?.active ? 'Active' : (saison ? 'Clôturée' : '–')}</div></div>`;
+}
 
-  // Matchs visiteur (depuis saison.matchs — calendrier du tirage)
+function _renderDashboardVisitorMatches(ctx) {
+  const { saison, isStarted, dateFR } = ctx;
   const dashMatches = document.getElementById('dashboard-matches-card');
-  if (dashMatches) {
-    const sMatchsV = saison?.matchs || [];
-    if (!saison || !sMatchsV.length) {
-      const msg = !saison ? 'Aucune saison en cours.' :
-        !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
-        saison.tirageDone ? 'Le calendrier des matchs est en cours de préparation.' :
-        'Le tirage au sort sera annoncé prochainement.';
-      dashMatches.innerHTML = `<div class="card mb"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Matchs</span></div>
-        <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">
-          <i class="fa-solid fa-calendar-plus" style="font-size:28px;margin-bottom:10px;display:block"></i>${msg}</div></div>`;
-    } else {
-      const pending = sMatchsV.filter(m => !m.joue).map((m,_,arr) => ({ ...m, _idx: sMatchsV.indexOf(m) }))
-        .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; });
-      const shown = pending.slice(0, 4);
-      const matchHtml = shown.map(m => {
-        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
-        const heureStr = m.heure ? ' · ' + m.heure : '';
-        const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px;display:block;margin-bottom:2px">REPORTÉ</span>` : '';
-        const dateDisplay = dateStr
-          ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
-          : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
-        const reportInfo = m.isReported && m.reportRaison
-          ? `<div style="font-size:11px;color:var(--amber-d);margin-top:2px"><i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison)}</div>` : '';
-        return `<div class="match-card" style="flex-wrap:wrap;row-gap:2px">
-          <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
-          <div class="match-team">${esc(m.dom)}</div>
-          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
-          <div class="match-team right">${esc(m.ext)}</div>
-          <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
-          ${reportInfo ? `<div style="width:100%;padding-left:58px">${reportInfo}</div>` : ''}
-        </div>`;
-      }).join('');
-      const total = sMatchsV.length;
-      const joues = sMatchsV.filter(m => m.joue).length;
-      dashMatches.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Programme des matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${joues}/${total} joués</span></span>
-          <button class="btn" onclick="showSection('competition')">Voir tout</button></div>
-        <div style="padding:8px;display:flex;flex-direction:column;gap:6px">${matchHtml}</div></div>`;
-    }
+  if (!dashMatches) return;
+  const sMatchsV = saison?.matchs || [];
+  if (!saison || !sMatchsV.length) {
+    const msg = !saison ? 'Aucune saison en cours.' :
+      !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
+      saison.tirageDone ? 'Le calendrier des matchs est en cours de préparation.' :
+      'Le tirage au sort sera annoncé prochainement.';
+    dashMatches.innerHTML = `<div class="card mb"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Matchs</span></div>
+      <div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">
+        <i class="fa-solid fa-calendar-plus" style="font-size:28px;margin-bottom:10px;display:block"></i>${msg}</div></div>`;
+    return;
   }
+  const pending = sMatchsV.filter(m => !m.joue).map((m,_,arr) => ({ ...m, _idx: sMatchsV.indexOf(m) }))
+    .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; });
+  const shown = pending.slice(0, 4);
+  const matchHtml = shown.map(m => {
+    const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
+    const heureStr = m.heure ? ' · ' + m.heure : '';
+    const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px;display:block;margin-bottom:2px">REPORTÉ</span>` : '';
+    const dateDisplay = dateStr
+      ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
+      : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
+    const reportInfo = m.isReported && m.reportRaison
+      ? `<div style="font-size:11px;color:var(--amber-d);margin-top:2px"><i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison)}</div>` : '';
+    return `<div class="match-card" style="flex-wrap:wrap;row-gap:2px">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
+      <div class="match-team">${esc(m.dom)}</div>
+      <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
+      <div class="match-team right">${esc(m.ext)}</div>
+      <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
+      ${reportInfo ? `<div style="width:100%;padding-left:58px">${reportInfo}</div>` : ''}
+    </div>`;
+  }).join('');
+  const total = sMatchsV.length;
+  const joues = sMatchsV.filter(m => m.joue).length;
+  dashMatches.innerHTML = `<div class="card mb">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Programme des matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${joues}/${total} joués</span></span>
+      <button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+    <div style="padding:8px;display:flex;flex-direction:column;gap:6px">${matchHtml}</div></div>`;
+}
 
-  // Poules / équipes visiteur
+function _renderDashboardVisitorPoules(ctx) {
+  const { saison, isStarted, dateFR, nbEquipes } = ctx;
   const dashPoules = document.getElementById('dashboard-poules-card');
-  if (dashPoules) {
-    if (!saison) {
-      dashPoules.innerHTML = '';
-    } else if (saison.poules && Object.keys(saison.poules).length) {
-      const COLORS = [
-        {bg:'var(--green-l)',c:'var(--green-d)'},{bg:'var(--amber-l)',c:'var(--amber-d)'},
-        {bg:'var(--blue-l)', c:'var(--blue)'},   {bg:'var(--gray-l)', c:'var(--muted)'},
-      ];
-      const poulesHtml = Object.entries(saison.poules).map(([lettre,equipes],i) => {
-        const col = COLORS[i%COLORS.length];
-        return `<div style="background:${col.bg};border-radius:var(--radius-sm);padding:12px">
-          <div style="font-size:12px;font-weight:700;color:${col.c};margin-bottom:6px">Poule ${lettre.toUpperCase()}</div>
-          <div style="font-size:12px;color:var(--text);line-height:1.8">${(equipes||[]).map(e=>esc(e)).join('<br>')}</div></div>`;
-      }).join('');
-      dashPoules.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title">Poules · Aperçu</span>
-          <button class="btn" onclick="showSection('competition')">Programme complet</button></div>
-        <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${poulesHtml}</div></div>`;
-    } else {
-      const teamsHtml = (saison.equipes||[]).map(e =>
-        `<span style="display:inline-block;padding:4px 12px;margin:3px;background:var(--green-l);border-radius:12px;font-size:12px;color:var(--green-d);font-weight:600">${esc(e)}</span>`
-      ).join('');
-      const startMsg = !isStarted
-        ? `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-clock"></i> La compétition démarrera le <strong>${dateFR(saison.date)}</strong>. Le tirage au sort sera annoncé prochainement.</div>`
-        : `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-dice"></i> Le tirage au sort est en cours de préparation.</div>`;
-      dashPoules.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title"><i class="fa-solid fa-shield-halved"></i> Équipes engagées · ${nbEquipes} associations</span></div>
-        <div style="padding:14px">${startMsg}<div>${teamsHtml}</div></div></div>`;
-    }
+  if (!dashPoules) return;
+  if (!saison) {
+    dashPoules.innerHTML = '';
+  } else if (saison.poules && Object.keys(saison.poules).length) {
+    const COLORS = [
+      {bg:'var(--green-l)',c:'var(--green-d)'},{bg:'var(--amber-l)',c:'var(--amber-d)'},
+      {bg:'var(--blue-l)', c:'var(--blue)'},   {bg:'var(--gray-l)', c:'var(--muted)'},
+    ];
+    const poulesHtml = Object.entries(saison.poules).map(([lettre,equipes],i) => {
+      const col = COLORS[i%COLORS.length];
+      return `<div style="background:${col.bg};border-radius:var(--radius-sm);padding:12px">
+        <div style="font-size:12px;font-weight:700;color:${col.c};margin-bottom:6px">Poule ${lettre.toUpperCase()}</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.8">${(equipes||[]).map(e=>esc(e)).join('<br>')}</div></div>`;
+    }).join('');
+    dashPoules.innerHTML = `<div class="card mb">
+      <div class="card-header"><span class="card-title">Poules · Aperçu</span>
+        <button class="btn" onclick="showSection('competition')">Programme complet</button></div>
+      <div style="padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${poulesHtml}</div></div>`;
+  } else {
+    const teamsHtml = (saison.equipes||[]).map(e =>
+      `<span style="display:inline-block;padding:4px 12px;margin:3px;background:var(--green-l);border-radius:12px;font-size:12px;color:var(--green-d);font-weight:600">${esc(e)}</span>`
+    ).join('');
+    const startMsg = !isStarted
+      ? `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-clock"></i> La compétition démarrera le <strong>${dateFR(saison.date)}</strong>. Le tirage au sort sera annoncé prochainement.</div>`
+      : `<div class="alert info" style="margin-bottom:12px"><i class="fa-solid fa-dice"></i> Le tirage au sort est en cours de préparation.</div>`;
+    dashPoules.innerHTML = `<div class="card mb">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-shield-halved"></i> Équipes engagées · ${nbEquipes} associations</span></div>
+      <div style="padding:14px">${startMsg}<div>${teamsHtml}</div></div></div>`;
   }
+}
 
-  // Fiches publiées visiteur
+function _renderDashboardVisitorFiches(ctx) {
+  const { fichesValidees, saison, fmt } = ctx;
   const dashFiches = document.getElementById('dashboard-fiches-card');
-  if (dashFiches) {
-    if (!fichesValidees.length) {
-      dashFiches.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
-        <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucune fiche publiée pour cette saison.</div></div>`;
-    } else {
-      const fHtml = fichesValidees.map(f => `
-        <div class="fiche-card">
-          <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-          <div class="fiche-info">
-            <div class="fiche-title">${esc(f.journee||'Journée')}</div>
-            <div class="fiche-meta">${saison?'Saison '+esc(saison.nom):''} · Publié le ${f.validatedAt?new Date(f.validatedAt).toLocaleDateString('fr-FR'):'–'}</div>
-          </div>
-          <div class="fiche-amount">${fmt(f.totalRecettes)} FCFA</div>
-        </div>`).join('');
-      dashFiches.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
-        <div>${fHtml}</div></div>`;
-    }
+  if (!dashFiches) return;
+  if (!fichesValidees.length) {
+    dashFiches.innerHTML = `<div class="card mb">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Aucune fiche publiée pour cette saison.</div></div>`;
+    return;
   }
+  const fHtml = fichesValidees.map(f => `
+    <div class="fiche-card">
+      <div class="fiche-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+      <div class="fiche-info">
+        <div class="fiche-title">${esc(f.journee||'Journée')}</div>
+        <div class="fiche-meta">${saison?'Saison '+esc(saison.nom):''} · Publié le ${f.validatedAt?new Date(f.validatedAt).toLocaleDateString('fr-FR'):'–'}</div>
+      </div>
+      <div class="fiche-amount">${fmt(f.totalRecettes)} FCFA</div>
+    </div>`).join('');
+  dashFiches.innerHTML = `<div class="card mb">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-file"></i> Fiches de recettes publiées</span><span class="badge green">Officielles</span></div>
+    <div>${fHtml}</div></div>`;
+}
 
-  // ── VUE MEMBRE ──────────────────────────────────────────────
+// ── VUE MEMBRE ──────────────────────────────────────────────
 
+function _renderDashboardMemberHeader(ctx) {
+  const { saison, statusText, statusBadge } = ctx;
   const memberHeader = document.getElementById('member-header');
-  if (memberHeader) {
-    memberHeader.innerHTML = `
-      <div>
-        <h2 style="font-size:18px;font-weight:700">${saison ? esc(saison.nom) : 'Zone 5R · Navetanes'}</h2>
-        <p style="font-size:12px;color:var(--muted)">${statusText}</p>
-      </div>${statusBadge}`;
-  }
+  if (!memberHeader) return;
+  memberHeader.innerHTML = `
+    <div>
+      <h2 style="font-size:18px;font-weight:700">${saison ? esc(saison.nom) : 'Zone 5R · Navetanes'}</h2>
+      <p style="font-size:12px;color:var(--muted)">${statusText}</p>
+    </div>${statusBadge}`;
+}
 
+function _renderDashboardMemberStats(ctx) {
+  const { nbEquipes, nbPoules, nbJoues, nbTotal, totalFiches, susp } = ctx;
   const memberStats = document.getElementById('member-stats');
-  if (memberStats) {
-    memberStats.innerHTML = `
-      <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules?nbPoules+' poules':'Tirage à venir'}</div></div>
-      <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal?'sur '+nbTotal+' prévus':'Programme à venir'}</div></div>
-      <div class="stat blue"><div class="stat-label">Recettes</div><div class="stat-value">${totalFiches>=1000?Math.round(totalFiches/1000)+'K':(totalFiches||'–')}</div><div class="stat-sub">FCFA</div></div>
-      <div class="stat red"><div class="stat-label">Suspensions</div><div class="stat-value">${susp.length}</div><div class="stat-sub">${susp.length?'actives':'aucune'}</div></div>`;
-  }
+  if (!memberStats) return;
+  memberStats.innerHTML = `
+    <div class="stat green"><div class="stat-label">Équipes engagées</div><div class="stat-value">${nbEquipes||'–'}</div><div class="stat-sub">${nbPoules?nbPoules+' poules':'Tirage à venir'}</div></div>
+    <div class="stat amber"><div class="stat-label">Matchs joués</div><div class="stat-value">${nbJoues||'–'}</div><div class="stat-sub">${nbTotal?'sur '+nbTotal+' prévus':'Programme à venir'}</div></div>
+    <div class="stat blue"><div class="stat-label">Recettes</div><div class="stat-value">${totalFiches>=1000?Math.round(totalFiches/1000)+'K':(totalFiches||'–')}</div><div class="stat-sub">FCFA</div></div>
+    <div class="stat red"><div class="stat-label">Suspensions</div><div class="stat-value">${susp.length}</div><div class="stat-sub">${susp.length?'actives':'aucune'}</div></div>`;
+}
 
+function _renderDashboardMemberAlert(ctx) {
+  const { litEnCours } = ctx;
   const memberAlert = document.getElementById('member-litiges-alert');
-  if (memberAlert) {
-    memberAlert.innerHTML = litEnCours
-      ? `<div class="alert warning" style="margin-bottom:12px"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${litEnCours} réclamation(s)</strong> en attente de traitement par la Commission Juridique</div>`
-      : '';
-  }
+  if (!memberAlert) return;
+  memberAlert.innerHTML = litEnCours
+    ? `<div class="alert warning" style="margin-bottom:12px"><i class="fa-solid fa-triangle-exclamation"></i> <strong>${litEnCours} réclamation(s)</strong> en attente de traitement par la Commission Juridique</div>`
+    : '';
+}
 
+function _renderDashboardMemberMatches(ctx) {
+  const { saison, isStarted, dateFR } = ctx;
   const memberMatchCard = document.getElementById('member-matches-card');
-  if (memberMatchCard) {
-    const sMatchs = saison?.matchs || [];
-    const canEdit = hasPermission('declare_saison');
-    if (!saison || !sMatchs.length) {
-      const msg = !saison ? 'Aucune saison en cours.' :
-        !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
-        saison.tirageDone ? 'Le calendrier est en cours de préparation.' :
-        'Le tirage au sort sera annoncé prochainement.';
-      memberMatchCard.innerHTML = `<div class="card mb">
-        <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
-        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">${msg}</div></div>`;
-    } else {
-      const prochains = sMatchs
-        .map((m,i) => ({ ...m, _idx: i }))
-        .filter(m => !m.joue)
-        .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; })
-        .slice(0, 5);
-      const upHtml = prochains.length ? prochains.map(m => {
-        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : null;
-        const heureStr = m.heure ? ' · ' + m.heure : '';
-        const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px"><i class="fa-solid fa-triangle-exclamation"></i> REPORTÉ</span>` : '';
-        const dateDisplay = dateStr
-          ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
-          : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
-        const reportInfo = m.isReported
-          ? `<div style="width:100%;padding-left:58px;font-size:11px;color:var(--amber-d);margin-top:3px">
-               <i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison||'')}
-               ${m.reportedFrom ? ' &nbsp;·&nbsp; <span style="text-decoration:line-through;opacity:0.7">' + new Date(m.reportedFrom).toLocaleDateString('fr-FR') + '</span>' : ''}
-             </div>` : '';
-        const adminBtns = canEdit
-          ? `<div style="width:100%;padding-left:58px;display:flex;gap:6px;margin-top:5px">
-               <button class="btn" style="font-size:10px;padding:3px 10px" onclick="fixerDateMatch(${m._idx})">
-                 <i class="fa-solid fa-calendar-days"></i> ${dateStr ? 'Modifier date' : 'Fixer date'}
-               </button>
-               <button class="btn" style="font-size:10px;padding:3px 10px;background:var(--amber-l);color:var(--amber-d);border-color:var(--amber-l)" onclick="reporterMatch(${m._idx})">
-                 <i class="fa-solid fa-rotate-left"></i> Reporter
-               </button>
-             </div>` : '';
-        return `<div class="match-card" style="flex-wrap:wrap;row-gap:3px;align-items:center">
-          <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
-          <div class="match-team">${esc(m.dom)}</div>
-          <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
-          <div class="match-team right">${esc(m.ext)}</div>
-          <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
-          ${reportInfo}${adminBtns}
-        </div>`;
-      }).join('')
-        : '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px">Tous les matchs sont joués.</div>';
-      const jouesCount = sMatchs.filter(m => m.joue).length;
-      memberMatchCard.innerHTML = `<div class="card mb">
-        <div class="card-header">
-          <span class="card-title">Prochains matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${jouesCount}/${sMatchs.length} joués</span></span>
-          <button class="btn" onclick="showSection('competition')">Voir tout</button>
-        </div>
-        <div style="padding:8px"><div class="gap" style="gap:6px;padding:8px">${upHtml}</div></div></div>`;
-    }
+  if (!memberMatchCard) return;
+  const sMatchs = saison?.matchs || [];
+  const canEdit = hasPermission('declare_saison');
+  if (!saison || !sMatchs.length) {
+    const msg = !saison ? 'Aucune saison en cours.' :
+      !isStarted ? `La compétition démarrera le <strong>${dateFR(saison.date)}</strong>.` :
+      saison.tirageDone ? 'Le calendrier est en cours de préparation.' :
+      'Le tirage au sort sera annoncé prochainement.';
+    memberMatchCard.innerHTML = `<div class="card mb">
+      <div class="card-header"><span class="card-title">Prochains matchs</span><button class="btn" onclick="showSection('competition')">Voir tout</button></div>
+      <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">${msg}</div></div>`;
+    return;
   }
+  const prochains = sMatchs
+    .map((m,i) => ({ ...m, _idx: i }))
+    .filter(m => !m.joue)
+    .sort((a,b) => { if(a.date&&b.date) return a.date.localeCompare(b.date); if(a.date) return -1; if(b.date) return 1; return 0; })
+    .slice(0, 5);
+  const upHtml = prochains.length ? prochains.map(m => {
+    const dateStr = m.date ? new Date(m.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : null;
+    const heureStr = m.heure ? ' · ' + m.heure : '';
+    const reportBadge = m.isReported ? `<span class="badge amber" style="font-size:9px"><i class="fa-solid fa-triangle-exclamation"></i> REPORTÉ</span>` : '';
+    const dateDisplay = dateStr
+      ? `<div style="font-size:11px;color:var(--muted)">${dateStr}${heureStr}</div>`
+      : `<div style="font-size:11px;color:var(--muted);font-style:italic">Date à définir</div>`;
+    const reportInfo = m.isReported
+      ? `<div style="width:100%;padding-left:58px;font-size:11px;color:var(--amber-d);margin-top:3px">
+           <i class="fa-solid fa-circle-info"></i> ${esc(m.reportRaison||'')}
+           ${m.reportedFrom ? ' &nbsp;·&nbsp; <span style="text-decoration:line-through;opacity:0.7">' + new Date(m.reportedFrom).toLocaleDateString('fr-FR') + '</span>' : ''}
+         </div>` : '';
+    const adminBtns = canEdit
+      ? `<div style="width:100%;padding-left:58px;display:flex;gap:6px;margin-top:5px">
+           <button class="btn" style="font-size:10px;padding:3px 10px" onclick="fixerDateMatch(${m._idx})">
+             <i class="fa-solid fa-calendar-days"></i> ${dateStr ? 'Modifier date' : 'Fixer date'}
+           </button>
+           <button class="btn" style="font-size:10px;padding:3px 10px;background:var(--amber-l);color:var(--amber-d);border-color:var(--amber-l)" onclick="reporterMatch(${m._idx})">
+             <i class="fa-solid fa-rotate-left"></i> Reporter
+           </button>
+         </div>` : '';
+    return `<div class="match-card" style="flex-wrap:wrap;row-gap:3px;align-items:center">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;min-width:52px;flex-shrink:0">Poule ${(m.poule||'').toUpperCase()}</div>
+      <div class="match-team">${esc(m.dom)}</div>
+      <div class="match-score"><div class="score-box" style="background:var(--gray-l);color:var(--muted);font-size:12px">VS</div></div>
+      <div class="match-team right">${esc(m.ext)}</div>
+      <div style="flex-shrink:0;text-align:right">${reportBadge}${dateDisplay}</div>
+      ${reportInfo}${adminBtns}
+    </div>`;
+  }).join('')
+    : '<div style="padding:12px;text-align:center;color:var(--muted);font-size:13px">Tous les matchs sont joués.</div>';
+  const jouesCount = sMatchs.filter(m => m.joue).length;
+  memberMatchCard.innerHTML = `<div class="card mb">
+    <div class="card-header">
+      <span class="card-title">Prochains matchs <span style="font-size:11px;font-weight:400;color:var(--muted)">${jouesCount}/${sMatchs.length} joués</span></span>
+      <button class="btn" onclick="showSection('competition')">Voir tout</button>
+    </div>
+    <div style="padding:8px"><div class="gap" style="gap:6px;padding:8px">${upHtml}</div></div></div>`;
+}
 
+function _renderDashboardMemberFinance(ctx) {
+  const { saison, totalFiches, totalLicences, fmt } = ctx;
   const memberFinance = document.getElementById('member-finance-card');
-  if (memberFinance) {
-    memberFinance.innerHTML = `<div class="card">
-      <div class="card-header"><span class="card-title">Recettes · ${saison?esc(saison.nom):'Saison en cours'}</span></div>
-      <div class="card-body">
-        <div style="margin-bottom:12px">
-          <div class="flex-between" style="margin-bottom:4px">
-            <span style="font-size:12px">Recettes billetterie</span>
-            <span style="font-size:12px;font-weight:600;color:var(--green-d)">${fmt(totalFiches)} FCFA</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:${totalFiches>0?'100':'0'}%;background:var(--green)"></div></div>
+  if (!memberFinance) return;
+  memberFinance.innerHTML = `<div class="card">
+    <div class="card-header"><span class="card-title">Recettes · ${saison?esc(saison.nom):'Saison en cours'}</span></div>
+    <div class="card-body">
+      <div style="margin-bottom:12px">
+        <div class="flex-between" style="margin-bottom:4px">
+          <span style="font-size:12px">Recettes billetterie</span>
+          <span style="font-size:12px;font-weight:600;color:var(--green-d)">${fmt(totalFiches)} FCFA</span>
         </div>
-        <div>
-          <div class="flex-between" style="margin-bottom:4px">
-            <span style="font-size:12px">Recettes licences</span>
-            <span style="font-size:12px;font-weight:600;color:var(--blue)">${fmt(totalLicences)} FCFA</span>
-          </div>
-          <div class="progress"><div class="progress-bar" style="width:${totalLicences>0?'100':'0'}%;background:var(--blue)"></div></div>
+        <div class="progress"><div class="progress-bar" style="width:${totalFiches>0?'100':'0'}%;background:var(--green)"></div></div>
+      </div>
+      <div>
+        <div class="flex-between" style="margin-bottom:4px">
+          <span style="font-size:12px">Recettes licences</span>
+          <span style="font-size:12px;font-weight:600;color:var(--blue)">${fmt(totalLicences)} FCFA</span>
         </div>
-      </div></div>`;
-  }
+        <div class="progress"><div class="progress-bar" style="width:${totalLicences>0?'100':'0'}%;background:var(--blue)"></div></div>
+      </div>
+    </div></div>`;
+}
+
+function renderDashboard() {
+  const ctx = _computeDashboardContext();
+  _renderDashboardVisitorHero(ctx);
+  _renderDashboardVisitorStats(ctx);
+  _renderDashboardVisitorMatches(ctx);
+  _renderDashboardVisitorPoules(ctx);
+  _renderDashboardVisitorFiches(ctx);
+  _renderDashboardMemberHeader(ctx);
+  _renderDashboardMemberStats(ctx);
+  _renderDashboardMemberAlert(ctx);
+  _renderDashboardMemberMatches(ctx);
+  _renderDashboardMemberFinance(ctx);
 }
 
 function migrateSaisonLegacy() {
@@ -4600,6 +4748,152 @@ function migrateSaisonLegacy() {
   } catch(e) { console.warn('[migration saison]', e); }
 }
 
+function _renderSaisonActiveHeader(saison, active, form, badge) {
+  active.style.display = 'block';
+  form.style.display   = 'none';
+  // Bouton clôturer : superadmin + président uniquement
+  const btnCloturer = document.querySelector('#saison-panel .btn.danger');
+  if (btnCloturer) btnCloturer.style.display = hasPermission('declare_saison') ? '' : 'none';
+  badge.textContent    = saison.declaredOpen ? 'Ouverte' : 'En cours';
+  badge.className      = saison.declaredOpen ? 'badge green' : 'badge amber';
+
+  document.getElementById('saison-nom-display').textContent     = saison.nom;
+  document.getElementById('saison-date-display').textContent    = new Date(saison.date).toLocaleDateString('fr-FR');
+  document.getElementById('saison-equipes-display').textContent = saison.equipes.length;
+  const dbEl = document.getElementById('saison-declared-by');
+  if (dbEl) dbEl.textContent = saison.declaredBy || '';
+
+  // Mettre à jour le header du bureau
+  const h = document.querySelector('#bureau h2');
+  if (h) h.textContent = 'Bureau Zone 5R / ' + saison.nom;
+}
+
+function _renderSaisonStepTirage(saison) {
+  // Étape 2 : Tirage
+  const step2 = document.getElementById('step-tirage');
+  const btn2  = document.getElementById('btn-tirage');
+  if (saison.tirageDone) {
+    step2.style.background   = 'var(--green-l)';
+    step2.style.borderColor  = 'var(--green)';
+    step2.style.opacity      = '1';
+    document.getElementById('step-tirage-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
+    document.getElementById('step-tirage-title').textContent = 'Étape 2 · Tirage effectué';
+    const nbPoules = saison.poules ? Object.keys(saison.poules).length : 0;
+    document.getElementById('step-tirage-desc').textContent  = nbPoules + ' poule(s) définies';
+    if (btn2) btn2.textContent = 'Refaire';
+  } else {
+    step2.style.background   = 'var(--gray-l)';
+    step2.style.borderColor  = 'var(--gray)';
+    step2.style.opacity      = '1';
+  }
+}
+
+function _renderSaisonStepMatchs(saison) {
+  // Étape 3 : Matchs
+  const step3 = document.getElementById('step-matchs');
+  const btn3  = document.getElementById('btn-matchs');
+  if (saison.tirageDone) {
+    step3.style.opacity = '1';
+    if (btn3) btn3.disabled = false;
+  }
+  if (saison.matchsProgrammes) {
+    step3.style.background  = 'var(--green-l)';
+    step3.style.borderColor = 'var(--green)';
+    document.getElementById('step-matchs-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
+    document.getElementById('step-matchs-title').textContent = 'Étape 3 · Matchs programmés';
+    document.getElementById('step-matchs-desc').textContent  = (saison.matchs||[]).length + ' rencontres générées';
+  }
+}
+
+function _renderSaisonStepOuverture(saison) {
+  // Étape 4 : Ouverture
+  const step4 = document.getElementById('step-ouverture');
+  const btn4  = document.getElementById('btn-ouverture');
+  const dateInput = document.getElementById('ouverture-date-input');
+  if (saison.matchsProgrammes) {
+    step4.style.opacity = '1';
+    if (btn4) btn4.disabled = false;
+    if (dateInput) dateInput.min = new Date(Date.now()+86400000).toISOString().split('T')[0];
+  }
+  if (saison.declaredOpen) {
+    step4.style.background  = 'var(--green-l)';
+    step4.style.borderColor = 'var(--green)';
+    document.getElementById('step-ouverture-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
+    document.getElementById('step-ouverture-title').textContent = 'Étape 4 · Compétition déclarée ouverte';
+    const d = new Date(saison.dateOuverture).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
+    if (btn4) { btn4.disabled = true; btn4.textContent = 'Ouverte'; }
+  }
+}
+
+function _renderSaisonStepElimination(saison) {
+  // Étape 5 : Phase éliminatoire (active dès que la compétition est ouverte)
+  const step5 = document.getElementById('step-eliminations');
+  const btn5  = document.getElementById('btn-eliminations');
+  if (step5) {
+    if (saison.declaredOpen) {
+      step5.style.opacity = '1';
+      if (btn5) btn5.disabled = false;
+    }
+    if (saison.eliminatoireGenere) {
+      step5.style.background  = 'var(--green-l)';
+      step5.style.borderColor = 'var(--green)';
+      step5.style.opacity     = '1';
+      document.getElementById('step-elim-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
+      document.getElementById('step-elim-title').textContent = 'Étape 5 · Phase éliminatoire générée';
+      const fmt = getFormatEliminatoire(saison) || 'Phase éliminatoire';
+      const nbQ = saison.nbQualifiesParPoule || 2;
+      const nbM3 = saison.nbMeilleur3eme || 0;
+      document.getElementById('step-elim-desc').textContent = fmt + ' · ' + nbQ + ' qualifié(s)/poule' + (nbM3 ? ' + ' + nbM3 + ' meilleur(s) 3ème' : '');
+      if (btn5) btn5.textContent = 'Refaire';
+    }
+  }
+  // Afficher le subnav bracket si généré
+  const subnavElim = document.getElementById('subnav-comp-elim');
+  if (subnavElim) subnavElim.style.display = saison.eliminatoireGenere ? '' : 'none';
+}
+
+function _renderSaisonEmpty(active, form, badge) {
+  active.style.display = 'none';
+  form.style.display   = hasPermission('declare_saison') ? 'block' : 'none';
+  badge.textContent    = 'Aucune saison active';
+  badge.className      = 'badge gray';
+  const h = document.querySelector('#bureau h2');
+  if (h) h.textContent = 'Bureau Zone 5R / 2025';
+  if (hasPermission('declare_saison')) refreshSaisonEquipesSelect();
+}
+
+function _renderSaisonHistorique() {
+  // Section saisons précédentes (superadmin uniquement)
+  const historiqueView = document.getElementById('saison-historique-view');
+  const historiqueList = document.getElementById('saison-historique-list');
+  if (!historiqueView || !historiqueList) return;
+  const passees = getSaisons().filter(s => !s.active);
+  if (currentUser?.role === 'superadmin' && passees.length) {
+    historiqueView.style.display = 'block';
+    historiqueList.innerHTML = [...passees].reverse().map(s => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+                  background:var(--gray-l);border-radius:var(--radius-sm);margin-bottom:6px;flex-wrap:wrap">
+        <div>
+          <span style="font-size:13px;font-weight:600">${esc(s.nom)}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px">${new Date(s.date).toLocaleDateString('fr-FR')}</span>
+          <span class="badge gray" style="font-size:10px;margin-left:6px">Clôturée</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn" style="font-size:11px;padding:4px 10px;color:var(--green-d);border-color:var(--green)" onclick="exporterSaison('${s.id}')">
+            <i class="fa-solid fa-download"></i> Exporter
+          </button>
+          <button class="btn danger" style="font-size:11px;padding:4px 10px" onclick="supprimerSaison('${s.id}')">
+            <i class="fa-solid fa-trash"></i> Supprimer
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    historiqueView.style.display = 'none';
+  }
+}
+
 function renderSaisonPanel() {
   const panel  = document.getElementById('saison-panel');
   const active = document.getElementById('saison-active-view');
@@ -4609,139 +4903,16 @@ function renderSaisonPanel() {
 
   const saison = getSaison();
   if (saison && saison.active) {
-    active.style.display = 'block';
-    form.style.display   = 'none';
-    // Bouton clôturer : superadmin + président uniquement
-    const btnCloturer = document.querySelector('#saison-panel .btn.danger');
-    if (btnCloturer) btnCloturer.style.display = hasPermission('declare_saison') ? '' : 'none';
-    badge.textContent    = saison.declaredOpen ? 'Ouverte' : 'En cours';
-    badge.className      = saison.declaredOpen ? 'badge green' : 'badge amber';
-
-    document.getElementById('saison-nom-display').textContent     = saison.nom;
-    document.getElementById('saison-date-display').textContent    = new Date(saison.date).toLocaleDateString('fr-FR');
-    document.getElementById('saison-equipes-display').textContent = saison.equipes.length;
-    const dbEl = document.getElementById('saison-declared-by');
-    if (dbEl) dbEl.textContent = saison.declaredBy || '';
-
-    // Mettre à jour le header du bureau
-    const h = document.querySelector('#bureau h2');
-    if (h) h.textContent = 'Bureau Zone 5R / ' + saison.nom;
-
-    // Étape 2 : Tirage
-    const step2 = document.getElementById('step-tirage');
-    const btn2  = document.getElementById('btn-tirage');
-    if (saison.tirageDone) {
-      step2.style.background   = 'var(--green-l)';
-      step2.style.borderColor  = 'var(--green)';
-      step2.style.opacity      = '1';
-      document.getElementById('step-tirage-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
-      document.getElementById('step-tirage-title').textContent = 'Étape 2 · Tirage effectué';
-      const nbPoules = saison.poules ? Object.keys(saison.poules).length : 0;
-      document.getElementById('step-tirage-desc').textContent  = nbPoules + ' poule(s) définies';
-      if (btn2) btn2.textContent = 'Refaire';
-    } else {
-      step2.style.background   = 'var(--gray-l)';
-      step2.style.borderColor  = 'var(--gray)';
-      step2.style.opacity      = '1';
-    }
-
-    // Étape 3 : Matchs
-    const step3 = document.getElementById('step-matchs');
-    const btn3  = document.getElementById('btn-matchs');
-    if (saison.tirageDone) {
-      step3.style.opacity = '1';
-      if (btn3) btn3.disabled = false;
-    }
-    if (saison.matchsProgrammes) {
-      step3.style.background  = 'var(--green-l)';
-      step3.style.borderColor = 'var(--green)';
-      document.getElementById('step-matchs-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
-      document.getElementById('step-matchs-title').textContent = 'Étape 3 · Matchs programmés';
-      document.getElementById('step-matchs-desc').textContent  = (saison.matchs||[]).length + ' rencontres générées';
-    }
-
-    // Étape 4 : Ouverture
-    const step4 = document.getElementById('step-ouverture');
-    const btn4  = document.getElementById('btn-ouverture');
-    const dateInput = document.getElementById('ouverture-date-input');
-    if (saison.matchsProgrammes) {
-      step4.style.opacity = '1';
-      if (btn4) btn4.disabled = false;
-      if (dateInput) dateInput.min = new Date(Date.now()+86400000).toISOString().split('T')[0];
-    }
-    if (saison.declaredOpen) {
-      step4.style.background  = 'var(--green-l)';
-      step4.style.borderColor = 'var(--green)';
-      document.getElementById('step-ouverture-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
-      document.getElementById('step-ouverture-title').textContent = 'Étape 4 · Compétition déclarée ouverte';
-      const d = new Date(saison.dateOuverture).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-      document.getElementById('step-ouverture-desc').textContent  = 'Date d\'ouverture : ' + d;
-      if (btn4) { btn4.disabled = true; btn4.textContent = 'Ouverte'; }
-    }
-
-    // Étape 5 : Phase éliminatoire (active dès que la compétition est ouverte)
-    const step5 = document.getElementById('step-eliminations');
-    const btn5  = document.getElementById('btn-eliminations');
-    if (step5) {
-      if (saison.declaredOpen) {
-        step5.style.opacity = '1';
-        if (btn5) btn5.disabled = false;
-      }
-      if (saison.eliminatoireGenere) {
-        step5.style.background  = 'var(--green-l)';
-        step5.style.borderColor = 'var(--green)';
-        step5.style.opacity     = '1';
-        document.getElementById('step-elim-icon').innerHTML  = '<i class="fa-solid fa-check"></i>';
-        document.getElementById('step-elim-title').textContent = 'Étape 5 · Phase éliminatoire générée';
-        const fmt = getFormatEliminatoire(saison) || 'Phase éliminatoire';
-        const nbQ = saison.nbQualifiesParPoule || 2;
-        const nbM3 = saison.nbMeilleur3eme || 0;
-        document.getElementById('step-elim-desc').textContent = fmt + ' · ' + nbQ + ' qualifié(s)/poule' + (nbM3 ? ' + ' + nbM3 + ' meilleur(s) 3ème' : '');
-        if (btn5) btn5.textContent = 'Refaire';
-      }
-    }
-    // Afficher le subnav bracket si généré
-    const subnavElim = document.getElementById('subnav-comp-elim');
-    if (subnavElim) subnavElim.style.display = saison.eliminatoireGenere ? '' : 'none';
+    _renderSaisonActiveHeader(saison, active, form, badge);
+    _renderSaisonStepTirage(saison);
+    _renderSaisonStepMatchs(saison);
+    _renderSaisonStepOuverture(saison);
+    _renderSaisonStepElimination(saison);
   } else {
-    active.style.display = 'none';
-    form.style.display   = hasPermission('declare_saison') ? 'block' : 'none';
-    badge.textContent    = 'Aucune saison active';
-    badge.className      = 'badge gray';
-    const h = document.querySelector('#bureau h2');
-    if (h) h.textContent = 'Bureau Zone 5R / 2025';
-    if (hasPermission('declare_saison')) refreshSaisonEquipesSelect();
+    _renderSaisonEmpty(active, form, badge);
   }
 
-  // Section saisons précédentes (superadmin uniquement)
-  const historiqueView = document.getElementById('saison-historique-view');
-  const historiqueList = document.getElementById('saison-historique-list');
-  if (historiqueView && historiqueList) {
-    const passees = getSaisons().filter(s => !s.active);
-    if (currentUser?.role === 'superadmin' && passees.length) {
-      historiqueView.style.display = 'block';
-      historiqueList.innerHTML = [...passees].reverse().map(s => `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
-                    background:var(--gray-l);border-radius:var(--radius-sm);margin-bottom:6px;flex-wrap:wrap">
-          <div>
-            <span style="font-size:13px;font-weight:600">${esc(s.nom)}</span>
-            <span style="font-size:11px;color:var(--muted);margin-left:8px">${new Date(s.date).toLocaleDateString('fr-FR')}</span>
-            <span class="badge gray" style="font-size:10px;margin-left:6px">Clôturée</span>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
-            <button class="btn" style="font-size:11px;padding:4px 10px;color:var(--green-d);border-color:var(--green)" onclick="exporterSaison('${s.id}')">
-              <i class="fa-solid fa-download"></i> Exporter
-            </button>
-            <button class="btn danger" style="font-size:11px;padding:4px 10px" onclick="supprimerSaison('${s.id}')">
-              <i class="fa-solid fa-trash"></i> Supprimer
-            </button>
-          </div>
-        </div>
-      `).join('');
-    } else {
-      historiqueView.style.display = 'none';
-    }
-  }
+  _renderSaisonHistorique();
 }
 
 function declarerSaison() {
@@ -4894,16 +5065,11 @@ function supprimerSaison(id) {
   renderDepensesList(); renderFinaleDisplay(); updateCaisse(); renderBilan();
 }
 
-function exporterSaison(id) {
-  const saisons = getSaisons();
-  const saison  = saisons.find(s => s.id === id);
-  if (!saison) return showToast('Saison introuvable.');
-  if (saison.active) return showToast('Clôturez la saison avant de l\'exporter.');
-  if (typeof XLSX === 'undefined') return showToast('Bibliothèque Excel non chargée. Vérifiez votre connexion.');
+function _getSaisonScopedData(key, id) {
+  try { return JSON.parse(localStorage.getItem(key) || '[]').filter(d => d.saisonId === id); } catch(e) { return []; }
+}
 
-  const wb = XLSX.utils.book_new();
-
-  // ── Feuille 1 : Saison (infos générales) ──────────────────────
+function _exportSheetSaison(wb, saison) {
   const infoRows = [
     ['Champ', 'Valeur'],
     ['Nom',           saison.nom],
@@ -4921,8 +5087,9 @@ function exporterSaison(id) {
     ['Exporté par',   currentUser?.name || ''],
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(infoRows), 'Saison');
+}
 
-  // ── Feuille 2 : Matchs ─────────────────────────────────────────
+function _exportSheetMatchs(wb, saison) {
   const matchs = saison.matchs || [];
   const matchRows = [['Poule','Domicile','Extérieur','Score Dom','Score Ext','Joué','Date','Heure','Reporté','Raison report']];
   matchs.forEach(m => {
@@ -4940,9 +5107,10 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(matchRows), 'Matchs');
+}
 
-  // ── Feuille 3 : Fiches ─────────────────────────────────────────
-  const fiches = (() => { try { return JSON.parse(localStorage.getItem('zone5r_fiches') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+function _exportSheetFiches(wb, id) {
+  const fiches = _getSaisonScopedData('zone5r_fiches', id);
   const ficheRows = [['Joueur','Équipe','Type','Date','Match','Note']];
   fiches.forEach(f => {
     ficheRows.push([
@@ -4955,9 +5123,10 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ficheRows), 'Fiches');
+}
 
-  // ── Feuille 4 : Licences ───────────────────────────────────────
-  const licences = (() => { try { return JSON.parse(localStorage.getItem('zone5r_licences') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+function _exportSheetLicences(wb, id) {
+  const licences = _getSaisonScopedData('zone5r_licences', id);
   const licRows = [['Joueur','Équipe','Numéro licence','Date']];
   licences.forEach(l => {
     licRows.push([
@@ -4968,9 +5137,10 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(licRows), 'Licences');
+}
 
-  // ── Feuille 5 : Dépenses ───────────────────────────────────────
-  const depenses = (() => { try { return JSON.parse(localStorage.getItem('zone5r_depenses') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+function _exportSheetDepenses(wb, id) {
+  const depenses = _getSaisonScopedData('zone5r_depenses', id);
   const depRows = [['Date','Libellé','Montant (FCFA)','Catégorie','Par']];
   depenses.forEach(d => {
     depRows.push([
@@ -4982,9 +5152,10 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depRows), 'Finance');
+}
 
-  // ── Feuille 6 : Litiges ────────────────────────────────────────
-  const litiges = (() => { try { return JSON.parse(localStorage.getItem('zone5r_litiges') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+function _exportSheetLitiges(wb, id) {
+  const litiges = _getSaisonScopedData('zone5r_litiges', id);
   const litigeRows = [['Date','Équipe plaignante','Équipe adverse','Objet','Statut','Décision']];
   litiges.forEach(l => {
     litigeRows.push([
@@ -4997,9 +5168,10 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(litigeRows), 'Litiges');
+}
 
-  // ── Feuille 7 : Finale ─────────────────────────────────────────
-  const finales = (() => { try { return JSON.parse(localStorage.getItem('zone5r_finales') || '[]').filter(d => d.saisonId === id); } catch(e){ return []; } })();
+function _exportSheetFinale(wb, id) {
+  const finales = _getSaisonScopedData('zone5r_finales', id);
   const finaleRows = [['Tour','Équipe 1','Équipe 2','Score 1','Score 2','Vainqueur','Date']];
   finales.forEach(f => {
     finaleRows.push([
@@ -5013,6 +5185,23 @@ function exporterSaison(id) {
     ]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(finaleRows), 'Finale');
+}
+
+function exporterSaison(id) {
+  const saisons = getSaisons();
+  const saison  = saisons.find(s => s.id === id);
+  if (!saison) return showToast('Saison introuvable.');
+  if (saison.active) return showToast('Clôturez la saison avant de l\'exporter.');
+  if (typeof XLSX === 'undefined') return showToast('Bibliothèque Excel non chargée. Vérifiez votre connexion.');
+
+  const wb = XLSX.utils.book_new();
+  _exportSheetSaison(wb, saison);
+  _exportSheetMatchs(wb, saison);
+  _exportSheetFiches(wb, id);
+  _exportSheetLicences(wb, id);
+  _exportSheetDepenses(wb, id);
+  _exportSheetLitiges(wb, id);
+  _exportSheetFinale(wb, id);
 
   // ── Génération du fichier ──────────────────────────────────────
   const slug = saison.nom.replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -5472,6 +5661,114 @@ function saveFicheJournee() {
   showToast('Fiche ' + journee + ' enregistrée · Bénéfice : ' + (totalR-totalD).toLocaleString('fr-FR') + ' FCFA');
 }
 
+function _ficheHeaderHtml(f, fmt) {
+  return `
+  <!-- En-tête cliquable (accordéon) -->
+  <div style="cursor:pointer" onclick="toggleFicheDetails('${f.id}')">
+    <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
+      Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
+    </div>
+    <div style="background:#ffff00;color:#000;padding:6px 16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700;font-size:13px">${f.journee}${f.terrain ? ' · ' + f.terrain : ''}</span>
+      <span style="display:flex;gap:12px;align-items:center;font-size:12px">
+        <span style="color:var(--green-d);font-weight:700">${fmt(f.totalRecettes)} ↑</span>
+        <span style="color:var(--red);font-weight:700">${fmt(f.totalDepenses)} ↓</span>
+        <span style="font-weight:700;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">= ${fmt(f.beneficeJour)}</span>
+        <span id="fiche-chevron-${f.id}" style="font-size:11px;color:var(--muted)">▼ Détail</span>
+      </span>
+    </div>
+    <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
+      Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
+    </div>
+  </div>`;
+}
+
+function _ficheDetailHtml(f, fmt) {
+  return `
+  <!-- Détail financier (masqué par défaut) -->
+  <div id="fiche-details-${f.id}" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
+      <div style="padding:12px;border-right:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
+        ${[
+          ['Recette à la porte', f.recettes.porte],
+          ['Bénéfices chaises',  f.recettes.chaises],
+          ['Quote part ASC',     f.recettes.asce],
+        ].filter(([,v]) => v).map(([l,v]) => `
+          <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+        `).join('')}
+        ${(f.recettes.contributions||[]).map(c => `
+          <div class="flex-between" style="font-size:12px;padding:2px 0;padding-left:10px"><span style="color:var(--muted)">↳ ${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
+        `).join('')}
+      </div>
+      <div style="padding:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center">Dépenses</div>
+        ${[
+          ['Arbitres',           f.depenses.arbitres],
+          ['ASP',                f.depenses.asp],
+          ['Animateur',          f.depenses.animateur],
+          ['Croix Rouge',        f.depenses.croixRouge],
+          ['Location cordes',    f.depenses.cordes],
+          ['Location filets',    f.depenses.filets],
+          ['Chaises école foot', f.depenses.chaises],
+          ['Presse',             f.depenses.presse],
+          ['Social',             f.depenses.social],
+          ['Transport',          f.depenses.transport],
+          ['Collège René Coly',  f.depenses.college],
+        ].filter(([,v]) => v).map(([l,v]) => `
+          <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
+      <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
+      <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
+    </div>
+    <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
+      <strong style="font-size:13px">Bénéfice du Jour</strong>
+      <strong style="font-size:18px;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">${fmt(f.beneficeJour)} FCFA</strong>
+    </div>
+    <div style="padding:10px 16px;background:var(--green-d);color:#fff;display:flex;justify-content:space-between;align-items:center">
+      <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
+      <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
+    </div>
+  </div>`;
+}
+
+function _ficheFooterHtml(f, canValidate, canEdit, users) {
+  const declaredDt     = f.declaredAt ? new Date(f.declaredAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const declaredPoste  = users[f.declaredByUsername]?.poste || '';
+  const isValidated    = f.statut === 'validee';
+  const validatedDt    = f.validatedAt ? new Date(f.validatedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const validatedPoste = users[f.validatedByUsername]?.poste || '';
+
+  return `
+  <!-- Pied : auteur + statut + actions -->
+  <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+    <div style="font-size:11px;color:var(--muted);line-height:1.6">
+      <div><i class="fa-solid fa-file-pen"></i> Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
+      ${isValidated
+        ? `<div style="color:var(--green-d)"><i class="fa-solid fa-check"></i> Validée par <strong>${f.validatedBy||'?'}</strong>${validatedPoste?' · <em>'+validatedPoste+'</em>':''} · ${validatedDt}</div>`
+        : `<div style="color:var(--amber-d)">⏳ En attente de validation TGA</div>`
+      }
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheDetail('${f.id}')"><i class="fa-solid fa-clipboard-list"></i> Historique</button>
+      ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')"><i class="fa-solid fa-check"></i> Valider</button>` : ''}
+      ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function _ficheCardHtml(f, fmt, canValidate, canEdit, users) {
+  return `
+  <div class="card mb" style="overflow:visible">
+    ${_ficheHeaderHtml(f, fmt)}
+    ${_ficheDetailHtml(f, fmt)}
+    ${_ficheFooterHtml(f, canValidate, canEdit, users)}
+  </div>`;
+}
+
 function renderFichesList() {
   const container = document.getElementById('fiches-list');
   if (!container) return;
@@ -5486,100 +5783,7 @@ function renderFichesList() {
   const canEdit     = ['superadmin','admin'].includes(role);
   const _users = getUsers();
 
-  container.innerHTML = [...fiches].reverse().map(f => {
-    const declaredDt = f.declaredAt ? new Date(f.declaredAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-    const declaredPoste = _users[f.declaredByUsername]?.poste || '';
-    const isValidated = f.statut === 'validee';
-    const validatedDt = f.validatedAt ? new Date(f.validatedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-    const validatedPoste = _users[f.validatedByUsername]?.poste || '';
-
-    return `
-    <div class="card mb" style="overflow:visible">
-      <!-- En-tête cliquable (accordéon) -->
-      <div style="cursor:pointer" onclick="toggleFicheDetails('${f.id}')">
-        <div style="background:var(--green-d);color:#fff;padding:10px 16px;text-align:center;font-weight:700;font-size:13px;letter-spacing:0.02em">
-          Bilan Financier Renouveau Navétane ZONE 5R O.D.G.AM de Bignona
-        </div>
-        <div style="background:#ffff00;color:#000;padding:6px 16px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:700;font-size:13px">${f.journee}${f.terrain ? ' · ' + f.terrain : ''}</span>
-          <span style="display:flex;gap:12px;align-items:center;font-size:12px">
-            <span style="color:var(--green-d);font-weight:700">${fmt(f.totalRecettes)} ↑</span>
-            <span style="color:var(--red);font-weight:700">${fmt(f.totalDepenses)} ↓</span>
-            <span style="font-weight:700;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">= ${fmt(f.beneficeJour)}</span>
-            <span id="fiche-chevron-${f.id}" style="font-size:11px;color:var(--muted)">▼ Détail</span>
-          </span>
-        </div>
-        <div style="background:#ff8c00;color:#fff;padding:4px 16px;text-align:center;font-size:12px;font-weight:600">
-          Date : ${f.date ? new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : ''}
-        </div>
-      </div>
-
-      <!-- Détail financier (masqué par défaut) -->
-      <div id="fiche-details-${f.id}" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)">
-          <div style="padding:12px;border-right:1px solid var(--border)">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-d);margin-bottom:8px;text-align:center">Recettes</div>
-            ${[
-              ['Recette à la porte', f.recettes.porte],
-              ['Bénéfices chaises',  f.recettes.chaises],
-              ['Quote part ASC',     f.recettes.asce],
-            ].filter(([,v]) => v).map(([l,v]) => `
-              <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
-            `).join('')}
-            ${(f.recettes.contributions||[]).map(c => `
-              <div class="flex-between" style="font-size:12px;padding:2px 0;padding-left:10px"><span style="color:var(--muted)">↳ ${c.equipe}</span><strong>${fmt(c.montant)}</strong></div>
-            `).join('')}
-          </div>
-          <div style="padding:12px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:8px;text-align:center">Dépenses</div>
-            ${[
-              ['Arbitres',           f.depenses.arbitres],
-              ['ASP',                f.depenses.asp],
-              ['Animateur',          f.depenses.animateur],
-              ['Croix Rouge',        f.depenses.croixRouge],
-              ['Location cordes',    f.depenses.cordes],
-              ['Location filets',    f.depenses.filets],
-              ['Chaises école foot', f.depenses.chaises],
-              ['Presse',             f.depenses.presse],
-              ['Social',             f.depenses.social],
-              ['Transport',          f.depenses.transport],
-              ['Collège René Coly',  f.depenses.college],
-            ].filter(([,v]) => v).map(([l,v]) => `
-              <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
-            `).join('')}
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--border)">
-          <div style="padding:8px 12px;background:var(--blue-l)"><span style="font-size:11px;font-weight:700;color:var(--blue)">TOTAL RECETTE</span> <strong style="float:right;color:var(--green-d)">${fmt(f.totalRecettes)}</strong></div>
-          <div style="padding:8px 12px;background:var(--red-l);border-left:1px solid var(--border)"><span style="font-size:11px;font-weight:700;color:var(--red)">TOTAL DÉPENSES</span> <strong style="float:right;color:var(--red)">${fmt(f.totalDepenses)}</strong></div>
-        </div>
-        <div style="padding:10px 16px;background:var(--amber-l);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)">
-          <strong style="font-size:13px">Bénéfice du Jour</strong>
-          <strong style="font-size:18px;color:${f.beneficeJour>=0?'var(--green-d)':'var(--red)'}">${fmt(f.beneficeJour)} FCFA</strong>
-        </div>
-        <div style="padding:10px 16px;background:var(--green-d);color:#fff;display:flex;justify-content:space-between;align-items:center">
-          <strong style="font-size:13px">SOLDE TOUT COMPTE</strong>
-          <strong style="font-size:20px">${fmt(f.soldeToutCompte)} FCFA</strong>
-        </div>
-      </div>
-
-      <!-- Pied : auteur + statut + actions -->
-      <div style="padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-        <div style="font-size:11px;color:var(--muted);line-height:1.6">
-          <div><i class="fa-solid fa-file-pen"></i> Remplie par <strong style="color:var(--fg)">${f.declaredBy||'?'}</strong>${declaredPoste?' · <em>'+declaredPoste+'</em>':''} · ${declaredDt}</div>
-          ${isValidated
-            ? `<div style="color:var(--green-d)"><i class="fa-solid fa-check"></i> Validée par <strong>${f.validatedBy||'?'}</strong>${validatedPoste?' · <em>'+validatedPoste+'</em>':''} · ${validatedDt}</div>`
-            : `<div style="color:var(--amber-d)">⏳ En attente de validation TGA</div>`
-          }
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheDetail('${f.id}')"><i class="fa-solid fa-clipboard-list"></i> Historique</button>
-          ${canValidate && !isValidated ? `<button class="btn primary" style="font-size:11px;padding:4px 10px" onclick="validateFiche('${f.id}')"><i class="fa-solid fa-check"></i> Valider</button>` : ''}
-          ${canEdit && isValidated ? `<button class="btn" style="font-size:11px;padding:4px 10px" onclick="openFicheEditModal('${f.id}')"><i class="fa-solid fa-pen"></i> Modifier</button>` : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  container.innerHTML = [...fiches].reverse().map(f => _ficheCardHtml(f, fmt, canValidate, canEdit, _users)).join('');
 }
 
 // ============================================================
@@ -5991,24 +6195,7 @@ function toggleDepHistory(id) {
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
-function openDepenseDetail(id) {
-  const dep = _rawDepenses();
-  const d   = dep.find(x => x.id === id);
-  if (!d) return;
-
-  const fmt  = n => (n||0).toLocaleString('fr-FR');
-  const me   = currentUser?.username;
-  const isD  = d.type === 'depense';
-  const statut = d.statut || (isD ? 'en_attente' : 'ok');
-
-  const BADGES = {
-    en_attente: `<span class="badge amber">⏳ En attente de validation</span>`,
-    validee:    `<span class="badge green"><i class="fa-solid fa-check"></i> Validée — En attente de décaissement</span>`,
-    decaissee:  `<span class="badge blue"><i class="fa-solid fa-coins"></i> Décaissée — En attente de confirmation</span>`,
-    recue:      `<span class="badge green"><i class="fa-solid fa-handshake"></i> Reçue et clôturée</span>`,
-    rejetee:    `<span class="badge red"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
-  };
-
+function _depenseDetailTimelineHtml(hist, allUsers) {
   const HIST_ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', approbation_president:'<i class="fa-solid fa-check"></i>', rejet:'<i class="fa-solid fa-xmark"></i>', decaissement:'<i class="fa-solid fa-coins"></i>', reception:'<i class="fa-solid fa-handshake"></i>' };
   const HIST_LABELS = {
     creation:              'Demande créée par',
@@ -6017,15 +6204,12 @@ function openDepenseDetail(id) {
     decaissement:          'Décaissement effectué par',
     reception:             'Réception confirmée par',
   };
-
-  const _allUsers = getUsers();
-  const hist = d.history || [];
-  const timelineRows = hist.map((h, i) => {
+  return hist.map((h, i) => {
     const dt       = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
     const isLast   = i === hist.length - 1;
     const lineColor = h.action === 'rejet' ? 'var(--red)' : h.action === 'creation' ? 'var(--muted)' : 'var(--green-d)';
     const nameStr  = h.name || h.by || '?';
-    const poste    = _allUsers[h.by]?.poste || '';
+    const poste    = allUsers[h.by]?.poste || '';
     const posteStr = poste ? `<span style="font-weight:400;font-style:italic"> · ${poste}</span>` : '';
     return `
     <div style="display:flex;gap:12px;padding-bottom:${isLast?'0':'12px'};position:relative">
@@ -6038,8 +6222,17 @@ function openDepenseDetail(id) {
       </div>
     </div>`;
   }).join('');
+}
 
-  const body = `
+function _depenseDetailBodyHtml(d, fmt, isD, statut, hist, timelineRows) {
+  const BADGES = {
+    en_attente: `<span class="badge amber">⏳ En attente de validation</span>`,
+    validee:    `<span class="badge green"><i class="fa-solid fa-check"></i> Validée — En attente de décaissement</span>`,
+    decaissee:  `<span class="badge blue"><i class="fa-solid fa-coins"></i> Décaissée — En attente de confirmation</span>`,
+    recue:      `<span class="badge green"><i class="fa-solid fa-handshake"></i> Reçue et clôturée</span>`,
+    rejetee:    `<span class="badge red"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
+  };
+  return `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div style="background:var(--gray-l);border-radius:6px;padding:10px">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">Catégorie</div>
@@ -6064,40 +6257,52 @@ function openDepenseDetail(id) {
       ? `<div style="padding:12px;background:var(--gray-l);border-radius:8px">${timelineRows}</div>`
       : `<div style="color:var(--muted);font-size:12px;font-style:italic">Aucune action enregistrée.</div>`
     }`;
+}
+
+function _depenseDetailActionsHtml(d, statut, me, isD, canValidatePresident, canDecaisser) {
+  let html = '';
+  if (!isD) return html;
+  if (statut === 'en_attente' && canValidatePresident) {
+    html += `<button class="btn primary" onclick="approveDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-check"></i> Valider</button>`;
+    html += `<button class="btn danger"  onclick="closeModal('modal-dep-detail');rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
+  }
+  if (statut === 'validee' && canDecaisser) {
+    html += `<button class="btn primary" style="background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
+  }
+  if (statut === 'decaissee' && d.createdBy === me) {
+    html += `<button class="btn primary" style="background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
+  }
+  return html;
+}
+
+function openDepenseDetail(id) {
+  const dep = _rawDepenses();
+  const d   = dep.find(x => x.id === id);
+  if (!d) return;
+
+  const fmt    = n => (n||0).toLocaleString('fr-FR');
+  const me     = currentUser?.username;
+  const isD    = d.type === 'depense';
+  const statut = d.statut || (isD ? 'en_attente' : 'ok');
+
+  const _allUsers    = getUsers();
+  const hist         = d.history || [];
+  const timelineRows = _depenseDetailTimelineHtml(hist, _allUsers);
+  const body         = _depenseDetailBodyHtml(d, fmt, isD, statut, hist, timelineRows);
 
   document.getElementById('dep-detail-title').textContent = (d.description || d.categorie) + ' — ' + fmt(d.montant) + ' FCFA';
   document.getElementById('dep-detail-body').innerHTML = body;
 
   // Boutons d'action dans le modal
-  const actDiv = document.getElementById('dep-detail-actions');
-  actDiv.innerHTML = '';
   const canValidatePresident = hasPermission('validate_president');
   const canDecaisser         = hasPermission('decaisser_depense');
-  if (isD) {
-    if (statut === 'en_attente' && canValidatePresident) {
-      actDiv.innerHTML += `<button class="btn primary" onclick="approveDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-check"></i> Valider</button>`;
-      actDiv.innerHTML += `<button class="btn danger"  onclick="closeModal('modal-dep-detail');rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
-    }
-    if (statut === 'validee' && canDecaisser) {
-      actDiv.innerHTML += `<button class="btn primary" style="background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
-    }
-    if (statut === 'decaissee' && d.createdBy === me) {
-      actDiv.innerHTML += `<button class="btn primary" style="background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}');closeModal('modal-dep-detail')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
-    }
-  }
+  document.getElementById('dep-detail-actions').innerHTML =
+    _depenseDetailActionsHtml(d, statut, me, isD, canValidatePresident, canDecaisser);
 
   openModal('modal-dep-detail');
 }
 
-function renderDepensesList() {
-  const allDep = getDepensesDiverses();
-  const div    = document.getElementById('depenses-list');
-  if (!div) return;
-  const fmt  = n => (n||0).toLocaleString('fr-FR');
-  const me   = currentUser?.username;
-  const canValidatePresident = hasPermission('validate_president');
-  const canDecaisser         = hasPermission('decaisser_depense');
-
+function _syncDepenseFilterButtons(allDep, me) {
   // Synchroniser l'apparence des boutons de filtre avec l'état réel de _depFilter
   ['all','en_attente','validee','decaissee','recue','rejetee','mine'].forEach(id => {
     const el = document.getElementById('df-' + id);
@@ -6117,105 +6322,133 @@ function renderDepensesList() {
   if (btnD) btnD.innerHTML = decaisseePendingCount
     ? `<i class="fa-solid fa-coins"></i> Décaissées <span style="background:var(--blue);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px">${decaisseePendingCount}</span>`
     : '<i class="fa-solid fa-coins"></i> Décaissées';
+}
 
-  // Appliquer le filtre
-  let dep = allDep;
-  if      (_depFilter === 'en_attente') dep = allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente');
-  else if (_depFilter === 'validee')    dep = allDep.filter(d => d.statut === 'validee');
-  else if (_depFilter === 'decaissee')  dep = allDep.filter(d => d.statut === 'decaissee');
-  else if (_depFilter === 'recue')      dep = allDep.filter(d => d.statut === 'recue');
-  else if (_depFilter === 'rejetee')    dep = allDep.filter(d => d.statut === 'rejetee');
-  else if (_depFilter === 'mine')       dep = allDep.filter(d => d.createdBy === me);
+function _filterDepenses(allDep, me) {
+  if      (_depFilter === 'en_attente') return allDep.filter(d => d.type === 'depense' && d.statut === 'en_attente');
+  else if (_depFilter === 'validee')    return allDep.filter(d => d.statut === 'validee');
+  else if (_depFilter === 'decaissee')  return allDep.filter(d => d.statut === 'decaissee');
+  else if (_depFilter === 'recue')      return allDep.filter(d => d.statut === 'recue');
+  else if (_depFilter === 'rejetee')    return allDep.filter(d => d.statut === 'rejetee');
+  else if (_depFilter === 'mine')       return allDep.filter(d => d.createdBy === me);
+  return allDep;
+}
 
+function _depenseEtatLine(d, statut) {
+  if (d.type !== 'depense') return '';
+  if (statut === 'validee') {
+    const p = d.approvals?.president?.name || '?';
+    return `<div style="font-size:11px;color:var(--green-d);margin-top:3px"><i class="fa-solid fa-check"></i> Validée par <strong>${p}</strong> (Président) · En attente de décaissement</div>`;
+  }
+  if (statut === 'decaissee') {
+    const dec = d.decaissement;
+    return `<div style="font-size:11px;color:var(--blue);margin-top:3px"><i class="fa-solid fa-coins"></i> Décaissée par <strong>${dec?.name||'?'}</strong> · En attente de confirmation</div>`;
+  }
+  if (statut === 'recue') {
+    const dec = d.decaissement;
+    const rec = d.reception;
+    return `<div style="font-size:11px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-handshake"></i> Décaissé par <strong>${esc(dec?.name||'?')}</strong> · Réception confirmée par <strong>${esc(rec?.name||'?')}</strong></div>`;
+  }
+  if (statut === 'rejetee') {
+    const by     = d.history?.slice().reverse().find(h => h.action === 'rejet');
+    const raison = by?.raison ? ` — <em>"${esc(by.raison)}"</em>` : '';
+    return `<div style="font-size:11px;color:var(--red);margin-top:3px"><i class="fa-solid fa-xmark"></i> Rejetée par <strong>${esc(by?.name||'?')}</strong>${raison}</div>`;
+  }
+  return '';
+}
+
+function _depenseActionBtns(d, statut, me, canValidatePresident, canDecaisser) {
+  if (d.type !== 'depense') return '';
+  let actionBtns = '';
+  if (statut === 'en_attente' && canValidatePresident) {
+    actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}')"><i class="fa-solid fa-check"></i> Valider</button>`;
+    actionBtns += `<button class="btn danger"  style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
+  }
+  if (statut === 'validee' && canDecaisser) {
+    actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
+  }
+  if (statut === 'decaissee' && d.createdBy === me) {
+    actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
+  }
+  return actionBtns;
+}
+
+// Historique timeline — calculé pour compatibilité avec le comportement existant
+// (non affiché dans la carte ; déjà inutilisé dans la version d'origine)
+function _depenseHistRows(hist) {
+  const HIST_ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', approbation_president:'<i class="fa-solid fa-check"></i>', rejet:'<i class="fa-solid fa-xmark"></i>', decaissement:'<i class="fa-solid fa-coins"></i>', reception:'<i class="fa-solid fa-handshake"></i>' };
+  const HIST_LABELS = { creation:'Demande créée', approbation_president:'Validée (Président)', rejet:'Rejetée', decaissement:'Décaissement effectué', reception:'Réception confirmée' };
+  return hist.map(h => {
+    const dt    = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const extra = h.raison ? `<div style="font-style:italic;color:var(--red);font-size:10px;margin-top:1px">Raison : ${esc(h.raison)}</div>` : '';
+    return `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:11px">
+      <div style="display:flex;gap:8px;align-items:baseline">
+        <span style="flex-shrink:0">${HIST_ICONS[h.action]||'•'}</span>
+        <span style="flex:1"><strong>${esc(HIST_LABELS[h.action]||h.action)}</strong> — ${esc(h.name||h.by||'?')}</span>
+        <span style="color:var(--muted);white-space:nowrap">${dt}</span>
+      </div>${extra}
+    </div>`;
+  }).join('');
+}
+
+function _depenseCardHtml(d, fmt, me, canValidatePresident, canDecaisser) {
+  const isD    = d.type === 'depense';
+  const statut = d.statut || (isD ? 'en_attente' : 'ok');
+
+  const etatLine   = _depenseEtatLine(d, statut);
+  const actionBtns = _depenseActionBtns(d, statut, me, canValidatePresident, canDecaisser);
+
+  const hist = d.history || [];
+  _depenseHistRows(hist); // conservé pour parité avec le comportement d'origine
+
+  // Badge statut
+  const BADGES = {
+    en_attente: `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`,
+    validee:    `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Validée</span>`,
+    decaissee:  `<span class="badge blue"  style="font-size:10px"><i class="fa-solid fa-coins"></i> Décaissée</span>`,
+    recue:      `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-handshake"></i> Reçue</span>`,
+    rejetee:    `<span class="badge red"   style="font-size:10px"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
+  };
+  const statusBadge = isD ? (BADGES[statut] || '') : '';
+
+  return `
+  <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0;cursor:pointer" onclick="openDepenseDetail('${d.id}')">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'<i class="fa-solid fa-money-bill-wave"></i>':'<i class="fa-solid fa-coins"></i>'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="tx-desc">${esc(d.description||d.categorie)}</div>
+        <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${esc(d.categorie)} · ${esc(d.date||'')} · <em>${esc(d.declaredBy||'')}</em> ${statusBadge}
+        </div>
+        ${etatLine}
+        ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px" onclick="event.stopPropagation()">${actionBtns}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;align-self:flex-start">
+        <div class="tx-amount ${isD?'depense':'recette'}" style="margin:0">${isD?'–':'+'} ${fmt(d.montant)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-clipboard-list"></i> ${hist.length} étape${hist.length>1?'s':''}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDepensesList() {
+  const allDep = getDepensesDiverses();
+  const div    = document.getElementById('depenses-list');
+  if (!div) return;
+  const fmt  = n => (n||0).toLocaleString('fr-FR');
+  const me   = currentUser?.username;
+  const canValidatePresident = hasPermission('validate_president');
+  const canDecaisser         = hasPermission('decaisser_depense');
+
+  _syncDepenseFilterButtons(allDep, me);
+
+  const dep = _filterDepenses(allDep, me);
   if (!dep.length) {
     div.innerHTML = '<div class="card" style="padding:24px;text-align:center;color:var(--muted)">Aucune dépense pour ce filtre</div>';
     return;
   }
 
-  div.innerHTML = dep.map(d => {
-    const isD    = d.type === 'depense';
-    const statut = d.statut || (isD ? 'en_attente' : 'ok');
-
-    // Ligne d'état
-    let etatLine = '';
-    if (isD) {
-      if (statut === 'validee') {
-        const p = d.approvals?.president?.name || '?';
-        etatLine = `<div style="font-size:11px;color:var(--green-d);margin-top:3px"><i class="fa-solid fa-check"></i> Validée par <strong>${p}</strong> (Président) · En attente de décaissement</div>`;
-      } else if (statut === 'decaissee') {
-        const dec = d.decaissement;
-        etatLine = `<div style="font-size:11px;color:var(--blue);margin-top:3px"><i class="fa-solid fa-coins"></i> Décaissée par <strong>${dec?.name||'?'}</strong> · En attente de confirmation</div>`;
-      } else if (statut === 'recue') {
-        const dec = d.decaissement;
-        const rec = d.reception;
-        etatLine = `<div style="font-size:11px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-handshake"></i> Décaissé par <strong>${esc(dec?.name||'?')}</strong> · Réception confirmée par <strong>${esc(rec?.name||'?')}</strong></div>`;
-      } else if (statut === 'rejetee') {
-        const by   = d.history?.slice().reverse().find(h => h.action === 'rejet');
-        const raison = by?.raison ? ` — <em>"${esc(by.raison)}"</em>` : '';
-        etatLine = `<div style="font-size:11px;color:var(--red);margin-top:3px"><i class="fa-solid fa-xmark"></i> Rejetée par <strong>${esc(by?.name||'?')}</strong>${raison}</div>`;
-      }
-    }
-
-    // Boutons d'action selon statut et rôle
-    let actionBtns = '';
-    if (isD) {
-      if (statut === 'en_attente' && canValidatePresident) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px" onclick="approveDepense('${d.id}')"><i class="fa-solid fa-check"></i> Valider</button>`;
-        actionBtns += `<button class="btn danger"  style="font-size:10px;padding:2px 8px" onclick="rejectDepense('${d.id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
-      }
-      if (statut === 'validee' && canDecaisser) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--blue);border-color:var(--blue)" onclick="decaisserDepense('${d.id}')"><i class="fa-solid fa-coins"></i> Décaisser</button>`;
-      }
-      if (statut === 'decaissee' && d.createdBy === me) {
-        actionBtns += `<button class="btn primary" style="font-size:10px;padding:2px 8px;background:var(--green-d);border-color:var(--green-d)" onclick="confirmerReceptionDepense('${d.id}')"><i class="fa-solid fa-handshake"></i> Confirmer réception</button>`;
-      }
-    }
-
-    // Historique timeline
-    const hist = d.history || [];
-    const HIST_ICONS  = { creation:'<i class="fa-solid fa-file-pen"></i>', approbation_president:'<i class="fa-solid fa-check"></i>', rejet:'<i class="fa-solid fa-xmark"></i>', decaissement:'<i class="fa-solid fa-coins"></i>', reception:'<i class="fa-solid fa-handshake"></i>' };
-    const HIST_LABELS = { creation:'Demande créée', approbation_president:'Validée (Président)', rejet:'Rejetée', decaissement:'Décaissement effectué', reception:'Réception confirmée' };
-    const histRows = hist.map(h => {
-      const dt    = h.at ? new Date(h.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-      const extra = h.raison ? `<div style="font-style:italic;color:var(--red);font-size:10px;margin-top:1px">Raison : ${esc(h.raison)}</div>` : '';
-      return `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:11px">
-        <div style="display:flex;gap:8px;align-items:baseline">
-          <span style="flex-shrink:0">${HIST_ICONS[h.action]||'•'}</span>
-          <span style="flex:1"><strong>${esc(HIST_LABELS[h.action]||h.action)}</strong> — ${esc(h.name||h.by||'?')}</span>
-          <span style="color:var(--muted);white-space:nowrap">${dt}</span>
-        </div>${extra}
-      </div>`;
-    }).join('');
-
-    // Badge statut
-    const BADGES = {
-      en_attente: `<span class="badge amber" style="font-size:10px">⏳ En attente</span>`,
-      validee:    `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-check"></i> Validée</span>`,
-      decaissee:  `<span class="badge blue"  style="font-size:10px"><i class="fa-solid fa-coins"></i> Décaissée</span>`,
-      recue:      `<span class="badge green" style="font-size:10px"><i class="fa-solid fa-handshake"></i> Reçue</span>`,
-      rejetee:    `<span class="badge red"   style="font-size:10px"><i class="fa-solid fa-xmark"></i> Rejetée</span>`,
-    };
-    const statusBadge = isD ? (BADGES[statut] || '') : '';
-
-    return `
-    <div class="tx-row" id="dep-${d.id}" style="flex-direction:column;align-items:stretch;padding:10px 12px;gap:0;cursor:pointer" onclick="openDepenseDetail('${d.id}')">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="tx-icon ${isD?'depense':'recette'}" style="flex-shrink:0;align-self:flex-start;margin-top:2px">${isD?'<i class="fa-solid fa-money-bill-wave"></i>':'<i class="fa-solid fa-coins"></i>'}</div>
-        <div style="flex:1;min-width:0">
-          <div class="tx-desc">${esc(d.description||d.categorie)}</div>
-          <div class="tx-date" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            ${esc(d.categorie)} · ${esc(d.date||'')} · <em>${esc(d.declaredBy||'')}</em> ${statusBadge}
-          </div>
-          ${etatLine}
-          ${actionBtns ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px" onclick="event.stopPropagation()">${actionBtns}</div>` : ''}
-        </div>
-        <div style="text-align:right;flex-shrink:0;align-self:flex-start">
-          <div class="tx-amount ${isD?'depense':'recette'}" style="margin:0">${isD?'–':'+'} ${fmt(d.montant)}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px"><i class="fa-solid fa-clipboard-list"></i> ${hist.length} étape${hist.length>1?'s':''}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  div.innerHTML = dep.map(d => _depenseCardHtml(d, fmt, me, canValidatePresident, canDecaisser)).join('');
 }
 
 function approveDepense(id) {
@@ -6443,24 +6676,8 @@ function renderBilan() {
   }
 }
 
-function printBilan() {
-  const b      = computeBilan();
-  const saison = getSaison();
-  const date   = new Date().toLocaleDateString('fr-FR');
-  const fmt    = n => (n||0).toLocaleString('fr-FR');
-
-  const row = (label, val, color) =>
-    `<div class="row"><span>${label}</span><strong style="color:${color||'#111'}">${fmt(val)} FCFA</strong></div>`;
-
-  const soldeColor = b.solde >= 0 ? '#412402' : '#A32D2D';
-  const soldeBg    = b.solde >= 0 ? '#FAEEDA' : '#FCEBEB';
-  const soldeBorder= b.solde >= 0 ? '#BA7517' : '#A32D2D';
-
-  const html = `<!DOCTYPE html>
-<html lang="fr"><head>
-<meta charset="UTF-8">
-<title>Bilan Zone 5R · ${saison?.nom || ''}</title>
-<style>
+function _bilanStylesHtml() {
+  return `<style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;padding:14px 20px}
   /* ── ENTÊTE ── */
@@ -6504,10 +6721,11 @@ function printBilan() {
   /* ── IMPRESSION ── */
   @page{size:A4 portrait;margin:1.2cm}
   @media print{body{padding:0}}
-</style></head>
-<body>
+</style>`;
+}
 
-<!-- ENTÊTE OFFICIELLE -->
+function _bilanHeaderHtml(saison, date) {
+  return `<!-- ENTÊTE OFFICIELLE -->
 <div class="hdr">
   <div class="hdr-left">
     République du SÉNÉGAL<br>
@@ -6531,9 +6749,11 @@ function printBilan() {
   ${saison?.nom || 'Saison en cours'}
   ${saison?.date ? '· ' + new Date(saison.date).getFullYear() : ''}
 </div>
-<div class="doc-sub">Généré le ${date} · par ${currentUser?.name || 'Zone 5R'}</div>
+<div class="doc-sub">Généré le ${date} · par ${currentUser?.name || 'Zone 5R'}</div>`;
+}
 
-<!-- RECETTES -->
+function _bilanRecettesHtml(b, row, fmt) {
+  return `<!-- RECETTES -->
 <div class="bloc bloc-rec">
   <div class="bloc-label"><i class="fa-solid fa-file-import"></i> Recettes</div>
   ${row('Solde de départ (report saison précédente)', b.soldeDep, '#185FA5')}
@@ -6546,9 +6766,11 @@ function printBilan() {
     <span>TOTAL RECETTES</span>
     <span style="color:#085041">${fmt(b.totalRecettes)} FCFA</span>
   </div>
-</div>
+</div>`;
+}
 
-<!-- DÉPENSES -->
+function _bilanDepensesHtml(b, row, fmt) {
+  return `<!-- DÉPENSES -->
 <div class="bloc bloc-dep">
   <div class="bloc-label"><i class="fa-solid fa-file-export"></i> Dépenses</div>
   ${row('Journées de championnat', b.depJournees, '#A32D2D')}
@@ -6558,15 +6780,19 @@ function printBilan() {
     <span>TOTAL DÉPENSES</span>
     <span style="color:#A32D2D">${fmt(b.totalDepenses)} FCFA</span>
   </div>
-</div>
+</div>`;
+}
 
-<!-- SOLDE EN CAISSE -->
+function _bilanSoldeHtml(b, fmt, soldeColor, soldeBg, soldeBorder) {
+  return `<!-- SOLDE EN CAISSE -->
 <div class="bloc-solde" style="background:${soldeBg};border:2px solid ${soldeBorder}">
   <div class="solde-lbl" style="color:${soldeColor}">Solde en Caisse</div>
   <div class="solde-val" style="color:${soldeColor}">${fmt(b.solde)} FCFA</div>
-</div>
+</div>`;
+}
 
-<!-- SIGNATURES -->
+function _bilanSignaturesHtml() {
+  return `<!-- SIGNATURES -->
 <div class="sigs">
   <div class="sig">
     <div class="sig-line"></div>
@@ -6583,15 +6809,50 @@ function printBilan() {
     <div>Djiby Diouf DIATTA</div>
     <div class="sig-role">Président Zone 5R</div>
   </div>
-</div>
+</div>`;
+}
 
-<!-- PIED DE PAGE -->
+function _bilanFooterHtml() {
+  return `<!-- PIED DE PAGE -->
 <div class="footer">
   ──────────────────────────────────────<br>
   <strong>Siège Social :</strong> <em>Collège René COLY, à côté de la Mairie de Bignona</em>
   &nbsp;·&nbsp;
   <strong>Contact :</strong> +221 77 418 97 75 (Président)
-</div>
+</div>`;
+}
+
+function printBilan() {
+  const b      = computeBilan();
+  const saison = getSaison();
+  const date   = new Date().toLocaleDateString('fr-FR');
+  const fmt    = n => (n||0).toLocaleString('fr-FR');
+
+  const row = (label, val, color) =>
+    `<div class="row"><span>${label}</span><strong style="color:${color||'#111'}">${fmt(val)} FCFA</strong></div>`;
+
+  const soldeColor = b.solde >= 0 ? '#412402' : '#A32D2D';
+  const soldeBg    = b.solde >= 0 ? '#FAEEDA' : '#FCEBEB';
+  const soldeBorder= b.solde >= 0 ? '#BA7517' : '#A32D2D';
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8">
+<title>Bilan Zone 5R · ${saison?.nom || ''}</title>
+${_bilanStylesHtml()}</head>
+<body>
+
+${_bilanHeaderHtml(saison, date)}
+
+${_bilanRecettesHtml(b, row, fmt)}
+
+${_bilanDepensesHtml(b, row, fmt)}
+
+${_bilanSoldeHtml(b, fmt, soldeColor, soldeBg, soldeBorder)}
+
+${_bilanSignaturesHtml()}
+
+${_bilanFooterHtml()}
 
 <script>window.onload = function(){ window.print(); };<\/script>
 <\/body><\/html>`;
