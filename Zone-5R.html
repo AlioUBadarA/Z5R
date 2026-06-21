@@ -1878,7 +1878,7 @@
         <div class="form-group"><label>Presse</label><input type="number" id="fj-d-presse" value="0" min="0"></div>
         <div class="form-group"><label>Social</label><input type="number" id="fj-d-social" value="0" min="0"></div>
         <div class="form-group"><label>Transport</label><input type="number" id="fj-d-transport" value="0" min="0"></div>
-        <div class="form-group"><label id="fj-d-college-label">Collège René Coly</label><input type="number" id="fj-d-college" value="0" min="0"></div>
+        <div class="form-group"><label id="fj-d-college-label">Location stade</label><input type="number" id="fj-d-college" value="0" min="0"></div>
       </div>
     </div>
 
@@ -5714,7 +5714,7 @@ function _ficheDetailHtml(f, fmt) {
           ['Presse',             f.depenses.presse],
           ['Social',             f.depenses.social],
           ['Transport',          f.depenses.transport],
-          [f.terrain ? 'Location · ' + f.terrain : 'Collège René Coly', f.depenses.college],
+          [f.terrain ? 'Location · ' + f.terrain : 'Location stade', f.depenses.college],
         ].filter(([,v]) => v).map(([l,v]) => `
           <div class="flex-between" style="font-size:12px;padding:2px 0"><span>${l}</span><strong>${fmt(v)}</strong></div>
         `).join('')}
@@ -6928,7 +6928,7 @@ function openFicheModal() {
 function updateFicheDepenseLabel() {
   const terrain = document.getElementById('fj-terrain')?.value || '';
   const label = document.getElementById('fj-d-college-label');
-  if (label) label.textContent = terrain ? 'Location · ' + terrain : 'Collège René Coly';
+  if (label) label.textContent = terrain ? 'Location · ' + terrain : 'Location stade';
 }
 
 let _contribAdded = [];
@@ -7037,7 +7037,7 @@ function openFicheEditModal(id) {
       <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Presse</label><input type="number" id="fe-d-presse" value="${fmt(f.depenses.presse)}" min="0" class="fe-input"></div>
       <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Social</label><input type="number" id="fe-d-social" value="${fmt(f.depenses.social)}" min="0" class="fe-input"></div>
       <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">Transport</label><input type="number" id="fe-d-transport" value="${fmt(f.depenses.transport)}" min="0" class="fe-input"></div>
-      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">${f.terrain ? 'Location · ' + esc(f.terrain) : 'Collège René Coly'}</label><input type="number" id="fe-d-college" value="${fmt(f.depenses.college)}" min="0" class="fe-input"></div>
+      <div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:3px">${f.terrain ? 'Location · ' + esc(f.terrain) : 'Location stade'}</label><input type="number" id="fe-d-college" value="${fmt(f.depenses.college)}" min="0" class="fe-input"></div>
     </div>`;
   openModal('modal-fiche-edit');
 }
