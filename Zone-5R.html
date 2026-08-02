@@ -372,6 +372,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <!-- SheetJS pour export Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<!-- pdf.js pour l'import des poules depuis un PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -975,11 +977,33 @@
           <p style="font-size:11px;color:var(--muted);margin-top:3px">Ce montant est ajouté au bilan comme point de départ de la caisse</p>
         </div>
         <div class="form-group">
-          <label>Équipes participantes (sélection multiple)</label>
-          <select id="saison-equipes-select" multiple style="height:160px">
-            <!-- Rempli dynamiquement par refreshSaisonEquipesSelect() -->
-          </select>
-          <p style="font-size:11px;color:var(--muted);margin-top:4px">Maintenir Ctrl (PC) ou ⌘ (Mac) pour sélectionner plusieurs équipes</p>
+          <label>Équipes participantes</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;padding-bottom:8px">
+            <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer">
+              <input type="radio" name="saison-equipes-mode" value="manuel" checked onchange="_toggleSaisonEquipesMode()">
+              <i class="fa-solid fa-list-check"></i> Sélection manuelle
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-weight:400;font-size:13px;cursor:pointer">
+              <input type="radio" name="saison-equipes-mode" value="pdf" onchange="_toggleSaisonEquipesMode()">
+              <i class="fa-solid fa-file-pdf"></i> Importer un PDF (poules & équipes)
+            </label>
+          </div>
+          <div id="saison-equipes-manuel-block">
+            <select id="saison-equipes-select" multiple style="height:160px">
+              <!-- Rempli dynamiquement par refreshSaisonEquipesSelect() -->
+            </select>
+            <p style="font-size:11px;color:var(--muted);margin-top:4px">Maintenir Ctrl (PC) ou ⌘ (Mac) pour sélectionner plusieurs équipes</p>
+          </div>
+          <div id="saison-equipes-pdf-block" style="display:none">
+            <input type="file" id="saison-pdf-input" accept="application/pdf" onchange="analyserSaisonPdf(this.files[0])">
+            <div id="saison-pdf-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+            <div id="saison-pdf-preview"></div>
+            <p style="font-size:11px;color:var(--muted);margin-top:6px">
+              Le PDF doit contenir un tableau des poules (ex. colonnes « Poule A », « Poule B »… avec les équipes en dessous).
+              Les équipes détectées mais pas encore enregistrées seront ajoutées automatiquement, à compléter ensuite dans « Équipes ».
+              Le tirage sera déjà considéré comme effectué.
+            </p>
+          </div>
         </div>
         <div class="form-group" style="margin-bottom:14px">
           <label><i class="fa-solid fa-sitemap"></i> Règles de qualification · Phase éliminatoire</label>
@@ -1910,6 +1934,10 @@
 // Échappement HTML — protège contre le XSS dans les templates innerHTML
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 // ============================================================
 //  FIREBASE — config, helpers, init
@@ -4915,32 +4943,239 @@ function renderSaisonPanel() {
   _renderSaisonHistorique();
 }
 
+// ============================================================
+//  IMPORT DES POULES DEPUIS UN PDF (déclaration de saison)
+// ============================================================
+let _pendingSaisonPoules = null; // { poules: { A:[team,...], B:[...] } }
+
+function _toggleSaisonEquipesMode() {
+  const mode = document.querySelector('input[name="saison-equipes-mode"]:checked')?.value || 'manuel';
+  document.getElementById('saison-equipes-manuel-block').style.display = mode === 'manuel' ? '' : 'none';
+  document.getElementById('saison-equipes-pdf-block').style.display   = mode === 'pdf'    ? '' : 'none';
+}
+
+// Normalise un nom d'équipe pour la comparaison (accents/casse/espaces ignorés)
+function _normalizeTeamKey(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+// Regroupe les items texte pdf.js en lignes (par proximité verticale), triées par page/y puis x
+function _pdfGroupRows(items, tol) {
+  const sorted = [...items].sort((a, b) => a.page - b.page || b.y - a.y || a.x - b.x);
+  const rows = [];
+  sorted.forEach(it => {
+    let row = rows.find(r => r.page === it.page && Math.abs(r.y - it.y) <= tol);
+    if (!row) { row = { page: it.page, y: it.y, items: [] }; rows.push(row); }
+    row.items.push(it);
+  });
+  rows.forEach(r => r.items.sort((a, b) => a.x - b.x));
+  return rows;
+}
+
+// Extrait { poules: {A:[...], B:[...]} } à partir d'un tableau "Poule A | Poule B | ..." (colonnes)
+function _parsePoulesTableFormat(rows) {
+  const headerRe = /^(?:poule|groupe|pool)\s*([a-z0-9]+)/i;
+  for (let ri = 0; ri < rows.length; ri++) {
+    const headers = rows[ri].items.filter(it => headerRe.test(it.str.trim()));
+    if (headers.length < 2) continue;
+    // Colonnes détectées : bornes = milieux entre en-têtes consécutifs
+    const cols = headers.map(h => ({
+      lettre: h.str.trim().match(headerRe)[1].toUpperCase(),
+      x: h.x,
+    }));
+    const poules = {};
+    cols.forEach(c => poules[c.lettre] = []);
+    for (let rj = ri + 1; rj < rows.length && rows[rj].page === rows[ri].page; rj++) {
+      const cells = {};
+      rows[rj].items.forEach(it => {
+        const txt = it.str.trim();
+        if (!txt) return;
+        // Colonne la plus proche par position x
+        let best = 0, bestDist = Infinity;
+        cols.forEach((c, ci) => { const d = Math.abs(it.x - c.x); if (d < bestDist) { bestDist = d; best = ci; } });
+        cells[best] = (cells[best] ? cells[best] + ' ' : '') + txt;
+      });
+      Object.keys(cells).forEach(ci => {
+        const txt = cells[ci].replace(/^[-•\d.)\s]+/, '').trim();
+        if (txt) poules[cols[ci].lettre].push(txt);
+      });
+    }
+    const nonVides = Object.values(poules).filter(t => t.length);
+    if (nonVides.length >= 2) return poules;
+  }
+  return null;
+}
+
+// Repli : format texte "Poule A : équipe1, équipe2, équipe3"
+function _parsePoulesTexteFormat(rows) {
+  const lignes = rows.map(r => r.items.map(it => it.str).join(' ').trim()).filter(Boolean);
+  const poules = {};
+  let courante = null;
+  const headerRe = /^(?:poule|groupe|pool)\s*([a-z0-9]+)\s*[:\-–]?\s*(.*)$/i;
+  lignes.forEach(l => {
+    const m = l.match(headerRe);
+    if (m) {
+      courante = m[1].toUpperCase();
+      if (!poules[courante]) poules[courante] = [];
+      const reste = m[2].replace(/^[-•\d.)\s]+/, '').trim();
+      if (reste) reste.split(/[,;/]+/).map(s => s.trim()).filter(Boolean).forEach(t => poules[courante].push(t));
+    } else if (courante) {
+      const t = l.replace(/^[-•\d.)\s]+/, '').trim();
+      if (t) poules[courante].push(t);
+    }
+  });
+  const nonVides = Object.values(poules).filter(t => t.length);
+  return nonVides.length >= 2 ? poules : null;
+}
+
+async function _parsePoulesFromPdf(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const items = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    content.items.forEach(it => {
+      const str = (it.str || '').trim();
+      if (!str) return;
+      items.push({ str, x: it.transform[4], y: it.transform[5], page: p });
+    });
+  }
+  const rows = _pdfGroupRows(items, 3);
+  return _parsePoulesTableFormat(rows) || _parsePoulesTexteFormat(rows) || {};
+}
+
+async function analyserSaisonPdf(file) {
+  _pendingSaisonPoules = null;
+  const statusEl  = document.getElementById('saison-pdf-status');
+  const previewEl = document.getElementById('saison-pdf-preview');
+  if (previewEl) previewEl.innerHTML = '';
+  if (!file || !statusEl) return;
+  if (!window.pdfjsLib) { statusEl.textContent = 'Lecteur PDF indisponible (connexion internet requise).'; return; }
+
+  statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyse du PDF…';
+  try {
+    const buf = await file.arrayBuffer();
+    const poules = await _parsePoulesFromPdf(buf);
+    const lettres = Object.keys(poules).filter(l => poules[l].length);
+    if (!lettres.length) {
+      statusEl.innerHTML = '<span style="color:var(--danger)">Aucune poule détectée dans ce PDF. Vérifiez le fichier ou utilisez la sélection manuelle.</span>';
+      return;
+    }
+    _pendingSaisonPoules = { poules };
+    const nbEquipes = lettres.reduce((s, l) => s + poules[l].length, 0);
+    statusEl.innerHTML = '<i class="fa-solid fa-check" style="color:var(--green)"></i> ' + nbEquipes + ' équipe(s) réparties en ' + lettres.length + ' poule(s) détectée(s). Vérifiez et corrigez si besoin ci-dessous.';
+    _renderSaisonPdfPreview();
+  } catch (e) {
+    statusEl.innerHTML = '<span style="color:var(--danger)">Erreur lors de la lecture du PDF : ' + esc(e.message || String(e)) + '</span>';
+  }
+}
+
+function _renderSaisonPdfPreview() {
+  const previewEl = document.getElementById('saison-pdf-preview');
+  if (!previewEl) return;
+  if (!_pendingSaisonPoules) { previewEl.innerHTML = ''; return; }
+
+  const knownKeys = new Set([...ALL_TEAMS, ...Object.keys(getTeams())].map(_normalizeTeamKey));
+  const lettres = Object.keys(_pendingSaisonPoules.poules).sort();
+  const rows = [];
+  lettres.forEach(l => _pendingSaisonPoules.poules[l].forEach(nom => rows.push({ nom, poule: l })));
+
+  previewEl.innerHTML =
+    '<div id="saison-pdf-rows" style="max-height:280px;overflow-y:auto;margin-top:8px;border:1px solid var(--border);border-radius:var(--radius-sm)">' +
+    rows.map(r => {
+      const isNew = !knownKeys.has(_normalizeTeamKey(r.nom));
+      return `<div class="saison-pdf-row" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--gray-l)">
+        <input type="text" value="${esc(r.nom)}" class="pdf-row-nom" style="flex:1;font-size:12px">
+        <select class="pdf-row-poule" style="width:auto">
+          ${lettres.map(l => `<option value="${l}" ${l === r.poule ? 'selected' : ''}>Poule ${l}</option>`).join('')}
+        </select>
+        ${isNew ? '<span class="badge amber" style="font-size:10px">Nouvelle</span>' : ''}
+        <button type="button" class="btn-icon" onclick="this.closest('.saison-pdf-row').remove()" title="Retirer cette ligne"><i class="fa-solid fa-xmark"></i></button>
+      </div>`;
+    }).join('') +
+    '</div>';
+}
+
+// Crée l'équipe (fiche minimale, à compléter) si elle n'existe pas encore
+function _ensureTeamRegistered(nom) {
+  const teams = getTeams();
+  if (!teams[nom]) {
+    teams[nom] = { nom, quartier: '', annee: '', couleurs: '', representants: [], incomplet: true };
+    saveTeams(teams);
+  }
+  if (!ALL_TEAMS.includes(nom)) ALL_TEAMS.push(nom);
+}
+
 function declarerSaison() {
   if (!hasPermission('declare_saison')) return showToast('Action réservée au Président et au Super Admin.');
-  const nom   = document.getElementById('saison-nom').value.trim();
-  const date  = document.getElementById('saison-date').value;
-  const selEl = document.getElementById('saison-equipes-select');
-  const equipes = Array.from(selEl.selectedOptions).map(o => o.value);
+  const nom  = document.getElementById('saison-nom').value.trim();
+  const date = document.getElementById('saison-date').value;
+  const mode = document.querySelector('input[name="saison-equipes-mode"]:checked')?.value || 'manuel';
 
-  if (!nom)           return showToast('Veuillez saisir un nom de saison.');
-  if (!date)          return showToast('Veuillez choisir une date de démarrage.');
-  if (equipes.length < 2) return showToast('Sélectionnez au moins 2 équipes.');
+  let equipes, poulesFromPdf = null;
+  if (mode === 'pdf') {
+    const lignes = Array.from(document.querySelectorAll('#saison-pdf-rows .saison-pdf-row')).map(row => ({
+      nom:   row.querySelector('.pdf-row-nom').value.trim(),
+      poule: row.querySelector('.pdf-row-poule').value,
+    })).filter(l => l.nom);
+    if (lignes.length < 2) return showToast('Importez un PDF avec au moins 2 équipes réparties en poules.');
+    poulesFromPdf = {};
+    lignes.forEach(l => { (poulesFromPdf[l.poule] = poulesFromPdf[l.poule] || []).push(l.nom); });
+    const tropPetites = Object.keys(poulesFromPdf).filter(l => poulesFromPdf[l].length < 2);
+    if (tropPetites.length) return showToast('Chaque poule doit compter au moins 2 équipes (Poule ' + tropPetites.join(', Poule ') + ').');
+    equipes = lignes.map(l => l.nom);
+  } else {
+    const selEl = document.getElementById('saison-equipes-select');
+    equipes = Array.from(selEl.selectedOptions).map(o => o.value);
+  }
+
+  if (!nom)                return showToast('Veuillez saisir un nom de saison.');
+  if (!date)               return showToast('Veuillez choisir une date de démarrage.');
+  if (equipes.length < 2)  return showToast('Sélectionnez au moins 2 équipes.');
 
   const soldeDepart          = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
   const nbQualifiesParPoule  = parseInt(document.getElementById('saison-nb-qualifs')?.value)||2;
   const nbMeilleur3eme       = parseInt(document.getElementById('saison-nb-m3')?.value)||0;
   const id = 'S' + Date.now();
   const saison = { id, nom, date, equipes, soldeDepart, nbQualifiesParPoule, nbMeilleur3eme, active: true, declaredBy: currentUser.name, declaredAt: new Date().toISOString() };
+  if (poulesFromPdf) {
+    saison.poules           = poulesFromPdf;
+    saison.tirageDone       = true;
+    saison.matchsProgrammes = false;
+    saison.declaredOpen     = false;
+  }
+
+  // Équipes détectées mais pas encore enregistrées : créées en fiche minimale à compléter
+  const nouvelles = equipes.filter(e => !getTeams()[e]);
+  equipes.forEach(_ensureTeamRegistered);
+
   // Clôturer l'éventuelle saison précédente
   getSaisons().filter(s => s.active && s.id !== id).forEach(s => { s.active = false; saveSaison(s); });
   saveSaison(saison);
   _selectedSaisonId = id;
-  logAction('DECLARE_SAISON', { detail: nom + ' · ' + equipes.length + ' équipes' });
+  logAction('DECLARE_SAISON', { detail: nom + ' · ' + equipes.length + ' équipes' + (poulesFromPdf ? ' · poules importées (PDF)' : '') });
 
+  // Réinitialiser le formulaire d'import PDF
+  _pendingSaisonPoules = null;
+  const pdfInput = document.getElementById('saison-pdf-input');
+  if (pdfInput) pdfInput.value = '';
+  const pdfPreview = document.getElementById('saison-pdf-preview');
+  if (pdfPreview) pdfPreview.innerHTML = '';
+  const pdfStatus = document.getElementById('saison-pdf-status');
+  if (pdfStatus) pdfStatus.innerHTML = '';
+
+  refreshSaisonEquipesSelect();
+  renderEquipesPanel();
   renderSaisonPanel();
   renderSeasonBar(); renderDashboard();
   _updateCompPoulesTabs(); renderCompMatches(); renderClassementSection();
-  showToast('Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes !');
+  showToast('Saison ' + nom + ' déclarée avec ' + equipes.length + ' équipes' +
+    (poulesFromPdf ? ' · poules importées, tirage déjà effectué' : '') +
+    (nouvelles.length ? ' · ' + nouvelles.length + ' nouvelle(s) équipe(s) à compléter' : '') + ' !');
 }
 
 function cloturerSaison() {
@@ -5261,11 +5496,11 @@ function renderEquipesPanel() {
     ).join('');
     return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
       <div class="flex-between" style="margin-bottom:4px">
-        <div style="font-size:14px;font-weight:600">${nom}</div>
-        <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteTeam('${nom}')">Supprimer</button>
+        <div style="font-size:14px;font-weight:600">${esc(nom)} ${t.incomplet ? '<span class="badge amber" style="font-size:10px;font-weight:600">À compléter</span>' : ''}</div>
+        <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteTeam('${esc(nom).replace(/'/g,"\\'")}')">Supprimer</button>
       </div>
       ${meta ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${meta}</div>` : ''}
-      ${repsHtml || '<div style="font-size:12px;color:var(--muted)">Aucun représentant renseigné</div>'}
+      ${t.incomplet ? '<div style="font-size:11px;color:var(--amber-d,#a15c00)"><i class="fa-solid fa-triangle-exclamation"></i> Équipe ajoutée automatiquement (import PDF) — complétez ses représentants via « Ajouter une équipe » avec le même nom.</div>' : (repsHtml || '<div style="font-size:12px;color:var(--muted)">Aucun représentant renseigné</div>')}
     </div>`;
   }).join('');
 }
