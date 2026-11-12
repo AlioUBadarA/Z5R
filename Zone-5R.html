@@ -803,7 +803,7 @@
         <span class="badge amber" id="litiges-count-badge">0 en cours</span>
       </div>
       <div class="alert info" style="margin:12px 16px;margin-bottom:0;font-size:12px">
-        ℹ️ Les litiges sont déclarés exclusivement par le <strong>Président de la Commission Juridique</strong>. Le PV de délibération est visible par tous.
+        ℹ️ Seul le <strong>Président de la Commission Juridique</strong> déclare les litiges. Tout le monde voit le PV de délibération.
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
@@ -849,7 +849,7 @@
     <div id="bureau-declare-card" class="card mb" style="display:none">
       <div class="card-header"><span class="card-title"><i class="fa-solid fa-pen-to-square"></i> Déclarer le bureau</span></div>
       <div class="card-body">
-        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Aucun bureau déclaré pour cette zone. En tant que Super Admin, déclarez le bureau avec tous ses membres.</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Aucun bureau n'est déclaré pour cette zone. Le Super Admin doit déclarer le bureau avec tous ses membres.</p>
         <button class="btn primary" onclick="openBureauDeclarationModal()"><i class="fa-solid fa-plus"></i> Déclarer le bureau Zone 5R</button>
       </div>
     </div>
@@ -875,7 +875,7 @@
       </div>
       <div class="card-body">
         <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
-          Sync automatique toutes les <strong>secondes</strong>. Si un appareil ne voit pas les dernières données, utilisez le bouton ci-dessous pour forcer la synchronisation complète.
+          La synchronisation se fait chaque <strong>seconde</strong>. Un appareil ne voit pas les dernières données ? Le bouton ci-dessous force une synchronisation complète.
         </p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn primary" onclick="forceSyncAllToFirebase()"><i class="fa-solid fa-cloud-arrow-up"></i> Forcer la synchronisation complète</button>
@@ -999,8 +999,8 @@
             <div id="saison-pdf-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
             <div id="saison-pdf-preview"></div>
             <p style="font-size:11px;color:var(--muted);margin-top:6px">
-              Le PDF doit contenir un tableau des poules (ex. colonnes « Poule A », « Poule B »… avec les équipes en dessous).
-              Les équipes détectées mais pas encore enregistrées seront ajoutées automatiquement, à compléter ensuite dans « Équipes ».
+              Le PDF doit contenir un tableau des poules. Par exemple, des colonnes « Poule A », « Poule B »… avec les équipes en dessous.
+              Les nouvelles équipes du PDF seront ajoutées automatiquement. Complétez-les ensuite dans « Équipes ».
               Le tirage sera déjà considéré comme effectué.
             </p>
           </div>
@@ -1028,7 +1028,7 @@
             </div>
           </div>
           <div id="format-preview" style="margin-top:8px;font-size:12px;padding:8px;background:var(--blue-l);border-radius:var(--radius-sm);color:var(--blue)">
-            <i class="fa-solid fa-circle-info"></i> Le format exact (1/4, 1/8…) sera calculé après le tirage. <span id="format-rule-text">Règle actuelle : 2 qualifiés/poule, sans meilleur 3ème.</span>
+            <i class="fa-solid fa-circle-info"></i> Le format exact (1/4, 1/8…) sera calculé après le tirage. <span id="format-rule-text">Chaque poule qualifie 2 équipes. Aucun meilleur 3ème n'est repêché.</span>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end">
@@ -1078,7 +1078,7 @@
       <span class="card-title"><i class="fa-solid fa-key"></i> Gestion des accès membres</span>
       <div style="display:flex;gap:8px">
         <button class="btn" style="font-size:12px" onclick="createAllBureauAccounts()"><i class="fa-solid fa-rocket"></i> Activer tous</button>
-        <button class="btn" style="font-size:12px" onclick="recreateAllBureauAccounts()" title="Pour les comptes déjà actifs dont le mot de passe a été perdu (bug corrigé) — génère un nouvel identifiant + mot de passe pour chacun"><i class="fa-solid fa-rotate"></i> Recréer tous les comptes</button>
+        <button class="btn" style="font-size:12px" onclick="recreateAllBureauAccounts()" title="Pour les comptes actifs dont le mot de passe est perdu. Chaque compte reçoit un nouvel identifiant et un nouveau mot de passe."><i class="fa-solid fa-rotate"></i> Recréer tous les comptes</button>
         <button class="btn primary" style="font-size:12px" onclick="openCreateAccountModal()">+ Créer un compte</button>
       </div>
     </div>
@@ -1140,7 +1140,7 @@
     <div class="card">
       <div class="card-header"><span class="card-title"><i class="fa-solid fa-users"></i> Cartes de tous les membres du Bureau</span></div>
       <div class="card-body">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Réservé au Super Admin et au Président : consultez et imprimez les cartes de l'ensemble du Bureau.</p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Cette page est réservée au Super Admin et au Président. Elle affiche et imprime les cartes de tout le Bureau.</p>
         <button class="btn primary" onclick="openCartesMembresModal()"><i class="fa-solid fa-id-card-clip"></i> Voir toutes les cartes</button>
       </div>
     </div>
@@ -1188,7 +1188,7 @@
       <label>Mot de passe *</label>
       <input type="password" id="create-pwd" placeholder="Min. 6 caractères" autocomplete="new-password">
     </div>
-    <div class="error-msg" id="create-error">Veuillez remplir tous les champs obligatoires.</div>
+    <div class="error-msg" id="create-error">Remplissez tous les champs obligatoires.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-create-account')">Annuler</button>
       <button class="btn primary" onclick="createAccount()"><i class="fa-solid fa-check"></i> Créer le compte</button>
@@ -1455,7 +1455,7 @@
       </div>
     </div>
     <div class="form-group"><label>Photo CNI / Joueur</label><input type="file" accept="image/*"></div>
-    <div class="error-msg" id="modal-player-error">Veuillez renseigner le prénom, le nom et l'équipe.</div>
+    <div class="error-msg" id="modal-player-error">Renseignez le prénom, le nom et l'équipe.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-joueur')">Annuler</button>
       <button class="btn primary" onclick="savePlayer()"><i class="fa-solid fa-check"></i> Valider & Licencier</button>
@@ -1512,7 +1512,7 @@
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-poule')">Annuler</button>
-      <button class="btn primary" onclick="alert('Poule créée ! Calendrier généré automatiquement.');closeModal('modal-poule')">Créer & Générer calendrier</button>
+      <button class="btn primary" onclick="alert('Poule créée. Le calendrier est généré.');closeModal('modal-poule')">Créer & Générer calendrier</button>
     </div>
   </div>
 </div>
@@ -1531,7 +1531,7 @@
     <div class="form-group"><label>Motivations</label><textarea placeholder="Rédiger la décision motivée..."></textarea></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-reclamation')">Annuler</button>
-      <button class="btn primary" onclick="alert('Décision enregistrée. Notification envoyée aux ASC.');closeModal('modal-reclamation')">Rendre la décision</button>
+      <button class="btn primary" onclick="alert('Décision enregistrée. Les ASC sont prévenues.');closeModal('modal-reclamation')">Rendre la décision</button>
     </div>
   </div>
 </div>
@@ -1580,7 +1580,7 @@
     <div class="form-group"><label>Quartier / Localité</label><input type="text" id="stade-lieu" placeholder="Ex : Bignona Centre"></div>
     <div class="form-group"><label>Capacité (places)</label><input type="number" id="stade-capacite" placeholder="Ex : 2000" min="0"></div>
     <div class="form-group"><label>Responsable / Contact</label><input type="text" id="stade-contact" placeholder="Ex : René COLY · 77 000 00 00"></div>
-    <div class="error-msg" id="stade-error">Veuillez renseigner le nom du terrain.</div>
+    <div class="error-msg" id="stade-error">Renseignez le nom du terrain.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-add-stade')">Annuler</button>
       <button class="btn primary" onclick="saveStade()"><i class="fa-solid fa-check"></i> Enregistrer</button>
@@ -1631,7 +1631,7 @@
       <div style="text-align:center;background:var(--green-l);border-radius:6px;padding:4px"><div style="font-size:10px;color:var(--green-d)">Bénéfice</div><div style="font-weight:700;color:var(--green-d)" id="fin-benefice">0</div></div>
     </div>
     <div class="form-group"><label>Observations / Notes</label><textarea id="fin-notes" placeholder="Résultat final, vainqueur, incidents…" style="min-height:60px"></textarea></div>
-    <div class="error-msg" id="fin-error">Veuillez renseigner la date et les équipes finalistes.</div>
+    <div class="error-msg" id="fin-error">Renseignez la date et les équipes finalistes.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-finale')">Annuler</button>
       <button class="btn primary" onclick="saveFinale()"><i class="fa-solid fa-check"></i> Enregistrer le bilan finale</button>
@@ -1662,7 +1662,7 @@
       <div style="font-size:11px;color:var(--green-d)">Montant total à percevoir</div>
       <div style="font-size:20px;font-weight:700;color:var(--green-d)" id="lic-total">0 FCFA</div>
     </div>
-    <div class="error-msg" id="lic-error">Veuillez sélectionner une ASC et renseigner au moins une quantité.</div>
+    <div class="error-msg" id="lic-error">Sélectionnez une ASC et renseigner au moins une quantité.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-licence')">Annuler</button>
       <button class="btn primary" onclick="saveLicence()"><i class="fa-solid fa-check"></i> Enregistrer</button>
@@ -1706,7 +1706,7 @@
       <input type="file" id="lit-pv" accept="image/*,application/pdf">
       <p style="font-size:11px;color:var(--muted);margin-top:3px">Visible par tous · non téléchargeable</p>
     </div>
-    <div class="error-msg" id="lit-error">Veuillez renseigner le match et le motif.</div>
+    <div class="error-msg" id="lit-error">Renseignez le match et le motif.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-litige')">Annuler</button>
       <button class="btn primary" onclick="saveLitige()"><i class="fa-solid fa-check"></i> Enregistrer la décision</button>
@@ -1721,7 +1721,7 @@
       <span class="modal-title"><i class="fa-solid fa-file-export"></i> Envoyer le bilan</span>
       <button class="close-btn" onclick="closeModal('modal-send-bilan')"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="alert info" style="margin-bottom:16px">Le bilan sera marqué comme envoyé. L'envoi réel nécessite une intégration backend (email/WhatsApp).</div>
+    <div class="alert info" style="margin-bottom:16px">Le bilan sera marqué comme envoyé. L'envoi réel par email ou WhatsApp demande une intégration backend.</div>
     <div class="form-group">
       <label>Destinataires</label>
       <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px" id="bilan-recipients">
@@ -1789,7 +1789,7 @@
       </div>
     </div>
 
-    <div class="error-msg" id="team-error">Veuillez renseigner le nom de l'association et au moins un représentant.</div>
+    <div class="error-msg" id="team-error">Renseignez le nom de l'association et au moins un représentant.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="closeModal('modal-add-team')">Annuler</button>
       <button class="btn primary" onclick="saveTeam()"><i class="fa-solid fa-check"></i> Enregistrer l'association</button>
@@ -1922,7 +1922,7 @@
       </div>
     </div>
 
-    <div class="error-msg" id="fj-error" style="margin-top:10px">Veuillez renseigner le libellé et la date.</div>
+    <div class="error-msg" id="fj-error" style="margin-top:10px">Renseignez le libellé et la date.</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
       <button class="btn" onclick="closeModal('modal-fiche-journee')">Annuler</button>
       <button class="btn primary" onclick="saveFicheJournee()"><i class="fa-solid fa-check"></i> Enregistrer la fiche</button>
@@ -2074,7 +2074,7 @@ async function forceSyncAllToFirebase() {
     if (banner) banner.remove();
     showToast('' + ok + ' collections synchronisées avec Firebase.');
   } else {
-    showToast('' + fail + ' erreur(s) — Vérifiez les règles Firestore.');
+    showToast('' + fail + ' erreur(s). Vérifiez les règles Firestore.');
   }
   _updateSyncIndicator();
 }
@@ -2703,8 +2703,8 @@ function saveCarton() {
   const cardType = document.getElementById('card-type')?.value;
   const suspNb = parseInt(document.getElementById('suspension-nb')?.value || '1');
   const motif = document.querySelector('#modal-carton textarea')?.value?.trim();
-  if (!matchId) { alert('Veuillez sélectionner une rencontre.'); return; }
-  if (!joueurId) { alert('Veuillez sélectionner un joueur.'); return; }
+  if (!matchId) { alert('Sélectionnez une rencontre.'); return; }
+  if (!joueurId) { alert('Sélectionnez un joueur.'); return; }
   const match = getMatchesData().find(m => m.id === matchId);
   const joueurOpt = document.getElementById('carton-joueur-sel');
   const joueurLabel = joueurOpt?.options[joueurOpt.selectedIndex]?.text || joueurId;
@@ -3233,7 +3233,7 @@ function savePlayer() {
   const errEl   = document.getElementById('modal-player-error');
 
   if (!prenom || !nom) {
-    errEl.textContent = 'Veuillez renseigner le prénom et le nom.';
+    errEl.textContent = 'Renseignez le prénom et le nom.';
     errEl.classList.add('show');
     return;
   }
@@ -3681,11 +3681,11 @@ function saveBureauDeclaration() {
   renderAccueilBureau();
   renderMembersTable();
   logAction('BUREAU_SAVED', { detail: 'Bureau ' + annee + ' · ' + Object.keys(membres).length + ' membres' });
-  showToast('Bureau ' + annee + ' enregistré — ' + Object.keys(membres).length + ' membre(s).');
+  showToast('Bureau ' + annee + ' enregistré avec ' + Object.keys(membres).length + ' membre(s).');
 }
 
 function renewBureauMandat() {
-  if (!confirm('Renouveler le mandat : un nouveau mandat sera créé à partir d\'aujourd\'hui.\nLes membres actuels seront pré-remplis. Continuer ?')) return;
+  if (!confirm('Renouveler le mandat ?\nLe nouveau mandat commence aujourd\'hui. Les membres actuels seront pré-remplis.')) return;
   openBureauDeclarationModal();
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('bureau-decl-debut').value = today;
@@ -4319,7 +4319,7 @@ function createAccount() {
   const errEl    = document.getElementById('create-error');
 
   if (!name || !poste || !username || !pwd) {
-    errEl.textContent = 'Veuillez remplir tous les champs obligatoires.';
+    errEl.textContent = 'Remplissez tous les champs obligatoires.';
     errEl.classList.add('show'); return;
   }
   if (pwd.length < 6) {
@@ -5133,8 +5133,8 @@ function declarerSaison() {
     equipes = Array.from(selEl.selectedOptions).map(o => o.value);
   }
 
-  if (!nom)                return showToast('Veuillez saisir un nom de saison.');
-  if (!date)               return showToast('Veuillez choisir une date de démarrage.');
+  if (!nom)                return showToast('Saisissez un nom de saison.');
+  if (!date)               return showToast('Choisissez une date de démarrage.');
   if (equipes.length < 2)  return showToast('Sélectionnez au moins 2 équipes.');
 
   const soldeDepart          = parseFloat(document.getElementById('saison-solde-depart')?.value)||0;
@@ -5222,7 +5222,7 @@ async function _doCloture() {
   const input = document.getElementById('cloture-pwd-input');
   const errEl = document.getElementById('cloture-pwd-error');
   const pwd   = input?.value?.trim();
-  if (!pwd) { if (errEl) { errEl.textContent = 'Veuillez saisir votre mot de passe.'; errEl.style.display = 'block'; } return; }
+  if (!pwd) { if (errEl) { errEl.textContent = 'Saisissez votre mot de passe.'; errEl.style.display = 'block'; } return; }
 
   if (errEl) errEl.style.display = 'none';
   const btn = document.querySelector('#cloture-pwd-overlay .btn.danger');
@@ -5237,7 +5237,7 @@ async function _doCloture() {
   } catch (authErr) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-flag-checkered"></i> Clôturer la saison'; }
     if (errEl) {
-      errEl.textContent = 'Mot de passe incorrect. Veuillez réessayer.';
+      errEl.textContent = 'Mot de passe incorrect. Réessayez.';
       errEl.style.display = 'block';
     }
     if (input) { input.value = ''; input.focus(); }
@@ -5500,7 +5500,7 @@ function renderEquipesPanel() {
         <button class="btn danger" style="font-size:11px;padding:3px 8px" onclick="deleteTeam('${esc(nom).replace(/'/g,"\\'")}')">Supprimer</button>
       </div>
       ${meta ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${meta}</div>` : ''}
-      ${t.incomplet ? '<div style="font-size:11px;color:var(--amber-d,#a15c00)"><i class="fa-solid fa-triangle-exclamation"></i> Équipe ajoutée automatiquement (import PDF) — complétez ses représentants via « Ajouter une équipe » avec le même nom.</div>' : (repsHtml || '<div style="font-size:12px;color:var(--muted)">Aucun représentant renseigné</div>')}
+      ${t.incomplet ? '<div style="font-size:11px;color:var(--amber-d,#a15c00)"><i class="fa-solid fa-triangle-exclamation"></i> L\'import PDF a ajouté cette équipe. Complétez ses représentants avec « Ajouter une équipe ». Gardez le même nom.</div>' : (repsHtml || '<div style="font-size:12px;color:var(--muted)">Aucun représentant renseigné</div>')}
     </div>`;
   }).join('');
 }
@@ -5758,7 +5758,7 @@ function programmerMatchs() {
 function declarerOuverte() {
   const dateOuverture = document.getElementById('ouverture-date-input').value;
   if (!dateOuverture) {
-    showToast('Veuillez choisir une date d\'ouverture.');
+    showToast('Choisissez une date d\'ouverture.');
     return;
   }
   const today = new Date().toISOString().split('T')[0];
@@ -6712,7 +6712,7 @@ function rejectDepense(id) {
 
 function confirmRejectDepense() {
   const raison = document.getElementById('reject-dep-reason')?.value.trim();
-  if (!raison) { showToast('Veuillez saisir la raison du rejet.'); return; }
+  if (!raison) { showToast('Saisissez la raison du rejet.'); return; }
   const dep = _rawDepenses();
   const d   = dep.find(x => x.id === _rejectDepenseId);
   if (!d) return;
@@ -6777,8 +6777,8 @@ function saveOperation() {
   const date     = document.getElementById('tx-date')?.value || '';
   const desc     = document.getElementById('tx-desc')?.value.trim() || '';
 
-  if (!montant) { showToast('Veuillez saisir un montant.'); return; }
-  if (!desc)    { showToast('Veuillez décrire la dépense.'); return; }
+  if (!montant) { showToast('Saisissez un montant.'); return; }
+  if (!desc)    { showToast('Décrivez la dépense.'); return; }
 
   // Recettes réservées aux tresorier/admin
   if (type === 'recette' && !['superadmin','admin','tresorier'].includes(currentUser?.role)) {
@@ -7316,7 +7316,7 @@ function saveFicheEdit() {
   saveFiches(allFiches);
   closeModal('modal-fiche-edit');
   renderFichesList(); updateCaisse();
-  showToast('Fiche modifiée — raison enregistrée.');
+  showToast('Fiche modifiée. La raison est enregistrée.');
   logAction('EDIT_FICHE', { detail: f.journee + ' · ' + reason });
 }
 
@@ -7759,7 +7759,7 @@ function _confirmDateMatch(idx, mid) {
   const d = document.getElementById(mid+'_date')?.value;
   const h = document.getElementById(mid+'_heure')?.value || null;
   document.getElementById(mid)?.remove();
-  if (!d) { showToast('Veuillez choisir une date.', 'error'); return; }
+  if (!d) { showToast('Choisissez une date.', 'error'); return; }
   const saison = getSelectedSaison();
   if (!saison?.matchs?.[idx]) return;
   saison.matchs[idx].date  = d;
@@ -7799,7 +7799,7 @@ function _confirmReportMatch(idx, mid) {
   const newDate = document.getElementById(mid+'_date')?.value || null;
   const newHeure = document.getElementById(mid+'_heure')?.value || null;
   document.getElementById(mid)?.remove();
-  if (!raison) { showToast('Veuillez indiquer une raison.', 'error'); return; }
+  if (!raison) { showToast('Indiquez une raison.', 'error'); return; }
   const saison = getSelectedSaison();
   if (!saison?.matchs?.[idx]) return;
   const m = saison.matchs[idx];
@@ -8001,7 +8001,7 @@ function openLiveMatch(matchId) {
 }
 
 function openLiveMatchNew() {
-  showToast('Sélectionner un match dans la liste et cliquer sur ▶ Démarrer.');
+  showToast('Sélectionnez un match dans la liste. Cliquez ensuite sur ▶ Démarrer.');
 }
 
 function closeLiveMatch() {
@@ -8327,7 +8327,7 @@ function _bootApp() {
     const banner = document.createElement('div');
     banner.id = 'fs-error-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;padding:10px 16px;font-size:13px;font-weight:600;text-align:center';
-    banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Synchronisation Firebase impossible — données locales uniquement. Superadmin : allez dans Dépenses et cliquez "Forcer la synchronisation" après avoir corrigé les règles Firestore.';
+    banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> La synchronisation Firebase ne marche pas. Les données restent sur cet appareil. Superadmin : corrigez les règles Firestore. Allez ensuite dans Dépenses et cliquez "Forcer la synchronisation".';
     document.body.prepend(banner);
     console.error('[FS] FIREBASE INACCESSIBLE — vérifie les règles Firestore sur console.firebase.google.com → z5rb-a8286 → Firestore → Règles');
   }
@@ -8507,7 +8507,7 @@ initFirebase()
       <button class="close-btn" onclick="closeModal('modal-cartes-membres')"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
-      <i class="fa-solid fa-circle-info"></i> Choisissez les membres et un modèle, puis imprimez. Format carte standard (85,6 × 54 mm), plusieurs cartes par page A4.
+      <i class="fa-solid fa-circle-info"></i> Choisissez les membres et un modèle. Imprimez ensuite. Les cartes ont le format standard (85,6 × 54 mm). Une page A4 contient plusieurs cartes.
     </p>
 
     <div class="flex-between" style="margin-bottom:6px">

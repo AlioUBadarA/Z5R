@@ -2,8 +2,7 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Use this section to list the versions that get security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -14,8 +13,7 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Use this section to explain how to report a vulnerability.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Say where to send a report. Say how often you give news about it.
+Say what happens when you accept or decline it.
