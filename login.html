@@ -330,27 +330,9 @@ function _saveSession(username, profile) {
   } catch(e) {}
 }
 
-// ── Bootstrap migration ───────────────────────────────────────
-// Used once per account to create the Firebase Auth entry.
-// After first login the account exists in Firebase Auth — this list
-// is no longer consulted. Passwords here are already in git history.
-const _DEFAULT_USERS = {
-  'aliou.sagna':    { pwd: 'Zone5R!2025',  role: 'superadmin',    name: 'Aliou Badara Sadia SAGNA', poste: '1er VP Marketing / Super Admin' },
-  'test.admin':     { pwd: 'TestAdmin25',  role: 'superadmin',    name: 'Compte Test Admin',         poste: 'Test – Accès complet' },
-  'test.visiteur':  { pwd: 'TestVisit25',  role: 'visiteur',      name: 'Compte Test Visiteur',      poste: 'Test – Lecture seule' },
-  'djiby.diatta':   { pwd: 'President!25', role: 'admin',         name: 'Djiby Diouf DIATTA',        poste: 'Président Zone 5R' },
-  'boubacar.camara':{ pwd: 'Secretaire25', role: 'secretaire',    name: 'Boubacar CAMARA',            poste: 'Secrétaire Général' },
-  'papis.sagna':    { pwd: 'SgAdj2025',    role: 'secretaire',    name: 'Aliou SAGNA (Papis)',        poste: 'SG Adjoint' },
-  'habib.sane':     { pwd: 'Tresor!25',    role: 'tresorier',     name: 'El Habib Pierre SANÉ',       poste: 'Trésorier Général' },
-  'agnile.dieng':   { pwd: 'TresorAdj25',  role: 'tresorier',     name: 'Souleymane DIENG',           poste: 'Trésorier Adjoint' },
-  'ibrahima.dieme': { pwd: 'Finance2025',  role: 'finances',      name: 'Ibrahima DIEME',             poste: 'Pdt Commission Finances' },
-  'sidiky.doumbia': { pwd: 'Compet!2025',  role: 'competitions',  name: 'Sidiky DOUMBIA',             poste: 'Commission des Sports' },
-  'fode.goudiaby':  { pwd: 'Juridique25',  role: 'juridique',     name: 'Fodé GOUDIABY',              poste: 'Commission Juridique' },
-  'cheikh.diatta':  { pwd: 'Commu!2025',   role: 'communication', name: 'Cheikh S. DIATTA',           poste: 'Commission Communication' },
-  'aicha.mbaye':    { pwd: 'Audit!2025',   role: 'audit',         name: 'Aïcha MBAYE',                poste: 'Commissaire aux Comptes' },
-  'idrissa.diallo': { pwd: 'Audit2025!',   role: 'audit',         name: 'Idrissa DIALLO',             poste: 'Commissaire aux Comptes' },
-  'nouha.coly':     { pwd: 'SecAdm2025!',  role: 'secretaire',    name: 'Nouha COLY',                 poste: 'Secrétaire Administratif' },
-};
+// Les comptes se connectent par Firebase Auth. Un compte pas encore créé dans Firebase
+// reçoit un mot de passe provisoire de l'administrateur (repli Firestore ci-dessous).
+// Plus aucun mot de passe n'est écrit dans ce fichier.
 
 // ── Firestore migration fallback ──────────────────────────────
 // Returns profile if username/password match a Firestore record that
@@ -439,24 +421,7 @@ async function doLogin() {
     return;
   }
 
-  // 3. Bootstrap fallback for DEFAULT_USERS (first-login migration to Firebase Auth)
-  const bootstrap = _DEFAULT_USERS[username];
-  if (bootstrap && bootstrap.pwd === password) {
-    await _migrateToFirebase(username, password);
-    try {
-      await firebase.auth().signInWithEmailAndPassword(username + _AUTH_SUFFIX, password);
-    } catch(e) {}
-    const stored = localStorage.getItem('zone5r_users');
-    const profiles = stored ? JSON.parse(stored) : {};
-    const p = profiles[username] || { role: bootstrap.role, name: bootstrap.name, poste: bootstrap.poste };
-    _saveSession(username, p);
-    _loginAttempts = 0;
-    setLoading(false);
-    window.location.replace('Zone-5R.html');
-    return;
-  }
-
-  // 4. Invalid credentials
+  // 3. Invalid credentials
   setLoading(false);
   document.getElementById('login-password').value = '';
   _loginAttempts++;
